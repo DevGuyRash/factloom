@@ -1,0 +1,39 @@
+# modern: clean sans-serif, a tinted header panel, and an accent bar beside each heading.
+# Every setting not listed here comes from the defaults (`resumes themes show modern` prints them all).
+# Sizes are half-points (21 = 10.5 pt); spacing and margins are twips (1440 = 1 inch); colors are hex.
+description: Clean sans-serif with a tinted header panel and an accent bar beside each heading.
+layout: flow
+ats: safe
+fonts: { body: Calibri, heading: Calibri, name: Calibri Light }
+colors:
+  accent: 2B5C8A
+  ink: 1E2A36
+  muted: 56616E
+  tint: EAF0F6
+corners: rounded
+radius: 8
+sizes: { name: 54, headline: 23, contact: 19, sectionHeading: 21, entryTitle: 21, entrySub: 19, body: 20, bullet: 20 }
+page: { marginX: 900 }
+margins: { resume: { top: 760, bottom: 640 } }
+spacing:
+  name: { after: 20 }
+  headline: { after: 30 }
+  sectionHeading: { before: 210, after: 80 }
+  bullet: { after: 30, line: 252 }
+  entryTitleBefore: 100
+  entrySubAfter: 40
+header:
+  panel: true
+  padding: 12
+  rule: none
+  name: { bold: false, color: ink }
+  headline: { bold: true, color: accent }
+  contact: { color: muted, separator: "   •   ", separatorColor: B4BFCB }
+headings: { style: bar, case: upper, tracking: 30, bold: true, color: ink }
+entries:
+  title: { bold: true, color: ink }
+  date: { bold: false, color: muted }
+  sub: { bold: false, italic: true, color: muted }
+labeled: { label: { bold: true, color: ink } }
+lines: { left: { bold: true, color: ink }, right: { bold: false, color: muted } }
+bulletList: { color: accent }

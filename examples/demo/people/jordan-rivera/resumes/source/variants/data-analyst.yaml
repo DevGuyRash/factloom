@@ -1,0 +1,23 @@
+# Structure: which facts appear, in what order, under which headings. `theme` picks the look;
+# `style` (optional) overrides any theme setting for this variant only, for example:
+#   style:
+#     colors: { accent: "0F766E" }
+#     corners: square
+variant: data-analyst
+theme: modern
+headline: "Data Analyst | SQL · Python · Tableau"
+output: Jordan_Rivera_Resume
+sections:
+  - title: Summary
+    paragraph: "Data analyst who turns operational data into dashboards and reports that teams use every week. Three years of SQL, Python, and Tableau across logistics and healthcare operations."
+  - title: Skills
+    labeled: [analytics, reporting, tools]
+  - title: Experience
+    entries:
+      - job: juniper
+      - job: cobalt
+  - title: Projects
+    entries:
+      - project: transit
+  - title: Education
+    lines: [degree, sql-course]

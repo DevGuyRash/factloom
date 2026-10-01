@@ -1,0 +1,37 @@
+# compact: dense, small margins, dates inline; fits more on one page.
+description: Dense layout with small margins and inline dates, for one-page resumes and long histories.
+layout: flow
+ats: safe
+fonts: { body: Calibri, heading: Calibri, name: Calibri }
+colors:
+  accent: 0E6B6B
+  ink: 1A1A1A
+  muted: "555555"
+corners: square
+sizes: { name: 40, headline: 20, contact: 18, sectionHeading: 19, entryTitle: 19, entrySub: 18, body: 18, bullet: 18 }
+page: { marginX: 620 }
+margins: { resume: { top: 500, bottom: 500 } }
+spacing:
+  name: { after: 0 }
+  headline: { after: 20 }
+  contact: { after: 40 }
+  sectionHeading: { before: 110, after: 40 }
+  bullet: { after: 10, line: 238 }
+  entryTitleBefore: 50
+  entrySubAfter: 10
+  paragraph: { after: 30, line: 240 }
+  labeled: { after: 15, line: 238 }
+  lines: { after: 15 }
+borders: { header: { size: 8, space: 3 }, sectionHeading: { size: 4, space: 1 } }
+header:
+  name: { bold: true, color: ink }
+  headline: { bold: true, color: accent }
+  contact: { color: ink, separator: "  |  ", separatorColor: muted }
+headings: { style: rule, case: upper, tracking: 20, bold: true, color: accent }
+entries:
+  dates: inline
+  title: { bold: true, color: ink }
+  date: { bold: false, color: muted }
+  sub: { bold: false, italic: true, color: muted }
+lines: { left: { bold: true, color: ink }, right: { bold: false, color: muted } }
+bulletList: { char: "•", indentLeft: 220, hanging: 160, color: ink }

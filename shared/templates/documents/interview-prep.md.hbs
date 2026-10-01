@@ -1,0 +1,52 @@
+---
+type: interview-prep
+person: {{person}}
+company: {{yaml company}}
+role: {{yaml role}}
+application: {{yaml application}}
+updated: {{date}}
+---
+
+# Interview prep — {{company}} ({{role}})
+
+## Role summary
+
+{{#if postingSummary}}{{postingSummary}}{{else}}<!-- No posting snapshot captured for this application. -->{{/if}}
+
+## Likely questions by competency
+
+{{#each competencies}}
+- **{{this}}**: have a story ready that shows {{this}}.
+{{/each}}
+{{#unless competencies.length}}
+<!-- No competencies derived from matching stories yet; prepare general behavioral answers. -->
+{{/unless}}
+
+## Matching stories
+
+{{#each stories}}
+### {{id}}
+
+- Competencies: {{join competencies}}
+- Situation: {{situation}}
+- Action: {{action}}
+- Result: {{result}}
+
+{{/each}}
+{{#unless stories.length}}
+<!-- No stories matched; see people/{{person}}/stories.md. -->
+{{/unless}}
+
+## Questions to ask
+
+- What does success look like in the first 90 days?
+- How is the {{role}} role measured?
+{{#if dossier}}- What's changed recently at {{company}}?
+{{/if}}
+
+## Logistics
+
+- Format: [phone / video / onsite]
+- Date and time: [tbd]
+- Interviewer(s): [tbd]
+- Location or link: [tbd]

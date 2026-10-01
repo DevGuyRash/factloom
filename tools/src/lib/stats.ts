@@ -1,0 +1,130 @@
+import { readFileSync } from "node:fs";
+import { listApplications } from "./applications.ts";
+import { peek, readDoc } from "./frontmatter.ts";
+import { loadPipelineConfig } from "./pipeline-config.ts";
+import { loadQueue } from "./queue.ts";
+import { findByType, personDir, repoRoot, today } from "./repo.ts";
+import { dueSearches } from "./searches.ts";
+import { INTERVIEW_STATUS, RESPONDED_STATUS } from "./schema.ts";
+
+export type GroupCounts = { total: number; responded: number; interview: number };
+export type StatsReport = {
+  byVariant: Record<string, GroupCounts>;
+  byCoverLetter: Record<string, GroupCounts>;
+  bySource: Record<string, GroupCounts>;
+  bySite: Record<string, GroupCounts>;
+};
+
+function bump(map: Record<string, GroupCounts>, key: string, status: string) {
+  const k = key || "(unknown)";
+  const c = (map[k] ??= { total: 0, responded: 0, interview: 0 });
+  c.total++;
+  if ((RESPONDED_STATUS as readonly string[]).includes(status)) c.responded++;
+  if ((INTERVIEW_STATUS as readonly string[]).includes(status)) c.interview++;
+}
+
+/** Response and interview counts grouped by resume variant, cover-letter use, source, and site. Small samples stay visible via `total`. */
+export function computeStats(person: string, root = repoRoot()): StatsReport {
+  const out: StatsReport = { byVariant: {}, byCoverLetter: {}, bySource: {}, bySite: {} };
+  for (const app of listApplications(person, root)) {
+    const r = app.record;
+    if (!r) continue;
+    bump(out.byVariant, String(r.resume ?? "(none)"), r.status);
+    bump(out.byCoverLetter, r.cover_letter === "yes" ? "yes" : "no", r.status);
+    bump(out.bySource, String(r.source ?? "(unknown)"), r.status);
+    bump(out.bySite, String(r.site ?? "(unknown)"), r.status);
+  }
+  return out;
+}
+
+export type PayRow = { key: string; min: number; median: number; max: number; n: number };
+
+function annualize(value: number, period: string | undefined, hoursPerYear: number): number {
+  switch ((period ?? "year").toLowerCase()) {
+    case "hour": return value * hoursPerYear;
+    case "month": return value * 12;
+    case "week": return value * 52;
+    default: return value;
+  }
+}
+
+/** Pay ranges from posting snapshots, normalized to annual (shared/pipeline.yaml's hours_per_year), grouped by variant, role, or site. */
+export function aggregatePay(person: string, by: "variant" | "role" | "site" = "variant", root = repoRoot()): PayRow[] {
+  const { hours_per_year } = loadPipelineConfig(root);
+  const groups = new Map<string, number[]>();
+  for (const app of listApplications(person, root)) {
+    const r = app.record;
+    const p = app.posting as Record<string, unknown> | null;
+    if (!p) continue;
+    const period = p.pay_period as string | undefined;
+    const vals: number[] = [];
+    if (typeof p.pay_min === "number") vals.push(annualize(p.pay_min, period, hours_per_year));
+    if (typeof p.pay_max === "number") vals.push(annualize(p.pay_max, period, hours_per_year));
+    if (!vals.length) continue;
+    const key = String(by === "variant" ? r?.resume ?? "(none)" : by === "role" ? r?.role ?? "(unknown)" : r?.site ?? "(unknown)");
+    let arr = groups.get(key);
+    if (!arr) { arr = []; groups.set(key, arr); }
+    arr.push(...vals);
+  }
+  const rows: PayRow[] = [];
+  for (const [key, vals] of groups) {
+    const sorted = [...vals].sort((a, b) => a - b);
+    const mid = sorted[Math.floor(sorted.length / 2)];
+    rows.push({ key, min: Math.round(sorted[0]), median: Math.round(mid), max: Math.round(sorted[sorted.length - 1]), n: vals.length });
+  }
+  return rows.sort((a, b) => a.key.localeCompare(b.key));
+}
+
+export type PendingSnapshot = {
+  statusCounts: Record<string, number>;
+  held: { dir: string; company: string; role: string; reason: string }[];
+  queueOpen: number;
+  queueStale: number;
+  followupsDue: { dir: string; company: string; role: string; followUp: string }[];
+  inboxCount: number;
+  guidesNeedingReview: { path: string }[];
+  searchesDue: number;
+};
+
+function daysSince(dateStr: string): number {
+  return Math.floor((Date.now() - Date.parse(`${dateStr}T00:00:00`)) / 86400000);
+}
+
+/** The first non-heading line of a record's body: the usual place a held reason lives (see references/records.md). */
+function heldReason(recordPath: string | null): string {
+  if (!recordPath) return "";
+  const { body } = readDoc(recordPath);
+  const line = body.split("\n").map((l) => l.trim()).find((l) => l && !l.startsWith("#"));
+  return line ?? "";
+}
+
+/**
+ * Everything "pending" for a person in one pass: status counts, held reasons, queue and search
+ * staleness, follow-ups due, inbox size, and guides awaiting review. Drives both `status` (plain
+ * text) and `dashboard` (written to a file via the dashboard template).
+ */
+export function pendingSnapshot(person: string, root = repoRoot()): PendingSnapshot {
+  const cfg = loadPipelineConfig(root);
+  const statusCounts: Record<string, number> = {};
+  const held: PendingSnapshot["held"] = [];
+  const followupsDue: PendingSnapshot["followupsDue"] = [];
+  const todayStr = today();
+  for (const app of listApplications(person, root)) {
+    const r = app.record;
+    if (!r) continue;
+    statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
+    if (r.status === "blocked") held.push({ dir: app.dir, company: String(r.company), role: String(r.role), reason: heldReason(app.recordPath) });
+    if (r.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= todayStr) {
+      followupsDue.push({ dir: app.dir, company: String(r.company), role: String(r.role), followUp: r.follow_up });
+    }
+  }
+  const { items } = loadQueue(person, root);
+  const open = items.filter((i) => i.status !== "done");
+  const queueStale = open.filter((i) => daysSince(i.found) >= cfg.stale_queue_days).length;
+  const inboxPath = findByType(personDir(person, root), "inbox")[0];
+  const inboxCount = inboxPath ? (readFileSync(inboxPath, "utf8").match(/^### /gm) ?? []).length : 0;
+  const guidesNeedingReview = findByType(personDir(person, root), "resume-guide")
+    .filter((p) => peek(p)?.status === "needs-review")
+    .map((path) => ({ path }));
+  return { statusCounts, held, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, searchesDue: dueSearches(person, root).length };
+}

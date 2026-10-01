@@ -1,0 +1,17 @@
+#!/bin/sh
+# The repository's tools: ./resumes help lists every command. Needs Node.js 22.18 or later; the
+# first run installs the tools' dependencies into tools/node_modules.
+dir=$(cd "$(dirname "$0")" && pwd)
+if ! command -v node >/dev/null 2>&1; then
+  echo "Node.js is not installed: get version 22.18 or later from https://nodejs.org, then run this again." >&2
+  exit 1
+fi
+if ! node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>22||(a===22&&b>=18)?0:1)'; then
+  echo "Node.js $(node --version) is too old: install 22.18 or later from https://nodejs.org." >&2
+  exit 1
+fi
+if [ ! -d "$dir/tools/node_modules" ]; then
+  echo "First run: installing the tools' dependencies..." >&2
+  (cd "$dir/tools" && npm ci --no-audit --no-fund >&2) || { echo "npm ci failed; see the messages above." >&2; exit 1; }
+fi
+exec node "$dir/tools/src/cli.ts" "$@"

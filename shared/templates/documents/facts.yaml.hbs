@@ -1,0 +1,33 @@
+# Content: every claim on {{name}}'s resumes, written once. Variants (variants/*.yaml) choose which
+# facts appear and in what order; themes (`./resumes themes list`) decide how they look.
+# Rules: keep each bullet true and checkable; mark a claim the person has not confirmed yet with
+# `confirm: ["the phrase"]` (guides list it for review; letters may not repeat it until confirmed).
+person: {{person}}
+name: {{yaml name}}
+contact:
+{{#if location}}  - text: {{yaml location}}
+{{/if}}{{#if phone}}  - text: {{yaml phone}}
+{{/if}}{{#if email}}  - text: {{yaml email}}
+    url: {{yaml (concat "mailto:" email)}}
+{{/if}}{{#each links}}  - text: {{yaml (bare this)}}
+    url: {{yaml this}}
+{{/each}}
+# Skill groups: an id, a label, and the items as one line.
+skills: {}
+#  data: { label: "Data", items: "SQL, Python, Excel" }
+
+# Jobs and projects: "Organization | Title" (or "Project | Kind"), optional sub line, dates, link, bullets.
+jobs: {}
+#  acme:
+#    title: "Acme Co. | Analyst"
+#    sub: "City, ST"
+#    dates: "2022 – Present"
+#    bullets:
+#      - text: "Built a **weekly report** that replaced three spreadsheets."
+#      - text: "Cut processing time by 30%."
+#        confirm: ["30%"]
+projects: {}
+
+# One-line entries such as degrees and certifications: left (bold), rest, right (dates).
+lines: {}
+#  degree: { left: "State University", rest: " | B.S. Business", right: "2021" }

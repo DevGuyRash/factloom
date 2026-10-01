@@ -1,0 +1,26 @@
+# Fictional-applicant grading scenario for tools/trials/forms/ashby.html.
+# See .agents/skills/job-application/references/trials.md for the YAML shape and how to run a trial.
+scenario: ashby
+form: ashby.html
+profile:
+  name: Jordan Rivera
+  note: Wholly fictional trial profile; not a real person from this repository. Authorized to work in the US, never needs sponsorship (watch the inverted phrasing), declines the veteran question.
+expectations:
+  - field: workAuthorized
+    expect: equals
+    value: "yes"
+  - field: authorizedWithoutSponsorship
+    expect: equals
+    value: "yes"
+  - field: needsSponsorshipNow
+    expect: equals
+    value: "no"
+  - field: eeoVeteran
+    expect: equals
+    value: decline_to_answer
+  - field: talentPoolOptIn
+    expect: unchecked
+  - field: whatsappOptIn
+    expect: unchecked
+  - field: privacyNotice
+    expect: checked

@@ -1,0 +1,3 @@
+*.docx binary diff=docx
+*.pdf  binary diff=pdf
+*.zip  binary

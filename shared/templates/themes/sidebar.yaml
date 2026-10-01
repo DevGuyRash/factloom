@@ -1,0 +1,38 @@
+# sidebar: two columns. Name, contact, skills, and education sit in a tinted side panel; summary
+# and experience fill the main column. Some applicant tracking systems read two columns out of order,
+# so use it where a person reads the resume first (email, networking, printed copies).
+description: Two columns with a tinted side panel for name, contact, skills, and education.
+layout: sidebar
+ats: caution
+fonts: { body: Trebuchet MS, heading: Trebuchet MS, name: Trebuchet MS }
+colors:
+  accent: 2C7A80
+  ink: 2B3442
+  muted: 59636F
+  tint: E8EEF1
+corners: rounded
+radius: 10
+sizes: { name: 40, headline: 20, contact: 17, sectionHeading: 19, entryTitle: 19, entrySub: 17, body: 18, bullet: 18 }
+page: { marginX: 640 }
+margins: { resume: { top: 640, bottom: 640 } }
+spacing:
+  name: { after: 40 }
+  headline: { after: 40 }
+  sectionHeading: { before: 170, after: 60 }
+  bullet: { after: 30, line: 250 }
+  entryTitleBefore: 90
+  entrySubAfter: 30
+  labeled: { after: 30, line: 250 }
+header:
+  name: { bold: true, color: ink }
+  headline: { bold: false, color: accent }
+  contact: { color: ink, linkColor: accent }
+headings: { style: underbar, case: upper, tracking: 30, bold: true, color: ink, barColor: accent }
+entries:
+  title: { bold: true, color: ink }
+  date: { bold: false, color: muted }
+  sub: { bold: false, italic: true, color: muted }
+labeled: { label: { bold: true, color: accent } }
+lines: { left: { bold: true, color: ink }, right: { bold: false, color: muted } }
+bulletList: { color: accent }
+sidebar: { width: 3200, gap: 420, padding: 12, sections: [labeled, lines], headingStyle: underbar }

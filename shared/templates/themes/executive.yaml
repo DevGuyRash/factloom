@@ -1,0 +1,38 @@
+# executive: centered serif with small capitals and fine rules; formal and spacious.
+description: Centered serif with small capitals and fine rules; formal and spacious.
+layout: flow
+ats: safe
+fonts: { body: Georgia, heading: Georgia, name: Georgia }
+colors:
+  accent: 1F3A5F
+  ink: "222222"
+  muted: "595959"
+  rule: 9AA5B1
+corners: square
+sizes: { name: 50, headline: 22, contact: 18, sectionHeading: 21, entryTitle: 20, entrySub: 19, body: 19, bullet: 19 }
+page: { marginX: 1000 }
+margins: { resume: { top: 800, bottom: 720 } }
+spacing:
+  name: { after: 30 }
+  headline: { after: 50 }
+  contact: { after: 120 }
+  sectionHeading: { before: 240, after: 100 }
+  bullet: { after: 35, line: 260 }
+  entryTitleBefore: 110
+  entrySubAfter: 50
+header:
+  align: center
+  rule: double
+  ruleColor: accent
+  name: { case: smallcaps, bold: false, tracking: 60, color: accent }
+  headline: { bold: false, italic: true, color: muted }
+  contact: { color: ink, separator: "   ·   ", separatorColor: muted }
+borders: { header: { size: 4, space: 6 }, sectionHeading: { size: 4, space: 3 } }
+headings: { style: rules, align: center, case: smallcaps, bold: false, tracking: 50, color: accent, ruleColor: rule }
+entries:
+  title: { bold: true, color: ink }
+  date: { bold: false, italic: true, color: muted }
+  sub: { bold: false, italic: true, color: muted }
+labeled: { label: { bold: false, case: smallcaps, tracking: 20, color: accent } }
+lines: { left: { bold: true, color: ink }, right: { bold: false, italic: true, color: muted } }
+bulletList: { char: "–", color: muted }

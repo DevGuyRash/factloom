@@ -1,0 +1,22 @@
+---
+type: application
+person: {{person}}
+company: {{yaml company}}
+role: {{yaml role}}
+{{#if url}}url: {{url}}
+{{/if}}{{#if source}}source: {{source}}
+{{/if}}{{#if site}}site: {{yaml site}}
+{{/if}}{{#if requisition}}requisition: {{yaml requisition}}
+{{/if}}status: {{status}}
+resume:
+cover_letter: no
+updated: {{date}}
+---
+
+# {{company}} — {{role}}
+
+## Answers given
+
+<!-- One line per question: the question, the answer, and its source (catalog id, profile, derived: basis, or person). Sensitive answers by id only. -->
+
+## Notes

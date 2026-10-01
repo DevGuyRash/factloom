@@ -1,0 +1,247 @@
+# Canonical skill/keyword terms shared by the keywords and tailor commands. Each entry's id is
+# the canonical term; `label` is how it is shown in reports; `aliases` are other spellings or
+# phrasings that count as the same term when scanning posting text, resumes, or facts.yaml.
+# Add terms here rather than hard-coding synonym lists in commands (SSOT).
+ai:
+  label: "AI"
+  aliases: ["artificial intelligence"]
+llm:
+  label: "LLM"
+  aliases: ["large language model", "large language models", "LLMs", "generative AI", "genai"]
+agentic-workflows:
+  label: "Agentic workflows"
+  aliases: ["agentic systems", "agents", "multi-agent", "agent orchestration", "autonomous agents"]
+mcp:
+  label: "Model Context Protocol (MCP)"
+  aliases: ["model context protocol"]
+prompt-engineering:
+  label: "Prompt engineering"
+  aliases: ["context engineering", "prompt design"]
+rag:
+  label: "Retrieval-augmented generation (RAG)"
+  aliases: ["retrieval augmented generation", "grounded generation", "grounding", "citations"]
+prompt-injection:
+  label: "Prompt-injection defense"
+  aliases: ["prompt injection", "jailbreak defense"]
+llm-evaluation:
+  label: "LLM/agent evaluation"
+  aliases: ["evaluation harness", "evaluation harnesses", "eval harness", "regression testing"]
+human-in-the-loop:
+  label: "Human-in-the-loop"
+  aliases: ["human in the loop", "HITL"]
+openai-api:
+  label: "OpenAI API"
+  aliases: ["OpenAI Responses", "Responses API", "GPT-4", "GPT-5"]
+anthropic-api:
+  label: "Anthropic API"
+  aliases: ["Claude API", "Messages API"]
+openai-codex:
+  label: "OpenAI Codex"
+  aliases: ["Codex CLI", "Codex"]
+claude-code:
+  label: "Claude Code"
+  aliases: ["Claude Code skills", "subagents", "Claude Code plugins"]
+cursor:
+  label: "Cursor"
+  aliases: []
+github-copilot:
+  label: "GitHub Copilot"
+  aliases: ["Copilot"]
+rust:
+  label: "Rust"
+  aliases: ["cargo", "clippy"]
+typescript:
+  label: "TypeScript"
+  aliases: ["TS"]
+javascript:
+  label: "JavaScript"
+  aliases: ["JS", "ECMAScript"]
+python:
+  label: "Python"
+  aliases: ["pytest"]
+go:
+  label: "Go"
+  aliases: ["Golang"]
+sql:
+  label: "SQL"
+  aliases: []
+bash:
+  label: "Bash/shell"
+  aliases: ["POSIX shell", "shell scripting"]
+powershell:
+  label: "PowerShell"
+  aliases: []
+c-cpp:
+  label: "C/C++"
+  aliases: ["C++", "C programming"]
+webassembly:
+  label: "WebAssembly"
+  aliases: ["WASM", "Leptos"]
+tauri:
+  label: "Tauri"
+  aliases: []
+react:
+  label: "React"
+  aliases: []
+vite:
+  label: "Vite"
+  aliases: []
+astro:
+  label: "Astro"
+  aliases: []
+tailwind:
+  label: "Tailwind CSS"
+  aliases: []
+flask:
+  label: "Flask"
+  aliases: []
+nodejs:
+  label: "Node.js"
+  aliases: ["Node", "Bun"]
+browser-extensions:
+  label: "Browser extensions"
+  aliases: ["Chrome extension", "Firefox extension", "WebExtensions"]
+postgresql:
+  label: "PostgreSQL"
+  aliases: ["Postgres", "Supabase", "row-level security"]
+sqlite:
+  label: "SQLite"
+  aliases: []
+stripe:
+  label: "Stripe"
+  aliases: ["payments integration"]
+excel:
+  label: "Microsoft Excel"
+  aliases: ["Excel", "Power Query", "VBA"]
+testing-quality:
+  label: "Automated testing"
+  aliases: ["unit tests", "end-to-end tests", "Playwright", "Vitest", "Bats"]
+cicd:
+  label: "CI/CD"
+  aliases: ["continuous integration", "GitHub Actions", "build pipelines", "release pipelines"]
+security-scanning:
+  label: "Supply-chain/secret scanning"
+  aliases: ["gitleaks", "Trivy", "cargo-deny", "secret scanning"]
+spec-driven-development:
+  label: "Spec-driven development"
+  aliases: ["ADRs", "requirements and design gates"]
+docker:
+  label: "Docker"
+  aliases: ["Docker Compose", "containers", "containerization"]
+terraform:
+  label: "Terraform"
+  aliases: ["infrastructure as code", "IaC"]
+ansible:
+  label: "Ansible"
+  aliases: []
+linux:
+  label: "Linux"
+  aliases: []
+proxmox:
+  label: "Proxmox"
+  aliases: []
+tailscale:
+  label: "Tailscale"
+  aliases: ["VPN mesh"]
+komodo:
+  label: "Komodo"
+  aliases: []
+renovate:
+  label: "Renovate"
+  aliases: ["dependency automation"]
+authentik:
+  label: "Authentik (SSO/OIDC)"
+  aliases: ["SSO", "OIDC", "single sign-on"]
+midpoint:
+  label: "midPoint (IAM)"
+  aliases: ["identity and access management", "IAM"]
+step-ca:
+  label: "step-ca (PKI/TLS)"
+  aliases: ["PKI", "TLS certificates"]
+github-apps:
+  label: "GitHub Apps"
+  aliases: []
+secrets-management:
+  label: "Secrets management"
+  aliases: ["SOPS", "age", "1Password", "git-crypt"]
+oracle-fusion:
+  label: "Oracle Fusion (ERP)"
+  aliases: ["Oracle ERP", "Oracle Fusion Cloud"]
+deltek-vantagepoint:
+  label: "Deltek Vantagepoint"
+  aliases: ["Deltek"]
+emburse:
+  label: "Emburse"
+  aliases: ["expense management software"]
+jira:
+  label: "Jira"
+  aliases: ["Atlassian Jira"]
+accounts-payable:
+  label: "Accounts payable"
+  aliases: ["AP", "invoice processing", "vendor invoices"]
+accounts-receivable:
+  label: "Accounts receivable"
+  aliases: ["AR"]
+erp:
+  label: "ERP systems"
+  aliases: ["enterprise resource planning"]
+vendor-management:
+  label: "Vendor management"
+  aliases: ["vendor onboarding", "vendor reconciliation"]
+ach-1099:
+  label: "ACH/1099 processing"
+  aliases: ["W-9", "ACH payments", "1099"]
+month-end-close:
+  label: "Month-end close"
+  aliases: ["financial close", "close process"]
+audit-controls:
+  label: "Audit-ready controls"
+  aliases: ["audit-ready documentation", "internal controls", "SOX"]
+reconciliation:
+  label: "Account reconciliation"
+  aliases: ["reconciling accounts", "discrepancy research"]
+expense-reports:
+  label: "Expense reporting"
+  aliases: ["purchase-card reports", "expense reports"]
+workflow-automation:
+  label: "Workflow automation"
+  aliases: ["process automation", "business process automation"]
+project-management:
+  label: "Project management"
+  aliases: ["PM", "project coordination"]
+stakeholder-management:
+  label: "Stakeholder management"
+  aliases: ["stakeholder discovery", "stakeholder communication"]
+requirements-gathering:
+  label: "Requirements gathering"
+  aliases: ["requirements analysis", "requirements and design"]
+grant-management:
+  label: "Grant management"
+  aliases: ["grants-management", "grant applications"]
+documentation:
+  label: "Documentation"
+  aliases: ["knowledge base", "process documentation", "SOPs"]
+customer-service:
+  label: "Customer service"
+  aliases: ["customer support", "client success"]
+forward-deployed:
+  label: "Forward-deployed engineering"
+  aliases: ["solutions engineering", "implementation engineering", "applied AI"]
+data-analysis:
+  label: "Data analysis"
+  aliases: ["data analytics", "reporting"]
+cross-functional-collaboration:
+  label: "Cross-functional collaboration"
+  aliases: ["cross-functional teams", "collaboration"]
+process-improvement:
+  label: "Process improvement"
+  aliases: ["continuous improvement", "operational efficiency"]
+version-control:
+  label: "Version control"
+  aliases: ["Git", "GitHub"]
+api-integration:
+  label: "API integration"
+  aliases: ["third-party APIs", "webhooks"]
+database-migrations:
+  label: "Database migrations"
+  aliases: ["schema migrations"]

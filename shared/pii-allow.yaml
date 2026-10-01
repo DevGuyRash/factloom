@@ -1,0 +1,12 @@
+# Allowlist for `resumes pii`. Entries suppress specific findings only — they do not disable a
+# detector. Prefer `strings` for one known-safe value; use `paths` (globs, `**` crosses
+# directories) only for a whole fixture or sample file that is expected to contain look-alikes.
+#
+# paths:
+#   - "tools/tests/**"
+#
+# strings:
+#   - "000-00-0000"
+paths:
+  - "tools/tests/pii.test.ts"
+strings: []

@@ -1,0 +1,9 @@
+# A repository-wide variation: everything from `modern`, with a teal palette, square corners, and
+# tinted bands behind the headings. Themes in custom/ are available to everyone in this repository.
+extends: modern
+description: modern in teal with square corners and banded headings.
+colors:
+  accent: "0F766E"
+  tint: "E6F4F1"
+corners: square
+headings: { style: band, color: accent }

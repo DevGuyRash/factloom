@@ -1,0 +1,20 @@
+---
+type: posting
+person: {{person}}
+company: {{yaml company}}
+role: {{yaml role}}
+{{#if url}}url: {{url}}
+{{/if}}{{#if requisition}}requisition: {{yaml requisition}}
+{{/if}}captured: {{date}}
+location:
+arrangement:
+pay_min:
+pay_max:
+pay_period:
+---
+
+# {{role}} — {{company}}
+
+## Description
+
+{{#if description}}{{description}}{{else}}<!-- Paste the full posting text here. -->{{/if}}

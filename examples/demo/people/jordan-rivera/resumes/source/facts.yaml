@@ -1,0 +1,66 @@
+# Content: every claim, written once. Variants (variants/*.yaml) choose which facts appear and in
+# what order; themes (`resumes themes list`) decide how they look. A bullet's `confirm` phrases mark
+# claims the person has not confirmed yet: guides show them for review, and letters may not repeat them.
+person: jordan-rivera
+name: Jordan Rivera
+contact:
+  - text: Denver, CO
+  - text: (555) 010-0142
+    url: tel:+15550100142
+  - text: jordan.rivera@example.com
+    url: mailto:jordan.rivera@example.com
+  - text: example.com/jordan
+    url: https://example.com/jordan
+
+skills:
+  analytics: { label: "Analytics", items: "SQL (PostgreSQL, Snowflake), Python (pandas), dbt, Excel (Power Query, pivot tables)" }
+  reporting: { label: "Reporting", items: "Tableau, Power BI, Looker Studio, KPI design, executive summaries" }
+  operations: { label: "Operations", items: "Process mapping, SOP writing, carrier and vendor scorecards, inventory planning" }
+  tools: { label: "Tools", items: "Git, Jira, Airtable, Zapier, Google Workspace" }
+
+jobs:
+  juniper:
+    title: "Juniper Freight Co. | Operations Analyst"
+    sub: "Denver, CO"
+    dates: "2023 – Present"
+    bullets:
+      - text: "Built a **daily on-time delivery dashboard** in Tableau over about 40,000 shipments a month, replacing three manual spreadsheets."
+        keywords: [tableau, dashboards]
+      - text: "Wrote SQL and dbt models for carrier scorecards used in weekly dispatch reviews; late pickups fell 18% over two quarters."
+        keywords: [sql, dbt]
+        confirm: ["18%"]
+      - text: "Automated invoice exception reports with **Python**, saving the billing team about 6 hours a week."
+        keywords: [python, automation]
+      - text: "Mapped the returns process with warehouse leads and wrote 12 SOPs that new-hire onboarding now uses."
+        keywords: [process improvement]
+  cobalt:
+    title: "Cobalt Ridge Health | Data Coordinator"
+    sub: "Aurora, CO"
+    dates: "2021 – 2023"
+    bullets:
+      - text: "Kept scheduling data clean across four clinics; resolved 300+ duplicate patient records with a repeatable SQL check."
+      - text: "Produced monthly utilization reports in Excel and **Power BI** for clinic managers."
+      - text: "Trained 15 front-desk staff on the scheduling system's reporting views."
+  library:
+    title: "Mapleton City Library | Circulation Assistant (part-time)"
+    sub: "Mapleton, CO"
+    dates: "2019 – 2021"
+    bullets:
+      - text: "Handled checkout, holds, and patron accounts; built the shift-coverage sheet the branch still uses."
+
+projects:
+  transit:
+    title: "Transit Ridership Explorer | Personal project"
+    dates: "2024"
+    link: { text: "example.com/jordan/transit", url: "https://example.com/jordan/transit" }
+    bullets:
+      - text: "Cleaned five years of public ridership data with pandas and published an interactive Tableau dashboard of weekday demand."
+  budget:
+    title: "Household Budget Model | Excel template"
+    dates: "2022"
+    bullets:
+      - text: "Shared an Excel template that imports bank CSV exports with Power Query and flags overspending by category."
+
+lines:
+  degree: { left: "Lakeside State University", rest: " | B.S. Business Analytics", right: "2021" }
+  sql-course: { left: "Data Analysis with SQL", rest: " | Online certificate", right: "2022" }

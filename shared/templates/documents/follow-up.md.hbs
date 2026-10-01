@@ -1,0 +1,26 @@
+---
+type: follow-up
+person: {{person}}
+company: {{yaml company}}
+role: {{yaml role}}
+application: {{yaml application}}
+updated: {{date}}
+---
+
+# Follow-up — {{company}} ({{role}})
+
+<!-- Draft for {{name}} to review and send; nothing here is sent automatically. -->
+
+Subject: Following up — {{role}} application
+
+Hi [hiring contact],
+
+I applied for the {{role}} role at {{company}}{{#if applied}} on {{longDate applied}}{{/if}} and wanted to check in on where things stand. I'm still very interested{{#if dossier}} in what {{company}} is building{{/if}}.
+{{#if stories.length}}
+One thing I'd highlight: {{stories.[0].situation}} {{stories.[0].action}} {{stories.[0].result}}
+{{/if}}
+Happy to share anything else that would help. Thank you for your time.
+
+Best,
+{{name}}
+{{#if email}}{{email}}{{/if}}{{#if phone}} · {{phone}}{{/if}}

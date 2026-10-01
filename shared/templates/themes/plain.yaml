@@ -1,0 +1,21 @@
+# plain: black and white, no graphics. The safest choice for strict applicant tracking systems,
+# government portals, and printing.
+description: Black and white with no graphics, for strict applicant tracking systems and printing.
+layout: flow
+ats: safe
+fonts: { body: Arial, heading: Arial, name: Arial }
+colors:
+  accent: "000000"
+  ink: "000000"
+  muted: "404040"
+corners: square
+sizes: { name: 44, headline: 22, contact: 19, sectionHeading: 21, entryTitle: 20, entrySub: 19, body: 19, bullet: 19 }
+header:
+  name: { bold: true, color: ink }
+  headline: { bold: true, color: ink }
+  contact: { color: ink, separator: "  |  ", separatorColor: ink, linkColor: ink }
+headings: { style: rule, case: upper, bold: true, color: ink, ruleColor: ink }
+entries:
+  title: { bold: true, color: ink }
+  date: { bold: true, color: ink }
+bulletList: { char: "•", color: ink }

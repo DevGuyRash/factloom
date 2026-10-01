@@ -1,0 +1,14 @@
+#!/bin/sh
+# Enable with: git config core.hooksPath .githooks
+set -e
+
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+
+if [ ! -d tools/node_modules ]; then
+  echo "pre-commit: tools/node_modules is missing; run 'npm install' in tools/ to enable the check and pii hooks (skipping)"
+  exit 0
+fi
+
+node tools/src/cli.ts check
+node tools/src/cli.ts pii --staged

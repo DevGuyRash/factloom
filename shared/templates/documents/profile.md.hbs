@@ -1,0 +1,31 @@
+---
+type: profile
+person: {{person}}
+name: {{yaml name}}
+{{#if email}}email: {{email}}
+{{/if}}{{#if phone}}phone: {{yaml phone}}
+{{/if}}{{#if location}}location: {{yaml location}}
+{{/if}}{{#if links}}links:
+{{#each links}}  - {{this}}
+{{/each}}{{/if}}apply: disabled
+---
+
+# {{name}}
+
+## Standing instruction
+
+<!-- The person's own words on how autonomously to apply for them. -->
+
+## Search focus
+
+## Job sources
+
+## Employment history
+
+| Employer | Title | Location | Start | End |
+|---|---|---|---|---|
+
+## Education
+
+| School | Credential | Field | Completed |
+|---|---|---|---|

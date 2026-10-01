@@ -1,0 +1,34 @@
+{
+  "name": "classic-blue",
+  "font": "Arial",
+  "colors": { "accent": "1870B0", "ink": "212529", "muted": "5A6069" },
+  "sizes": { "name": 48, "headline": 24, "contact": 19, "sectionHeading": 21, "entryTitle": 20, "entrySub": 19, "body": 19, "bullet": 19 },
+  "page": { "width": 12240, "height": 15840, "marginX": 806 },
+  "margins": { "resume": { "top": 620, "bottom": 620 }, "letter": { "top": 720, "bottom": 720 } },
+  "spacing": {
+    "name": { "after": 0 },
+    "headline": { "after": 40 },
+    "contact": { "after": 60 },
+    "sectionHeading": { "before": 130, "after": 50 },
+    "bullet": { "after": 25, "line": 245 },
+    "entryTitleBefore": 70,
+    "entrySubAfter": 30,
+    "paragraph": { "after": 40, "line": 250 },
+    "labeled": { "after": 30, "line": 245 },
+    "lines": { "after": 30 }
+  },
+  "borders": {
+    "header": { "size": 12, "space": 4 },
+    "sectionHeading": { "size": 8, "space": 1 }
+  },
+  "bulletList": { "char": "•", "indentLeft": 260, "hanging": 180 },
+  "letter": {
+    "bodySize": 21,
+    "lineSpacing": 276,
+    "paragraphAfter": 160,
+    "dateAfter": 200,
+    "companyAfterWithRole": 0,
+    "companyAfterNoRole": 200,
+    "roleAfter": 200
+  }
+}

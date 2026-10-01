@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Private overlays kept out of git (addresses and other personal details)
+*.local.*
+
+# Editor, Office, and OS artifacts
+~$*
+.~lock.*#
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Python bytecode
+__pycache__/
+*.pyc

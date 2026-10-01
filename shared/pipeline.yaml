@@ -1,0 +1,31 @@
+# Single source of truth for pipeline numbers: scoring weights, follow-up timing, staleness
+# thresholds, and pay normalization. Commands under tools/src/commands/ (app, score, pay, queue,
+# dashboard, status) read this file through tools/src/lib/pipeline-config.ts instead of
+# hardcoding these numbers. Change a number here and every command picks it up next run.
+
+# `app submit` sets follow_up = applied + follow_up_days.
+follow_up_days: 7
+
+# `queue list` / `dashboard` / `status` call a queued item "stale" once it has waited this long
+# (days since its `found` date) without being started or done.
+stale_queue_days: 10
+
+# `pay`: hours in a work-year, for normalizing an hourly pay_min/pay_max to annual.
+hours_per_year: 2080
+
+score:
+  # Weights for each dimension of a record's `fit:` map (see tools/src/lib/scoring.ts). A
+  # dimension missing from `fit:` is left out of both the earned and possible totals, so the
+  # score is renormalized over whatever the record actually states.
+  weights:
+    must_haves: 35
+    pay_ok: 10
+    arrangement_ok: 10
+    location_ok: 10
+    seniority: 20
+    preferred: 15
+  # Credit given for each `fit.seniority` value (match/stretch/over).
+  seniority_credit:
+    match: 1
+    stretch: 0.6
+    over: 0.5

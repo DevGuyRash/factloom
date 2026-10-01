@@ -1,0 +1,28 @@
+---
+type: thank-you
+person: {{person}}
+company: {{yaml company}}
+role: {{yaml role}}
+application: {{yaml application}}
+updated: {{date}}
+---
+
+# Thank-you — {{company}} ({{role}})
+
+<!-- Draft for {{name}} to review and send; nothing here is sent automatically. -->
+
+Subject: Thank you — {{role}} interview
+
+Hi [interviewer name],
+
+Thank you for taking the time to talk with me about the {{role}} role at {{company}}.
+{{#if stories.length}}
+I enjoyed getting to talk through {{stories.[0].situation}}
+{{/if}}{{#if dossier}}
+Our conversation only made me more interested in what {{company}} is building.
+{{/if}}
+Please let me know if there's anything further I can provide.
+
+Best,
+{{name}}
+{{#if email}}{{email}}{{/if}}{{#if phone}} · {{phone}}{{/if}}

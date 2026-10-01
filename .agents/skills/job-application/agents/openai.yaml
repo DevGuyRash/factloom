@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job application"
+  short_description: "Apply to jobs from your browser tabs and job sources"
+  default_prompt: "Apply to the jobs open in my browser."

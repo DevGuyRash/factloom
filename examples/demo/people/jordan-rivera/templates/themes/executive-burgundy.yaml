@@ -1,0 +1,6 @@
+# A personal variation: themes under people/<person>/templates/themes/ are visible to that person
+# only, and override any theme of the same name in custom/ or shared/.
+extends: executive
+description: executive in burgundy.
+colors:
+  accent: "7A1F3D"

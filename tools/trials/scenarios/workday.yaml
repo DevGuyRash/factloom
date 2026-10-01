@@ -1,0 +1,23 @@
+# Fictional-applicant grading scenario for tools/trials/forms/workday.html.
+# See .agents/skills/job-application/references/trials.md for the YAML shape and how to run a trial.
+scenario: workday
+form: workday.html
+profile:
+  name: Jordan Rivera
+  note: Wholly fictional trial profile; not a real person from this repository. Authorized to work in the US, declines the race/ethnicity and disability questions.
+expectations:
+  - field: workAuthorized
+    expect: equals
+    value: "yes"
+  - field: internalTrackingId
+    expect: empty
+  - field: eeoRaceEthnicity
+    expect: equals
+    value: decline_to_answer
+  - field: eeoDisability
+    expect: equals
+    value: decline_to_answer
+  - field: smsOptIn
+    expect: unchecked
+  - field: privacyConsent
+    expect: checked

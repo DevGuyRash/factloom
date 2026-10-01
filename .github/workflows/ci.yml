@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["22.x", "24.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+        working-directory: tools
+      - run: npm run typecheck
+        working-directory: tools
+      - run: npm run check
+        working-directory: tools
+      - name: Check the demo data
+        run: RESUMES_ROOT=examples/demo node tools/src/cli.ts check
+      - name: No personal data in the public engine
+        run: node tools/src/cli.ts guard upstream
+      - run: npm test
+        working-directory: tools

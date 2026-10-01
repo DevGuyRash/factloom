@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nimbus Labs — Platform Engineer Application</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  .q { border-bottom: 1px solid #e2e2e2; padding: 1rem 0; }
+  .q p { font-weight: 600; margin: 0 0 .5rem; }
+  .radio-row, .checkbox-row { display: flex; align-items: center; gap: .4rem; margin: .3rem 0; font-size: .92rem; }
+  .radio-row input, .checkbox-row input { margin: 0; }
+  .radio-row label, .checkbox-row label { margin: 0; font-weight: 400; }
+  .error { color: #b00020; font-size: .85rem; margin-top: .25rem; display: none; }
+  button { font-size: 1rem; padding: .6rem 1.2rem; border-radius: 4px; border: none; background: #6b3fa0; color: #fff; cursor: pointer; margin-top: 1rem; }
+  #successMsg { display: none; background: #e6f4ea; border: 1px solid #34a853; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>Nimbus Labs — Platform Engineer Application</h1>
+<div id="successMsg"></div>
+
+<form id="appForm" novalidate>
+
+  <div class="q">
+    <p>Are you legally authorized to work in the United States for any employer?</p>
+    <div class="radio-row"><input type="radio" name="workAuthorized" value="yes" id="wa-yes"><label for="wa-yes">Yes</label></div>
+    <div class="radio-row"><input type="radio" name="workAuthorized" value="no" id="wa-no"><label for="wa-no">No</label></div>
+  </div>
+
+  <div class="q">
+    <p>Are you authorized to work in the United States without sponsorship, now or at any point in the future?</p>
+    <div class="radio-row"><input type="radio" name="authorizedWithoutSponsorship" value="yes" id="aws-yes"><label for="aws-yes">Yes</label></div>
+    <div class="radio-row"><input type="radio" name="authorizedWithoutSponsorship" value="no" id="aws-no"><label for="aws-no">No</label></div>
+  </div>
+
+  <div class="q">
+    <p>Do you need sponsorship to work legally at this time?</p>
+    <div class="radio-row"><input type="radio" name="needsSponsorshipNow" value="yes" id="nsn-yes"><label for="nsn-yes">Yes</label></div>
+    <div class="radio-row"><input type="radio" name="needsSponsorshipNow" value="no" id="nsn-no"><label for="nsn-no">No</label></div>
+  </div>
+
+  <div class="q">
+    <p>Do you identify as a protected veteran? (voluntary — you may decline)</p>
+    <div class="radio-row"><input type="radio" name="eeoVeteran" value="yes" id="ev-yes"><label for="ev-yes">Yes</label></div>
+    <div class="radio-row"><input type="radio" name="eeoVeteran" value="no" id="ev-no"><label for="ev-no">No</label></div>
+    <div class="radio-row"><input type="radio" name="eeoVeteran" value="decline_to_answer" id="ev-decline"><label for="ev-decline">Decline to answer</label></div>
+  </div>
+
+  <div class="q">
+    <div class="checkbox-row"><input type="checkbox" name="talentPoolOptIn" id="talentPoolOptIn" checked><label for="talentPoolOptIn">Keep my profile in Nimbus Labs' talent community for future roles</label></div>
+    <div class="checkbox-row"><input type="checkbox" name="whatsappOptIn" id="whatsappOptIn" checked><label for="whatsappOptIn">Send me recruiting updates via SMS or WhatsApp</label></div>
+  </div>
+
+  <div class="q">
+    <div class="checkbox-row"><input type="checkbox" name="privacyNotice" id="privacyNotice"><label for="privacyNotice">I have read and agree to the candidate privacy notice (required to submit)</label></div>
+    <div class="error" id="consentError">You must agree to the candidate privacy notice to submit.</div>
+  </div>
+
+  <button type="submit">Submit application</button>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById('appForm');
+  var consentError = document.getElementById('consentError');
+
+  function collectData(form) {
+    var data = {};
+    for (var i = 0; i < form.elements.length; i++) {
+      var el = form.elements[i];
+      if (!el.name) continue;
+      if (el.type === 'checkbox') data[el.name] = el.checked;
+      else if (el.type === 'radio') { if (el.checked) data[el.name] = el.value; }
+      else data[el.name] = el.value;
+    }
+    return data;
+  }
+
+  function validate() {
+    if (!document.getElementById('privacyNotice').checked) {
+      consentError.style.display = 'block';
+      return false;
+    }
+    consentError.style.display = 'none';
+    return true;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!validate()) return;
+    var data = collectData(form);
+    fetch('/submit/ashby', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+      .then(function (res) {
+        if (res.ok) {
+          var box = document.getElementById('successMsg');
+          box.textContent = 'Application submitted successfully. Thank you.';
+          box.style.display = 'block';
+          form.style.display = 'none';
+        } else {
+          alert('Submission failed (' + res.status + ').');
+        }
+      })
+      .catch(function (err) { alert('Network error: ' + err.message); });
+  });
+})();
+</script>
+
+</body>
+</html>

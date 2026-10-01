@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solstice Systems — Careers Application</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  .steps { display: flex; gap: .5rem; margin-bottom: 1.25rem; font-size: .85rem; }
+  .steps span { padding: .25rem .6rem; border-radius: 12px; background: #eee; color: #777; }
+  .steps span.active { background: #0a6847; color: #fff; }
+  section.step { display: none; }
+  section.step.active { display: block; }
+  label { display: block; margin: .6rem 0 .25rem; font-size: .92rem; }
+  input[type="text"], input[type="number"], input[type="email"], select, textarea {
+    width: 100%; box-sizing: border-box; padding: .5rem; font-size: .95rem; border: 1px solid #999; border-radius: 4px;
+  }
+  textarea { min-height: 6rem; }
+  .radio-row, .checkbox-row { display: flex; align-items: center; gap: .4rem; margin: .3rem 0; font-size: .92rem; }
+  .radio-row input, .checkbox-row input { margin: 0; }
+  .radio-row label, .checkbox-row label { margin: 0; font-weight: 400; }
+  .hint { color: #666; font-size: .82rem; margin-top: .15rem; }
+  .error { color: #b00020; font-size: .85rem; margin-top: .25rem; display: none; }
+  .nav { margin-top: 1.25rem; display: flex; gap: .6rem; }
+  button { font-size: 1rem; padding: .6rem 1.2rem; border-radius: 4px; border: none; background: #0a6847; color: #fff; cursor: pointer; }
+  button.secondary { background: #777; }
+  #successMsg { display: none; background: #e6f4ea; border: 1px solid #34a853; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>Solstice Systems — Careers Application</h1>
+<div class="steps">
+  <span id="tab1" class="active">1. Basics</span>
+  <span id="tab2">2. Experience</span>
+  <span id="tab3">3. Additional info</span>
+</div>
+<div id="successMsg"></div>
+
+<form id="appForm" novalidate>
+
+  <section class="step active" id="step1">
+    <label for="fullName">Full name</label>
+    <input type="text" id="fullName" name="fullName">
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email">
+
+    <label>Are you legally authorized to work in the United States?</label>
+    <div class="radio-row"><input type="radio" name="workAuthorized" value="yes" id="wa-yes"><label for="wa-yes">Yes</label></div>
+    <div class="radio-row"><input type="radio" name="workAuthorized" value="no" id="wa-no"><label for="wa-no">No</label></div>
+
+    <div class="nav"><button type="button" class="next" data-next="2">Next</button></div>
+  </section>
+
+  <section class="step" id="step2">
+    <label for="yearsExperience">Years of relevant professional experience</label>
+    <input type="number" min="0" id="yearsExperience" name="yearsExperience">
+
+    <label for="coverLetter">Cover letter</label>
+    <textarea id="coverLetter" name="coverLetter" placeholder="Paste or write your cover letter here."></textarea>
+
+    <label for="resume">Resume (upload)</label>
+    <input type="file" id="resume" name="resume">
+
+    <div class="nav">
+      <button type="button" class="secondary back" data-back="1">Back</button>
+      <button type="button" class="next" data-next="3">Next</button>
+    </div>
+  </section>
+
+  <section class="step" id="step3">
+    <label for="internalTrackingId">Requisition Fingerprint</label>
+    <input type="text" id="internalTrackingId" name="internalTrackingId">
+    <div class="hint">Internal recruiter tracking field — applicants should leave this blank.</div>
+
+    <label for="eeoRaceEthnicity">Race / ethnicity (voluntary — you may decline)</label>
+    <select id="eeoRaceEthnicity" name="eeoRaceEthnicity">
+      <option value="">— Select —</option>
+      <option value="white">White</option>
+      <option value="black">Black or African American</option>
+      <option value="asian">Asian</option>
+      <option value="hispanic_latino">Hispanic or Latino</option>
+      <option value="two_or_more">Two or more races</option>
+      <option value="decline_to_answer">Decline to answer</option>
+    </select>
+
+    <label for="eeoDisability">Disability status (voluntary — you may decline)</label>
+    <select id="eeoDisability" name="eeoDisability">
+      <option value="">— Select —</option>
+      <option value="yes_disability">Yes, I have a disability</option>
+      <option value="no_disability">No, I do not have a disability</option>
+      <option value="decline_to_answer">Decline to answer</option>
+    </select>
+
+    <div class="checkbox-row"><input type="checkbox" name="smsOptIn" id="smsOptIn" checked><label for="smsOptIn">Send me recruiting updates via SMS or WhatsApp</label></div>
+
+    <div class="checkbox-row"><input type="checkbox" name="privacyConsent" id="privacyConsent"><label for="privacyConsent">I consent to the processing of my personal data per the candidate privacy notice (required)</label></div>
+    <div class="error" id="consentError">You must accept the privacy notice to submit this application.</div>
+
+    <div class="nav">
+      <button type="button" class="secondary back" data-back="2">Back</button>
+      <button type="submit">Submit application</button>
+    </div>
+  </section>
+
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById('appForm');
+  var consentError = document.getElementById('consentError');
+
+  function showStep(n) {
+    for (var i = 1; i <= 3; i++) {
+      document.getElementById('step' + i).classList.toggle('active', i === n);
+      document.getElementById('tab' + i).classList.toggle('active', i === n);
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.next'), function (btn) {
+    btn.addEventListener('click', function () { showStep(Number(btn.getAttribute('data-next'))); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.back'), function (btn) {
+    btn.addEventListener('click', function () { showStep(Number(btn.getAttribute('data-back'))); });
+  });
+
+  function collectData(form) {
+    var data = {};
+    for (var i = 0; i < form.elements.length; i++) {
+      var el = form.elements[i];
+      if (!el.name) continue;
+      if (el.type === 'checkbox') data[el.name] = el.checked;
+      else if (el.type === 'radio') { if (el.checked) data[el.name] = el.value; }
+      else if (el.type === 'file') data[el.name] = el.files && el.files[0] ? el.files[0].name : '';
+      else data[el.name] = el.value;
+    }
+    return data;
+  }
+
+  function validate() {
+    if (!document.getElementById('privacyConsent').checked) {
+      consentError.style.display = 'block';
+      showStep(3);
+      return false;
+    }
+    consentError.style.display = 'none';
+    return true;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!validate()) return;
+    var data = collectData(form);
+    fetch('/submit/workday', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+      .then(function (res) {
+        if (res.ok) {
+          var box = document.getElementById('successMsg');
+          box.textContent = 'Application submitted successfully. Thank you.';
+          box.style.display = 'block';
+          form.style.display = 'none';
+        } else {
+          alert('Submission failed (' + res.status + ').');
+        }
+      })
+      .catch(function (err) { alert('Network error: ' + err.message); });
+  });
+})();
+</script>
+
+</body>
+</html>

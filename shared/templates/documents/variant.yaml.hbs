@@ -1,0 +1,24 @@
+# Structure: which facts appear, in what order, under which headings. Delete what this version should
+# leave out and reorder the rest. `theme` picks the look (`./resumes themes list`); `style` changes any
+# theme setting for this version only; `pages` is the most pages it may take (the build tightens to fit).
+variant: {{variant}}
+theme: {{theme}}
+headline: {{yaml headline}}
+output: {{output}}
+# pages: 2
+# style:
+#   colors: { accent: "0F766E" }
+sections:
+{{#if summary}}  - title: Summary
+    paragraph: {{yaml summary}}
+{{/if}}{{#if skills.length}}  - title: Skills
+    labeled: [{{join skills ", "}}]
+{{/if}}{{#if jobs.length}}  - title: Experience
+    entries:
+{{#each jobs}}      - job: {{this}}
+{{/each}}{{/if}}{{#if projects.length}}  - title: Projects
+    entries:
+{{#each projects}}      - project: {{this}}
+{{/each}}{{/if}}{{#if lines.length}}  - title: Education
+    lines: [{{join lines ", "}}]
+{{/if}}

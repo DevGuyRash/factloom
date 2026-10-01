@@ -1,0 +1,10 @@
+#!/bin/sh
+# Enabled by ./resumes setup (git config core.hooksPath .githooks). Refuses a push that would send
+# people/ or custom/ anywhere but your verified private repository, or personal details to the
+# public engine. Without the tools it refuses too: a privacy check must not be skipped silently.
+root=$(git rev-parse --show-toplevel)
+if [ ! -d "$root/tools/node_modules" ]; then
+  echo "pre-push: the tools are not installed, so the privacy guard cannot run; run ./resumes setup first (or git push --no-verify if you are sure)." >&2
+  exit 1
+fi
+exec node "$root/tools/src/cli.ts" guard pre-push "$1" "$2"

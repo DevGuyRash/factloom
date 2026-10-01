@@ -1,0 +1,17 @@
+variant: operations-analyst
+theme: classic-blue
+headline: "Operations Analyst | Process Improvement · Reporting"
+output: Jordan_Rivera_Resume
+sections:
+  - title: Summary
+    paragraph: "Operations analyst who maps processes, writes the procedures, and builds the reporting that keeps them on track."
+  - title: Experience
+    entries:
+      - job: juniper
+        bullets: [3, 2, 0, 1]
+      - job: cobalt
+      - job: library
+  - title: Skills
+    labeled: [operations, analytics, reporting]
+  - title: Education
+    lines: [degree]
