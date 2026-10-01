@@ -33,3 +33,9 @@ score:
     match: 1
     stretch: 0.6
     over: 0.5
+  # The lowest score worth applying to when the person has not answered `prefs.min-fit` in
+  # onboarding. `score` reports whether a posting clears the bar; postings below it are skipped.
+  minimum: 65
+  # Whatever the score, a posting is skipped when the person meets less than this share of its
+  # must-haves: screening already settles pay, arrangement, and location, so those points come easy.
+  must_haves_minimum: 0.5

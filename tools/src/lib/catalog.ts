@@ -6,7 +6,8 @@ import { findOne, personDir, repoRoot, today } from "./repo.ts";
 import { FILE_NAMES, POLICIES } from "./schema.ts";
 
 export type Policy = (typeof POLICIES)[number];
-export type CatalogEntry = { id: string; core: boolean; section: string; ask: string; seenAs?: string; shape?: string; policy: Policy };
+/** `essential` entries are core entries asked before the first application; `core` covers both. */
+export type CatalogEntry = { id: string; core: boolean; essential: boolean; section: string; ask: string; seenAs?: string; shape?: string; policy: Policy };
 export type Answer = { id: string; answer: string; policy: Policy; confirmed?: string; notes?: string; source?: string };
 
 const field = (block: string, name: string) => block.match(new RegExp(`^- ${name}:[ \\t]*(.*)$`, "m"))?.[1].trim();
@@ -32,7 +33,7 @@ function catalogEntries(path: string): CatalogEntry[] {
     const h3 = chunk.match(/^### (\S+)(.*)$/m);
     if (!h3) continue;
     out.push({
-      id: h3[1], core: /\(core\)/.test(h3[2]), section, ask: field(chunk, "Ask") ?? "",
+      id: h3[1], core: /\((?:core|essential)\)/.test(h3[2]), essential: /\(essential\)/.test(h3[2]), section, ask: field(chunk, "Ask") ?? "",
       seenAs: field(chunk, "Seen as"), shape: field(chunk, "Shape"), policy: (field(chunk, "Policy") as Policy) ?? "ask",
     });
   }
@@ -64,7 +65,7 @@ export function loadAnswers(path: string): Map<string, Answer> {
   return existsSync(path) ? parseAnswers(parse(readFileSync(path, "utf8")).body) : new Map();
 }
 
-/** Core catalog questions that neither the saved answers nor this session's answers settle. */
+/** Core catalog questions (essential ones included) that neither the saved answers nor this session's answers settle. */
 export function openCoreQuestions(person: string, root = repoRoot()): CatalogEntry[] {
   const saved = loadAnswers(savedAnswersPath(person, root));
   const session = loadAnswers(sessionAnswersPath(person, root));

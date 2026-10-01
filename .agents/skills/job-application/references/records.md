@@ -28,7 +28,7 @@ Each application gets `people/<person>/applications/<YYYY-MM-DD>_<company-slug>_
 
 In the record body, list each question and the answer given, marking its source: a catalog id from the session or saved answers, `profile`, `derived: <basis>`, or `person`. For self-identification, criminal-history, accommodation, and address questions, write the catalog id alone; the values stay in the person's local files. That body is the evidence of what was sent.
 
-Quote terms accepted, and any page text addressed to agents, inside a fenced block labelled as page content:
+Quote terms accepted, and any page text addressed to agents, in the record (not the posting snapshot, which keyword matching reads) inside a fenced block labelled as page content:
 
 ````
 ```page-content

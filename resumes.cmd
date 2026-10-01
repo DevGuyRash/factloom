@@ -7,4 +7,4 @@ if not exist "%DIR%tools\node_modules" (
   echo First run: installing the tools' dependencies... 1>&2
   pushd "%DIR%tools" && call npm ci --no-audit --no-fund 1>&2 && popd || (echo npm ci failed 1>&2 & exit /b 1)
 )
-node "%DIR%tools\src\cli.ts" %*
+node --disable-warning=ExperimentalWarning "%DIR%tools\src\cli.ts" %*

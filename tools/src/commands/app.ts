@@ -20,14 +20,15 @@ function findApp(person: string, dirArg: string): Application {
   return app;
 }
 
-/** `app new` creates an application (refusing duplicates and blocked employers); `submit` and `hold` update its record. */
+/** `app new` creates an application (refusing duplicates and blocked employers); `submit`, `hold`, and `skip` update its record. */
 const command: Command = {
   name: "app",
-  summary: "Create, submit, or hold a job application",
+  summary: "Create, submit, hold, or skip a job application",
   usage: [
     "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--person p]",
     "resumes app submit <dir> [--confirmation TEXT] [--person p]",
     "resumes app hold <dir> --reason TEXT [--person p]",
+    "resumes app skip <dir> --reason TEXT [--person p]",
   ].join("\n       "),
   run(argv) {
     const [sub, ...rest] = argv;
@@ -91,6 +92,28 @@ const command: Command = {
       data.updated = today();
       writeDoc(app.recordPath!, data, `${body.trimEnd()}\n\n- ${today()}: held — ${reason}\n`);
       console.log(`held ${rel(app.dir)}: ${reason}`);
+      return 0;
+    }
+
+    if (sub === "skip") {
+      const dirArg = a._[0];
+      const reason = flag(a, "reason");
+      if (!dirArg || !reason) throw new Error("app skip needs <dir> --reason TEXT");
+      const app = findApp(person, dirArg);
+      const { data, body } = loadRecord(app);
+      data.status = "skipped";
+      data.updated = today();
+      writeDoc(app.recordPath!, data, `${body.trimEnd()}\n\n- ${today()}: skipped — ${reason}\n`);
+      if (data.url) {
+        const { items } = loadQueue(person);
+        const key = normalizeUrl(String(data.url));
+        const i = items.findIndex((q) => normalizeUrl(q.url) === key);
+        if (i >= 0) {
+          items[i] = { ...items[i], status: "done", outcome: "skipped", note: reason, application: rel(app.dir) };
+          saveQueue(person, items);
+        }
+      }
+      console.log(`skipped ${rel(app.dir)}: ${reason}`);
       return 0;
     }
 

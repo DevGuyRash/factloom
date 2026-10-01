@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corvid Analytics — Senior Data Engineer</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.4rem; }
+  .posting { border: 1px solid #ddd; border-radius: 6px; padding: .75rem 1rem; margin-bottom: 1.25rem; font-size: .92rem; }
+  .posting h2 { font-size: 1.05rem; margin: .25rem 0 .5rem; }
+  .posting ul { margin: .25rem 0 .5rem 1.1rem; padding: 0; }
+  .field { margin: .9rem 0; }
+  label { display: block; margin-bottom: .3rem; font-size: .92rem; font-weight: 600; }
+  input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea {
+    width: 100%; box-sizing: border-box; padding: .5rem; font-size: .95rem; border: 1px solid #999; border-radius: 4px;
+  }
+  textarea { min-height: 6rem; }
+  .radio-row, .checkbox-row { display: flex; align-items: center; gap: .4rem; margin: .3rem 0; font-size: .92rem; }
+  .radio-row label, .checkbox-row label { margin: 0; font-weight: 400; }
+  .error { color: #b00020; font-size: .85rem; margin-top: .25rem; display: none; }
+  button { font-size: 1rem; padding: .6rem 1.2rem; border-radius: 4px; border: none; background: #2f3a4a; color: #fff; cursor: pointer; }
+  #successMsg { display: none; background: #e6f4ea; border: 1px solid #34a853; border-radius: 6px; padding: 1rem; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>Corvid Analytics — Senior Data Engineer</h1>
+<section class="posting">
+  <h2>Senior Data Engineer</h2>
+  <p>Remote (US) · Full-time · $150,000–$180,000</p>
+  <p>Corvid Analytics runs real-time fraud scoring for payment processors. You will own the streaming pipelines that feed our models and lead the platform's move to a new orchestration stack.</p>
+  <p><strong>Requirements</strong></p>
+  <ul>
+    <li>7+ years of data engineering, including 3+ years leading production pipelines</li>
+    <li>Spark and Scala in production</li>
+    <li>Kafka or another streaming platform at scale</li>
+    <li>Kubernetes and Terraform</li>
+    <li>On-call rotation for the pipelines you own</li>
+  </ul>
+  <p><strong>Nice to have</strong></p>
+  <ul>
+    <li>Airflow or Dagster</li>
+    <li>Payments or fraud domain experience</li>
+  </ul>
+</section>
+<div id="successMsg"></div>
+
+<form id="appForm" novalidate>
+  <div class="field">
+    <label for="fullName">Full name</label>
+    <input type="text" id="fullName" name="fullName">
+  </div>
+  <div class="field">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email">
+  </div>
+  <div class="field">
+    <label for="phone">Phone</label>
+    <input type="tel" id="phone" name="phone">
+  </div>
+  <div class="field">
+    <label for="resume">Resume/CV</label>
+    <input type="file" id="resume" name="resume">
+  </div>
+  <div class="field">
+    <label for="linkedin">LinkedIn or portfolio URL</label>
+    <input type="url" id="linkedin" name="linkedin">
+  </div>
+  <div class="field">
+    <label>Are you legally authorized to work in the United States?</label>
+    <div class="radio-row"><input type="radio" name="workAuthorized" value="yes" id="wa-yes"><label for="wa-yes">Yes</label></div>
+    <div class="radio-row"><input type="radio" name="workAuthorized" value="no" id="wa-no"><label for="wa-no">No</label></div>
+  </div>
+  <div class="field">
+    <label for="additionalInfo">Additional information</label>
+    <textarea id="additionalInfo" name="additionalInfo" placeholder="Add a cover letter or anything else you want to share."></textarea>
+  </div>
+  <div class="field">
+    <div class="checkbox-row"><input type="checkbox" id="privacyConsent" name="privacyConsent"><label for="privacyConsent">I agree to Corvid Analytics' candidate privacy policy (required)</label></div>
+    <div class="error" id="consentError">You must accept the privacy policy to submit this application.</div>
+  </div>
+  <button type="submit">Submit application</button>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById('appForm');
+  var consentError = document.getElementById('consentError');
+
+  function collectData(form) {
+    var data = {};
+    for (var i = 0; i < form.elements.length; i++) {
+      var el = form.elements[i];
+      if (!el.name) continue;
+      if (el.type === 'checkbox') data[el.name] = el.checked;
+      else if (el.type === 'radio') { if (el.checked) data[el.name] = el.value; }
+      else if (el.type === 'file') data[el.name] = el.files && el.files[0] ? el.files[0].name : '';
+      else data[el.name] = el.value;
+    }
+    return data;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!document.getElementById('privacyConsent').checked) { consentError.style.display = 'block'; return; }
+    consentError.style.display = 'none';
+    fetch('/submit/lever', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(collectData(form)) })
+      .then(function (res) {
+        if (res.ok) {
+          var box = document.getElementById('successMsg');
+          box.textContent = 'Application submitted successfully. Thank you.';
+          box.style.display = 'block';
+          form.style.display = 'none';
+        } else {
+          alert('Submission failed (' + res.status + ').');
+        }
+      })
+      .catch(function (err) { alert('Network error: ' + err.message); });
+  });
+})();
+</script>
+
+</body>
+</html>

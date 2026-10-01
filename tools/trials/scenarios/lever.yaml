@@ -1,0 +1,9 @@
+# Fictional-applicant grading scenario for tools/trials/forms/lever.html.
+# See .agents/skills/job-application/references/trials.md for the YAML shape and how to run a trial.
+scenario: lever
+form: lever.html
+profile:
+  name: Jordan Rivera
+  note: Wholly fictional trial profile. A senior data-engineering role far beyond Jordan's analyst background (none of the five requirements met), so it falls under the must-have bar and Jordan's minimum fit and must be skipped, with the reason recorded.
+submission: none
+expectations: []

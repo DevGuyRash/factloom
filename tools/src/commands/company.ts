@@ -6,7 +6,7 @@ import { rel } from "../lib/repo.ts";
 /** Company dossiers: `company new|find|list`. Dossiers are shared across every person. */
 const command: Command = {
   name: "company",
-  summary: "Create, find, or list company dossiers (shared/companies/)",
+  summary: "Create, find, or list company dossiers (custom/companies/)",
   usage: "resumes company new <Name> [--website <URL>] | resumes company find <Name> | resumes company list",
   run(argv) {
     const a = parseArgs(argv);

@@ -14,4 +14,4 @@ if [ ! -d "$dir/tools/node_modules" ]; then
   echo "First run: installing the tools' dependencies..." >&2
   (cd "$dir/tools" && npm ci --no-audit --no-fund >&2) || { echo "npm ci failed; see the messages above." >&2; exit 1; }
 fi
-exec node "$dir/tools/src/cli.ts" "$@"
+exec node --disable-warning=ExperimentalWarning "$dir/tools/src/cli.ts" "$@"

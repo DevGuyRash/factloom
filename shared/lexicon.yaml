@@ -110,6 +110,21 @@ sqlite:
 stripe:
   label: "Stripe"
   aliases: ["payments integration"]
+tableau:
+  label: "Tableau"
+  aliases: []
+power-bi:
+  label: "Power BI"
+  aliases: ["PowerBI", "Microsoft Power BI"]
+looker:
+  label: "Looker"
+  aliases: ["Looker Studio", "Google Data Studio"]
+dbt:
+  label: "dbt"
+  aliases: ["data build tool"]
+snowflake:
+  label: "Snowflake"
+  aliases: []
 excel:
   label: "Microsoft Excel"
   aliases: ["Excel", "Power Query", "VBA"]
@@ -128,6 +143,21 @@ spec-driven-development:
 docker:
   label: "Docker"
   aliases: ["Docker Compose", "containers", "containerization"]
+spark:
+  label: "Apache Spark"
+  aliases: ["Spark", "PySpark"]
+scala:
+  label: "Scala"
+  aliases: []
+kafka:
+  label: "Kafka"
+  aliases: ["Apache Kafka"]
+kubernetes:
+  label: "Kubernetes"
+  aliases: ["k8s"]
+airflow:
+  label: "Airflow"
+  aliases: ["Apache Airflow"]
 terraform:
   label: "Terraform"
   aliases: ["infrastructure as code", "IaC"]

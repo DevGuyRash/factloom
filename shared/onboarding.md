@@ -4,7 +4,7 @@ type: onboarding-catalog
 
 # Onboarding catalog
 
-Questions that job applications ask, written once for everyone. Session onboarding asks the entries marked **core** (unless the person's saved answers cover them); the rest are asked the first time a form needs them. Answers the person chooses to keep are saved in their `answers` file under the same ids.
+Questions that job applications ask, written once for everyone. Session onboarding asks the entries marked **essential** first, before the first application: they settle what to apply for and the questions nearly every form asks. It asks the entries marked **core** in batches once applying has started (all of them, when the person prefers to finish onboarding first). The rest are asked the first time a form needs them. The person's saved answers cover any of these. Answers the person chooses to keep are saved in their `answers` file under the same ids.
 
 Each entry lists what to ask the person, phrasings seen on forms, the answer shape, and the default policy (`auto`, `confirm`, `ask`, or `person`, defined in the job-application skill). The person may choose a different policy for their own answer.
 
@@ -15,12 +15,18 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: number per day; days between applications to one employer
 - Policy: auto
 
-### documents.cover-letter (core)
+### prefs.min-fit (essential)
+- Ask: How good a match should a posting be before you apply? Each posting gets a fit score from 0 to 100 from the must-haves you meet, seniority, preferred skills, pay, arrangement, and location. Whatever the score, a posting where you meet fewer than half the requirements is skipped. Offer: 50 (anything you could plausibly do, stretch roles included), 65 (solid matches, the default), or 80 (strong matches only).
+- Use: `./resumes score` reports whether a posting clears it; a posting below it is skipped with its score as the reason
+- Shape: number from 0 to 100
+- Policy: auto
+
+### documents.cover-letter (essential)
 - Ask: When a cover letter is optional, should one be included: always, only for strong-fit roles, or only when required?
 - Shape: choice
 - Policy: auto
 
-### accounts.handling (core)
+### accounts.handling (essential)
 - Ask: When an application needs a sign-in or a new account on a job site, who handles it: you (the agent holds those steps for you), the agent with passwords from your password manager, or the agent with a password you type once per session into a hidden prompt (`./resumes credentials set`)? An agent whose own rules forbid creating accounts or typing passwords holds those steps whatever the answer.
 - Shape: choice: the person, the agent with the password manager, or the agent with a session password
 - Policy: confirm
@@ -68,13 +74,13 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 ## Work authorization and eligibility
 
-### work-auth.us-authorized (core)
+### work-auth.us-authorized (essential)
 - Ask: Are you legally authorized to work in the United States for any employer?
 - Seen as: "Are you legally authorized to work in the United States?", "…in the country where the job is located?", "…in the stated location of this role?", "Are you currently eligible to work legally in the United States?"; some forms offer several categories (citizen or national, permit without sponsorship, permit needing sponsorship, not authorized)
 - Shape: yes / no
 - Policy: auto
 
-### work-auth.sponsorship (core)
+### work-auth.sponsorship (essential)
 - Ask: Will you now or in the future require employer sponsorship for a work visa?
 - Seen as: "Will you now or in the future require sponsorship for employment visa status (e.g., H-1B)?", "…to retain or extend your work authorization", "…commence an immigration case", "ever", "at any point". Some forms invert it ("Are you authorized to work without sponsorship?"), where yes means no sponsorship is needed.
 - Shape: yes / no; visa type follow-ups (CPT, OPT, TN, J-1) apply only to people who hold one
@@ -104,14 +110,14 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 ## Location, arrangement, travel
 
-### prefs.work-arrangement (core)
+### prefs.work-arrangement (essential)
 - Ask: Which arrangements will you accept (remote, hybrid, on-site), and for hybrid or on-site, which metro areas and how many office days a week?
 - Seen as: "This role requires in-office work three days per week… do you acknowledge and agree?", "Do you currently live in, or plan to relocate to, the specified location?"; some remote roles exclude listed states
 - Use: answers arrangement questions and screens postings before applying
 - Shape: list with limits
 - Policy: auto
 
-### prefs.relocation (core)
+### prefs.relocation (essential)
 - Ask: Would you relocate for a role? Where, and only with relocation assistance?
 - Seen as: "Are you open to relocation for this role?", "If you would need to relocate, type 'relocating'"
 - Shape: yes / no with conditions
@@ -128,13 +134,13 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: yes / no with limits
 - Policy: confirm
 
-### prefs.constraints (core)
+### prefs.constraints (essential)
 - Ask: What rules a job out for you that the questions above do not cover? For example: hours, shifts, weekends, or on-call work; how long a commute you accept, or driving for work; physical demands; industries or kinds of work you avoid; commission-only pay; benefits you need; how many applications a day, or how soon to apply to the same employer again. Record schedule, driving, and pace limits under `prefs.schedule`, `background.drivers-license`, and `prefs.pace` as well, so forms reuse them.
 - Use: screens every posting before applying, alongside the other answers; a constraint the person states mid-session is added here at once
 - Shape: list, one constraint per line
 - Policy: confirm
 
-### employers.avoid (core)
+### employers.avoid (essential)
 - Ask: Which employers should never get an application from you: your current employer, recent ones, or any others?
 - Use: add each to the blocked employers with its reason (`./resumes employers block <name> --reason <why>`); `queue add` and `app new` refuse them, also under a shorter or longer form of the name
 - Shape: employer names, each with a reason
@@ -142,7 +148,7 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 ## Timing
 
-### availability.start (core)
+### availability.start (essential)
 - Ask: How soon could you start after an offer (notice period or earliest date)?
 - Seen as: "When is the earliest you would want to start working with us?", "Notice period / availability details"
 - Shape: relative period or date
@@ -150,13 +156,13 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 ## Compensation and employment type
 
-### comp.strategy (core)
+### comp.strategy (essential)
 - Ask: How should salary questions be answered: a target base figure or range for each kind of role, wording for free-text fields, and an hourly figure for contract roles?
 - Seen as: "What is your expected compensation range?", "What is your desired salary range?", "Do you accept the listed salary range for this position?"; some forms state that "negotiable" or "market" answers are not reviewed
 - Shape: number or range per role family; free-text wording
 - Policy: confirm
 
-### comp.minimum (core)
+### comp.minimum (essential)
 - Ask: What is the lowest base salary or hourly rate you would consider? Postings below it are flagged before applying.
 - Shape: number
 - Policy: auto
@@ -245,22 +251,22 @@ These appear mostly on Workday, iCIMS, and public-sector forms.
 
 Optional, kept apart from hiring decisions, and always open to declining. Record whatever the person chooses; never infer it from a name or resume.
 
-### eeo.gender (core)
+### eeo.gender (essential)
 - Ask: How do you want to answer gender on voluntary self-identification forms?
 - Shape: choice or decline
 - Policy: auto
 
-### eeo.race-ethnicity (core)
+### eeo.race-ethnicity (essential)
 - Ask: How do you want to answer race, ethnicity, and Hispanic or Latino questions?
 - Shape: choice or decline
 - Policy: auto
 
-### eeo.veteran (core)
+### eeo.veteran (essential)
 - Ask: How do you want to answer protected-veteran status questions, including "Have you served in the military?" outside the self-identification block?
 - Shape: choice or decline
 - Policy: auto
 
-### eeo.disability (core)
+### eeo.disability (essential)
 - Ask: How do you want to answer the voluntary disability self-identification form, and may its name-and-date line be filled with your legal name and the date?
 - Shape: choice or decline; name line yes / no
 - Policy: auto
@@ -298,7 +304,7 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Shape: yes / no
 - Policy: auto
 
-### consent.required-terms (core)
+### consent.required-terms (essential)
 - Ask: When a form requires accepting a privacy notice, the application system's terms, or an arbitration agreement before it can be submitted, should the agent accept on your behalf?
 - Seen as: "Do you consent to … processing your personal information…?", "Please review and acknowledge … candidate privacy policy", "Please confirm receipt of the above linked global data privacy notice and US arbitration agreement"
 - Shape: yes / no, optionally excluding arbitration agreements
@@ -341,7 +347,7 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Shape: number or leave blank
 - Policy: confirm
 
-### experience.years-total (core)
+### experience.years-total (essential)
 - Ask: How many years of professional experience should forms state, overall and for the kind of role being applied to?
 - Shape: numbers with the basis for each
 - Policy: confirm

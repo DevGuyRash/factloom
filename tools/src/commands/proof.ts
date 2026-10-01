@@ -23,7 +23,9 @@ const command: Command = {
     const destName = `confirmation${ext}`;
     copyFileSync(file, join(app.dir, destName));
     const { data, body } = loadRecord(app);
-    data.confirmation = destName;
+    // A confirmation number or message recorded by `app submit` stays; the file is recorded beside it.
+    if (!data.confirmation) data.confirmation = destName;
+    data.proof = destName;
     data.updated = today();
     writeDoc(app.recordPath!, data, body);
     console.log(`copied to ${rel(join(app.dir, destName))}`);

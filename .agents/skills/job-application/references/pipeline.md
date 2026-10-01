@@ -25,10 +25,26 @@ hours-per-year) live in `shared/pipeline.yaml` (the engine's defaults); change a
    `resumes employers block "<Company>" --reason "..."` to block one as you learn it should be
    (current employer, bad experience, etc.); `resumes employers priority "<Company>"` to flag a
    target worth pursuing first.
-3. Capture the posting (`references/records.md`); when the record's body gets a `fit:` map
-   (must-haves met/total, pay/arrangement/location fit, seniority match, preferred met/total),
-   `resumes score <dir> --person <p>` writes a 0-100 score to the record and, if the item is still
-   queued, to the queue entry too — higher-scored queue items come up first via `queue next`.
+3. Capture the posting (`references/records.md`) and give the record's frontmatter a `fit:` map:
+
+   ```yaml
+   fit:
+     must_haves_met: 3        # requirements the person meets, of
+     must_haves_total: 4      # the requirements the posting states
+     pay_ok: true             # pay, arrangement, and location against the person's answers
+     arrangement_ok: true
+     location_ok: true
+     seniority: match         # match, stretch, or over
+     preferred_met: 1         # nice-to-haves met, of
+     preferred_total: 2
+   ```
+
+   Leave out what the posting does not state. `resumes score <dir> --person <p>` writes a 0-100
+   score to the record and, if the item is still queued, to the queue entry too — higher-scored
+   queue items come up first via `queue next`. It also gives the verdict: skip when the person
+   meets fewer than half the must-haves (`score.must_haves_minimum`), or when the score is below
+   their minimum (their `prefs.min-fit` answer, else `score.minimum` in the pipeline config). With
+   no must-haves recorded it gives no verdict. Skip with `resumes app skip`, giving its reason.
 4. `resumes queue start <url|#> --person <p>` when you begin working an item already queued.
 5. `resumes app new --company X --role Y [--url U] [--source S] [--site Z] [--requisition R]
    --person <p>` to create the application directory (refuses duplicates and blocked employers).
@@ -37,8 +53,10 @@ hours-per-year) live in `shared/pipeline.yaml` (the engine's defaults); change a
      `follow_up` (from the pipeline config's `follow_up_days`), and marks the matching queue
      item done.
    - `resumes app hold <dir> --reason TEXT --person <p>` — sets blocked and appends the reason.
+   - `resumes app skip <dir> --reason TEXT --person <p>` — sets skipped, appends the reason, and
+     marks the matching queue item done.
    - `resumes proof <dir> <file> --person <p>` — copies a confirmation screenshot/PDF/text into the
-     application directory and records it, once you have one.
+     application directory and records it as `proof`, keeping any confirmation text already recorded.
    - `resumes queue done <url|#> --outcome submitted|skipped|held --person <p>` /
      `resumes queue drop <url|#> --person <p>` keep the queue in sync when an item did not become
      its own `app new` (skipped before capturing, or captured but not queued).

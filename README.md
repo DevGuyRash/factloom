@@ -15,9 +15,9 @@ Truthful, agent-driven job applications. You write every fact about your work on
 - **One source of truth.** Each claim lives once in `facts.yaml`. Resume versions (variants) pick and order facts for a kind of role; themes decide the look. Fix a typo once and every resume picks it up.
 - **Truth-locked.** A claim you have not confirmed carries a `confirm` flag: the resume is marked for review, tailoring refuses it, and cover letters may not repeat it until you confirm.
 - **Applies for you.** Open job postings or job sites in the browser your agent controls and say "apply to the jobs open in my browser." The agent captures each posting, picks and tailors a resume, writes a cover letter when wanted, fills the form from your answers, submits or holds it, and records what it sent.
-- **Knows what to apply for.** Each resume version's guide is written from current research: the titles employers use, the seniority the facts support, pay, and saved searches that find those roles. `./resumes status` flags guides due for fresh research (every 90 days by default).
+- **Knows what to apply for.** Each resume version's guide is written from current research: the titles employers use, the seniority the facts support, pay, and saved searches that find those roles. `./resumes status` flags guides due for fresh research (every 90 days by default). Each posting gets a fit score: postings where you meet fewer than half the requirements, or that score below the minimum you choose in onboarding, are skipped.
 - **Accounts and codes, if you allow it.** Onboarding asks who handles sign-ins and new accounts (you, or the agent with your password manager or with a password you type once per session into a hidden prompt), which email new accounts use, and who reads verification emails. You never edit a file for it. Whether a given agent will create accounts or type passwords also depends on that agent's own rules.
-- **Asks before it guesses.** Each session starts with onboarding (work authorization, travel, salary approach, and so on). New questions from forms land in your inbox for review, so the next session already knows them.
+- **Asks before it guesses.** Each session starts with onboarding: about fifteen essential questions first (work authorization, salary, arrangement, what rules a job out, how good a match to require), then the rest in batches while applications run, and only what your saved answers leave open. New questions from forms land in your inbox for review, so the next session already knows them.
 - **Keeps your data private.** Your people and settings live in your own private repository; a pre-push guard refuses to send them anywhere else.
 
 ## Quick start
@@ -43,7 +43,8 @@ You need [git](https://git-scm.com), [Node.js](https://nodejs.org) 22.18 or late
    ```
 
 4. Open Claude Code or Codex in the folder and say **"set me up"**. The agent creates your profile, imports your current resume, turns it into your facts file, shows it to you in a few themes, and runs onboarding.
-5. Open job postings in your agent's browser and say **"apply to the jobs open in my browser."**
+5. Optionally, say **"run a trial"** first: the agent applies, as a fictional person, to mock postings on your machine, and a grader checks what it submitted and skipped.
+6. Open job postings in your agent's browser and say **"apply to the jobs open in my browser."**
 
 On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode before cloning so git can create the skill links (`git config --global core.symlinks true`), or use WSL.
 

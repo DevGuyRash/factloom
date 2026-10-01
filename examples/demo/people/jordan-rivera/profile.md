@@ -30,4 +30,4 @@ Jordan, 2026-09-01, for their own applications:
 ## Preferences
 
 - Salary: from the person each session.
-- Avoid: commission-based roles; roles that need a security clearance.
+- Avoid: commission-only roles; roles that need a security clearance.

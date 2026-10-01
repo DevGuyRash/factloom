@@ -14,10 +14,6 @@ Observations from application sessions and research, grouped by job site or appl
 ## ADP Workforce Now
 - 2026-09-25: A mobile verification code was required mid-application; the person enters it.
 
-## Arizona public sector
-- 2026-09-30: azstatejobs.gov runs on PageUp. City of Phoenix, Maricopa County, and the Department of Public Safety use NEOGOV: one account across agencies, with supplemental questions on each posting.
-- 2026-09-30: City of Phoenix rejects "see resume" as an answer and accepts a single file up to 10 MB.
-
 ## Ashby
 - 2026-09-30: Single-page forms with yes/no fields; uploads up to 50 MB. Spam protection and per-candidate application limits can block repeated submissions to one employer.
 

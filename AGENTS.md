@@ -50,7 +50,7 @@ When a person has no directory yet, or asks to be set up:
 1. Run `./resumes doctor`. If the privacy line says the repository is public, or this checkout still points at the public engine, stop and have the person create their private copy (`./resumes setup --private-repo <name>`, with their agreement) before writing anything about them.
 2. `./resumes person new "<Full Name>" [--email ...] [--phone ...] [--location ...] [--link ...]` creates their directory, with `apply: disabled`.
 3. For each resume they already have: `./resumes import <file> --person <slug>`, then write `resumes/source/facts.yaml` from the imported text, create variants, and research each variant's guide (the job-application skill's resumes reference has the steps). Show them the built resumes in a few themes (`./resumes themes preview`) and let them choose.
-4. Record their standing instruction in their own words in the profile, run session onboarding (it also settles who handles sign-ins, new accounts, and verification emails), and set `apply: enabled` when they want applications run.
+4. Record their standing instruction in their own words in the profile, run session onboarding (essential questions first; it also settles who handles sign-ins, new accounts, and verification emails), and set `apply: enabled` when they want applications run. Before their first long unattended run, offer a trial on mock forms (the job-application skill's trials reference).
 
 ## Applying to jobs
 

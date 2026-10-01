@@ -34,7 +34,7 @@ export function findCompany(name: string, root = repoRoot()): Company | null {
   return listCompanies(root).find((c) => c.slug === slug || slugify(String(c.data.company)) === slug) ?? null;
 }
 
-/** Creates shared/companies/<slug>.md from the company-dossier template. Throws if one already exists. */
+/** Creates custom/companies/<slug>.md from the company-dossier template. Throws if one already exists. */
 export function createCompany(name: string, opts: { website?: string } = {}, root = repoRoot()): Company {
   const existing = findCompany(name, root);
   if (existing) throw new Error(`a dossier for ${name} already exists at ${existing.path}`);

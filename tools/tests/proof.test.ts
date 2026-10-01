@@ -38,3 +38,19 @@ test(
     assert.ok(readdirSync(appDir).includes("confirmation.txt"));
   }),
 );
+
+test(
+  "proof keeps a confirmation number recorded at submit and records the file beside it",
+  withFixture({}, async (fx) => {
+    await appCommand.run(["new", "--company", "Acme", "--role", "Engineer", "--person", "pat-lee"]);
+    const dir = `${fx.root}/people/pat-lee/applications`;
+    const appDir = `${dir}/${readdirSync(dir)[0]}`;
+    await appCommand.run(["submit", appDir, "--confirmation", "Application #A-778", "--person", "pat-lee"]);
+    const shot = join(fx.root, "page.png");
+    writeFileSync(shot, "png");
+    assert.equal(await command.run([appDir, shot, "--person", "pat-lee"]), 0);
+    const { data } = readDoc(`${appDir}/record.md`);
+    assert.equal(data.confirmation, "Application #A-778");
+    assert.equal(data.proof, "confirmation.png");
+  }),
+);

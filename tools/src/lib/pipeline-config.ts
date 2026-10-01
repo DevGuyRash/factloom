@@ -13,6 +13,10 @@ export type PipelineConfig = {
   score: {
     weights: { must_haves: number; pay_ok: number; arrangement_ok: number; location_ok: number; seniority: number; preferred: number };
     seniority_credit: { match: number; stretch: number; over: number };
+    /** The lowest score worth applying to when the person has no `prefs.min-fit` answer. */
+    minimum: number;
+    /** The share of must-haves below which a posting is skipped whatever its score. */
+    must_haves_minimum: number;
   };
 };
 
@@ -24,6 +28,8 @@ const DEFAULTS: PipelineConfig = {
   score: {
     weights: { must_haves: 35, pay_ok: 10, arrangement_ok: 10, location_ok: 10, seniority: 20, preferred: 15 },
     seniority_credit: { match: 1, stretch: 0.6, over: 0.5 },
+    minimum: 65,
+    must_haves_minimum: 0.5,
   },
 };
 
@@ -37,6 +43,8 @@ function merge(base: PipelineConfig, raw: Partial<PipelineConfig>): PipelineConf
     score: {
       weights: { ...base.score.weights, ...(raw.score?.weights ?? {}) },
       seniority_credit: { ...base.score.seniority_credit, ...(raw.score?.seniority_credit ?? {}) },
+      minimum: raw.score?.minimum ?? base.score.minimum,
+      must_haves_minimum: raw.score?.must_haves_minimum ?? base.score.must_haves_minimum,
     },
   };
 }

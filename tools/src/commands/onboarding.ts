@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
-import { formatAnswer, loadAnswers, loadCatalog, openCoreQuestions, savedAnswersPath, sessionAnswersPath, sessionHeader, type Policy } from "../lib/catalog.ts";
+import { formatAnswer, loadAnswers, loadCatalog, openCoreQuestions, savedAnswersPath, sessionAnswersPath, sessionHeader, type CatalogEntry, type Policy } from "../lib/catalog.ts";
 import type { Command } from "../lib/command.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
 import { POLICIES } from "../lib/schema.ts";
@@ -14,7 +14,7 @@ function upsert(path: string, header: string, entry: string, id: string) {
 }
 
 /**
- * Session onboarding helper. `onboarding` lists saved answers and the core questions still open;
+ * Session onboarding helper. `onboarding` lists saved answers and the core questions still open, essential ones first;
  * `onboarding start` writes the session-answers file from the saved answers;
  * `onboarding answer <id> <text>` records an answer for this session (and `--save` keeps it).
  */
@@ -32,7 +32,8 @@ const command: Command = {
       const saved = loadAnswers(savedPath);
       const entries = [...saved.values()].filter((x) => x.answer).map((x) => formatAnswer({ id: x.id, answer: x.answer, policy: x.policy }));
       writeFileSync(sessionPath, `${sessionHeader(person)}\n${entries.join("\n\n")}${entries.length ? "\n" : ""}`);
-      console.log(`wrote ${rel(sessionPath)} with ${entries.length} saved answers; confirm unconfirmed ones with the person`);
+      const unconfirmed = [...saved.values()].filter((x) => x.answer && !x.confirmed).length;
+      console.log(`wrote ${rel(sessionPath)} with ${entries.length} saved answers${unconfirmed ? `; confirm the ${unconfirmed} without a Confirmed date with the person` : ""}`);
       return 0;
     }
     if (sub === "answer") {
@@ -51,11 +52,17 @@ const command: Command = {
     console.log(`saved answers (${rel(savedPath)}):`);
     for (const x of saved.values()) console.log(`  ${x.confirmed ? "✓" : "?"} ${x.id}: ${x.answer || "(blank)"}${x.confirmed ? "" : "  ← confirm with the person"}`);
     const open = openCoreQuestions(person);
-    console.log(`\nopen core questions (${open.length}):`);
-    let section = "";
-    for (const q of open) {
-      if (q.section !== section) { section = q.section; console.log(`  ${section}`); }
-      console.log(`    ${q.id}: ${q.ask}`);
+    const groups: [string, CatalogEntry[]][] = [
+      [`open essential questions (${open.filter((q) => q.essential).length}): ask these before the first application`, open.filter((q) => q.essential)],
+      [`other open core questions (${open.filter((q) => !q.essential).length}): ask in batches once applying has started, or all now if the person prefers`, open.filter((q) => !q.essential)],
+    ];
+    for (const [title, questions] of groups) {
+      console.log(`\n${title}`);
+      let section = "";
+      for (const q of questions) {
+        if (q.section !== section) { section = q.section; console.log(`  ${section}`); }
+        console.log(`    ${q.id}: ${q.ask}`);
+      }
     }
     console.log(existsSync(sessionPath) ? `\nsession file: ${rel(sessionPath)}` : "\nno session file yet: run `resumes onboarding start`");
     return 0;
