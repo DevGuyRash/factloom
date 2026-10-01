@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { checkPush, leaksIn, personalTokens } from "../src/commands/guard.ts";
 import { updateFrom } from "../src/commands/update.ts";
-import { git, PRIVATE_REMOTE_KEY, upstreamUrl } from "../src/lib/git.ts";
+import { DISABLED_PUSH, ensureUpstreamRemote, git, PRIVATE_REMOTE_KEY, upstreamUrl } from "../src/lib/git.ts";
 
 const ZERO = "0".repeat(40);
 
@@ -129,6 +129,30 @@ test("update merges the engine, refuses after local engine edits, and links an u
     assert.strictEqual(readFileSync(join(old.dir, "people", "pat", "profile.md"), "utf8"), "pat\n");
     assert.deepStrictEqual("extra" in linked ? linked.extra : [], ["tools/old.py"], "engine-area files the engine lacks are listed, not deleted");
     assert.strictEqual(updateFrom(old.dir).status, "up-to-date", "after linking, updates work normally");
+  } finally {
+    delete process.env.FACTLOOM_UPSTREAM;
+  }
+}));
+
+test("the engine remote is added under a free name and never takes over a remote that points elsewhere", () => withTemp((base) => {
+  const engine = repo(join(base, "engine"));
+  engine.write("AGENTS.md", "# engine\n");
+  engine.commit("engine");
+  process.env.FACTLOOM_UPSTREAM = engine.dir;
+  try {
+    const copy = repo(join(base, "copy"));
+    copy.write("people/pat/profile.md", "pat\n");
+    copy.commit("mine");
+    const elsewhere = join(base, "elsewhere.git");
+    execFileSync("git", ["remote", "add", "upstream", elsewhere], { cwd: copy.dir });
+    const first = ensureUpstreamRemote(copy.dir);
+    assert.ok(!("error" in first) && first.added === "factloom" && first.remote.name === "factloom", "added as factloom, since upstream is taken");
+    assert.strictEqual(git(["remote", "get-url", "upstream"], copy.dir).out, elsewhere, "the other remote's fetch URL is unchanged");
+    assert.strictEqual(git(["remote", "get-url", "--push", "upstream"], copy.dir).out, elsewhere, "and so is its push URL");
+    assert.strictEqual(git(["remote", "get-url", "--push", "factloom"], copy.dir).out, DISABLED_PUSH, "nothing is ever pushed to the engine remote");
+    const again = ensureUpstreamRemote(copy.dir);
+    assert.ok(!("error" in again) && again.remote.name === "factloom" && again.added === undefined, "found the second time, not added again");
+    assert.strictEqual(updateFrom(copy.dir).status, "no-history", "update goes through the engine remote it found");
   } finally {
     delete process.env.FACTLOOM_UPSTREAM;
   }

@@ -26,7 +26,7 @@ When a person has only an existing resume file:
 
 ## Building
 
-`resumes build-resumes [--person <slug>] [--variant <name>] [--theme <name> --out <dir>] [--out <dir>]` renders every variant under `resumes/source/variants/` (or just `--variant`) into `people/<person>/resumes/active/<variant>/<output>.docx` (+ `.pdf` when LibreOffice is available), or under `--out` when given.
+`resumes build-resumes [--person <slug>] [--variant <name>] [--theme <name> --out <dir>] [--out <dir>]` renders every variant under `resumes/source/variants/` (or just `--variant`) into `people/<person>/resumes/active/<variant>/<output>.docx` (+ `.pdf` when LibreOffice is available), or under `--out` when given. `resumes build-resumes --check` writes nothing: it lists generated resumes whose rebuild would differ from their files (`resumes update` runs it after bringing in a new engine).
 
 ## Review-item derivation
 

@@ -65,6 +65,37 @@ export function visibility(url: string, cwd: string): string | undefined {
 /** The git config key holding the one remote URL allowed to receive people/ and custom/ data. */
 export const PRIVATE_REMOTE_KEY = "factloom.privateRemote";
 
+/** The git config key marking a checkout for working on the engine itself (`./resumes setup --engine`). */
+export const ROLE_KEY = "factloom.role";
+
+/** The push URL of the engine remote in a person's copy, so nothing is ever pushed to it. */
+export const DISABLED_PUSH = "no-push--the-engine-takes-changes-through-pull-requests";
+
+/** Names tried, in order, for the engine remote; the first one not already in use is taken. */
+const ENGINE_REMOTE_NAMES = ["upstream", "factloom", "factloom-engine"];
+
+/** A name for the engine remote that this checkout does not use yet, or undefined. */
+export function freeRemoteName(cwd: string): string | undefined {
+  const taken = new Set(remotes(cwd).map((r) => r.name));
+  return ENGINE_REMOTE_NAMES.find((n) => !taken.has(n));
+}
+
+/**
+ * The remote to update from: the one whose fetch URL is the engine, else a new fetch-only one under a
+ * free name. A remote that points anywhere else is never changed.
+ */
+export function ensureUpstreamRemote(cwd: string): { remote: Remote; added?: string } | { error: string } {
+  const existing = upstreamRemote(cwd);
+  if (existing) return { remote: existing };
+  const name = freeRemoteName(cwd);
+  if (!name) return { error: `remotes named ${ENGINE_REMOTE_NAMES.join(", ")} already point elsewhere; add the engine yourself: git remote add <name> ${upstreamUrl()}` };
+  const added = git(["remote", "add", name, upstreamUrl()], cwd);
+  if (added.ok) git(["remote", "set-url", "--push", name, DISABLED_PUSH], cwd);
+  const remote = upstreamRemote(cwd);
+  if (!added.ok || !remote) return { error: `could not add the engine as remote ${name}: ${added.err || "unknown error"}` };
+  return { remote, added: name };
+}
+
 /** Paths under people/ and custom/ that the public engine itself ships (and so may be pushed anywhere). */
 export const ENGINE_OWNED_DATA = new Set(["people/.gitkeep", "custom/README.md"]);
 

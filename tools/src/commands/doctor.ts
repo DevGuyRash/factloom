@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
-import { PRIVATE_REMOTE_KEY, remotes, repoSlug, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
+import { PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
 import { engineRoot } from "../lib/layers.ts";
 import { findByType, listPeople, personDir, repoRoot } from "../lib/repo.ts";
 import { listVariants, loadVariant } from "../render/spec.ts";
@@ -82,6 +82,9 @@ const command: Command = {
     const people = realPeople(root);
     const inGit = run("git", ["rev-parse", "--is-inside-work-tree"], root).ok;
     if (inGit) {
+      if (run("git", ["config", "--get", ROLE_KEY], root).stdout === "engine") {
+        checks.push({ name: "checkout", ok: true, note: true, detail: "for working on factloom itself (AGENTS.md, \"Working on the engine\")" });
+      }
       const hookOn = hooks.stdout === ".githooks" && existsSync(join(root, ".githooks", "pre-push"));
       checks.push({ name: "push guard", ok: hookOn, detail: hookOn ? "on: people/ and custom/ go only to your private repository" : "off", fix: "run ./resumes setup" });
       const up = upstreamRemote(root);

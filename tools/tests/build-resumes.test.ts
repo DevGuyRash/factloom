@@ -133,3 +133,31 @@ test("generated resumes rebuild to exactly the committed files", async (t) => {
     assert.deepStrictEqual(stale.map((g) => `${g.person}/${g.variant}`), [], "rebuild these with `resumes build-resumes --person <p> --variant <v>` and review");
   }
 });
+
+test("build-resumes --check lists generated resumes that would render differently, and writes nothing", async () => {
+  const fx = makeFixture();
+  const prev = process.env.RESUMES_ROOT;
+  process.env.RESUMES_ROOT = fx.root;
+  const lines: string[] = [];
+  const log = console.log;
+  try {
+    seedFixture(fx);
+    const active = join(fx.root, "people", "pat-lee", "resumes", "active", "test-variant");
+    await buildVariant("pat-lee", "test-variant", active, fx.root);
+    const before = readFileSync(join(active, "Pat_Lee_Resume.docx"));
+    const command = (await import("../src/commands/build-resumes.ts")).default;
+    console.log = (...a: unknown[]) => { lines.push(a.join(" ")); };
+    assert.strictEqual(await command.run(["--check"]), 0);
+    assert.match(lines.join("\n"), /all 1 generated resume\(s\) render exactly as their files/);
+    lines.length = 0;
+    const facts = join(fx.root, "people", "pat-lee", "resumes", "source", "facts.yaml");
+    fx.write("people/pat-lee/resumes/source/facts.yaml", readFileSync(facts, "utf8").replace("a second widget", "a third widget"));
+    assert.strictEqual(await command.run(["--check"]), 1);
+    assert.match(lines.join("\n"), /1 of 1 generated resume\(s\) would render differently[\s\S]*pat-lee\/test-variant/);
+    assert.ok(readFileSync(join(active, "Pat_Lee_Resume.docx")).equals(before), "the active file is untouched");
+  } finally {
+    console.log = log;
+    if (prev === undefined) delete process.env.RESUMES_ROOT; else process.env.RESUMES_ROOT = prev;
+    fx.cleanup();
+  }
+});

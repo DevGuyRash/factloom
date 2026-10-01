@@ -6,25 +6,21 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import { has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
-import { git, upstreamRemote, upstreamUrl } from "../lib/git.ts";
+import { ensureUpstreamRemote, git } from "../lib/git.ts";
 import { engineRoot } from "../lib/layers.ts";
-import { staleGenerated } from "../lib/generated.ts";
 import { repoRoot } from "../lib/repo.ts";
 
 const DATA = [":(exclude)people", ":(exclude)custom"];
 
 export type UpdateResult =
-  | { status: "dirty" | "no-history" | "edited" | "conflict" | "fetch-failed"; message: string; files?: string[] }
+  | { status: "no-remote" | "dirty" | "no-history" | "edited" | "conflict" | "fetch-failed"; message: string; files?: string[] }
   | { status: "up-to-date" | "dry-run" | "updated" | "linked"; message: string; incoming?: string[]; extra?: string[]; depsChanged?: boolean };
 
 /** The git part of an update: fetch, check for local engine edits, merge (or link once with `link`). */
 export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolean } = {}): UpdateResult {
-  let remote = upstreamRemote(root);
-  if (!remote) {
-    git(["remote", "add", "upstream", upstreamUrl()], root);
-    remote = upstreamRemote(root);
-  }
-  const name = remote!.name;
+  const ensured = ensureUpstreamRemote(root);
+  if ("error" in ensured) return { status: "no-remote", message: ensured.error };
+  const name = ensured.remote.name;
   if (git(["status", "--porcelain", "--untracked-files=no"], root).out) return { status: "dirty", message: "commit or stash your changes first; update merges into a clean checkout" };
   const fetched = git(["fetch", name], root);
   if (!fetched.ok) return { status: "fetch-failed", message: `could not fetch ${name}: ${fetched.err}` };
@@ -77,7 +73,7 @@ const command: Command = {
     const a = parseArgs(argv, ["dry-run", "link"]);
     const root = repoRoot();
     const r = updateFrom(root, { dryRun: has(a, "dry-run"), link: has(a, "link") });
-    if (["dirty", "no-history", "edited", "conflict", "fetch-failed"].includes(r.status)) { console.error(r.message); return 1; }
+    if (["no-remote", "dirty", "no-history", "edited", "conflict", "fetch-failed"].includes(r.status)) { console.error(r.message); return 1; }
     console.log(r.message);
     if ("incoming" in r && r.incoming?.length) console.log(`  ${r.incoming.slice(0, 15).join("\n  ")}${r.incoming.length > 15 ? "\n  …" : ""}`);
     if ("extra" in r && r.extra?.length) console.log(`These files are outside people/ and custom/ but not part of the engine; move what you want to keep into custom/ and delete the rest:\n  ${r.extra.join("\n  ")}`);
@@ -86,9 +82,9 @@ const command: Command = {
       console.log("dependencies changed; reinstalling");
       spawnSync("npm", ["ci", "--no-audit", "--no-fund"], { cwd: join(engineRoot(), "tools"), stdio: "inherit", shell: process.platform === "win32" });
     }
+    // Fresh processes run the merged engine; this one still has the code from before the merge loaded.
     spawnSync(process.execPath, [process.argv[1], "check"], { stdio: "inherit" });
-    const stale = await staleGenerated(root);
-    if (stale.length) console.log(`The new engine renders these resumes differently; rebuild them (\`./resumes build-resumes --person <p> --variant <v>\`), review, and commit:\n  ${stale.map((g) => `${g.person}/${g.variant}`).join("\n  ")}`);
+    spawnSync(process.execPath, [process.argv[1], "build-resumes", "--check"], { stdio: "inherit" });
     return 0;
   },
 };

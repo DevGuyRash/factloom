@@ -5,7 +5,7 @@ Resumes, applicant profiles, saved answers, and application records for the peop
 ## Who owns what
 
 - `people/` and `custom/` belong to this repository's people: their data, and their own themes, templates, catalog entries, settings, notes, and company research. Engine updates never touch them.
-- Everything else (`tools/`, `shared/`, `.agents/`, `docs/`, `examples/`, these instructions) is the factloom engine, updated with `./resumes update`. Do not edit engine files in a person's copy: put the change in `custom/` (or `people/<person>/templates/`), which overrides the engine's version of the same file, or contribute it to the engine.
+- Everything else (`tools/`, `shared/`, `.agents/`, `docs/`, `examples/`, these instructions) is the factloom engine, updated with `./resumes update`. Do not edit engine files in a person's copy: put the change in `custom/` (or `people/<person>/templates/`), which overrides the engine's version of the same file. A change everyone would benefit from goes in the person's inbox as an engine suggestion; the engine itself is changed in its own checkout (see "Working on the engine").
 - Shared assets are looked up most specific first: `people/<person>/templates/`, then `custom/`, then `shared/`. Data files merge instead: `custom/pipeline.yaml`, `custom/lexicon.yaml`, `custom/onboarding.md`, and `custom/pii-allow.yaml` add to or change the engine's.
 - `examples/demo/` is a complete fictional person for trying commands (`RESUMES_ROOT=examples/demo ./resumes ...`); it is never applied for.
 
@@ -79,3 +79,12 @@ A person's profile may carry a standing instruction, in their own words, on how 
 - `./resumes update` brings in the newest engine, and lists generated resumes that render differently afterwards so they can be rebuilt and reviewed.
 - When a person has `resumes/source/`, change resumes there and rebuild rather than editing the generated files.
 - Commit as records change, with messages describing what changed, and push at the end of a session.
+
+## Working on the engine
+
+A checkout set up with `./resumes setup --engine` (`git config --get factloom.role` prints `engine`, and `people/` holds no one) is for changing factloom itself, for everyone who uses it. CONTRIBUTING.md has the details.
+
+- Change the engine's files directly. Never add files under `people/` or `custom/` here: the push guard and CI refuse them. Examples and tests use the fictional person in `examples/demo`.
+- Before committing, run the typecheck and the tests in `tools/`, and `./resumes check` on the checkout and on the demo (`RESUMES_ROOT=examples/demo ./resumes check`). When a change alters how resumes render, rebuild the demo person and refresh `docs/themes/`.
+- To see a change on a person's real resumes without touching their copy, run this checkout's tools against it: `RESUMES_ROOT=<their copy> ./resumes build-resumes --check` lists which of their generated resumes would change, and adding `--person <slug> --out <dir>` (without `--check`) renders them elsewhere. This checkout supplies the defaults; their `custom/` and personal overrides still apply.
+- A person's copy picks the change up with `./resumes update` once it is on the engine's main branch.

@@ -1,14 +1,14 @@
 // Generated resumes: active variants whose guide says `generated: true`, built from resumes/source.
-// Shared by the reproduction test and `resumes update`, which both ask the same question: does this
-// engine still render exactly the committed file?
+// Shared by the reproduction test and `resumes build-resumes --check` (which `resumes update` runs),
+// which ask the same question: does this engine still render exactly the file that is there?
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import JSZip from "jszip";
-import { buildVariant } from "../commands/build-resumes.ts";
 import { readDoc } from "./frontmatter.ts";
 import { listPeople, personDir, repoRoot } from "./repo.ts";
 import { render } from "../render/docx.ts";
+import { writeFitted } from "../render/fit.ts";
 import { listVariants, loadFacts, loadVariant, resolveContent } from "../render/spec.ts";
 import { loadTheme } from "../render/theme.ts";
 
@@ -39,10 +39,12 @@ export async function normalizedXml(file: string): Promise<string> {
 /** Renders a variant's .docx into `dir` the way a build would (a page target needs the full build, with PDFs). */
 export async function renderDocx(person: string, variantName: string, dir: string, root = repoRoot()): Promise<string> {
   const variant = loadVariant(person, variantName, root);
-  if (variant.pages) return (await buildVariant(person, variantName, dir, root)).find((f) => f.endsWith(".docx"))!;
   const theme = loadTheme(variant.theme, root, { person, overrides: variant.style });
+  const content = resolveContent(loadFacts(person, root), variant);
+  // A page target is met by measuring the PDF, so it renders the way a build does; otherwise the .docx is enough.
+  if (variant.pages) return (await writeFitted(theme, content, dir, variant.output, variant.pages)).files.find((f) => f.endsWith(".docx"))!;
   const out = join(dir, `${variant.output}.docx`);
-  await render(theme, resolveContent(loadFacts(person, root), variant), out);
+  await render(theme, content, out);
   return out;
 }
 

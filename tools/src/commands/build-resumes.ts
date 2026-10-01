@@ -3,9 +3,10 @@
 // built variant's guide.md `review`/`status` fields from the `confirm` phrases its bullets use.
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { flag, parseArgs } from "../lib/args.ts";
+import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { readDoc, writeDoc } from "../lib/frontmatter.ts";
+import { listGenerated, staleGenerated } from "../lib/generated.ts";
 import { personDir, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { type FitResult, writeFitted } from "../render/fit.ts";
 import { confirmsUsed, listVariants, loadFacts, loadVariant, resolveContent } from "../render/spec.ts";
@@ -58,13 +59,25 @@ export function fitNote(variant: string, target: number | undefined, fit: FitRes
     : `${variant}: still ${fit.pages} pages after the tightest setting (${fit.step}); shorten the variant or raise pages: ${target}`;
 }
 
+/** `--check`: the generated resumes this engine would render differently from their files, writing nothing. */
+async function checkGenerated(root: string): Promise<number> {
+  const all = listGenerated(root);
+  if (!all.length) { console.log("no generated resumes to check (guides with generated: true)"); return 0; }
+  const stale = await staleGenerated(root);
+  if (!stale.length) { console.log(`all ${all.length} generated resume(s) render exactly as their files`); return 0; }
+  console.log(`${stale.length} of ${all.length} generated resume(s) would render differently; look with --person <p> --variant <v> --out <dir>, then rebuild, review, and commit:`);
+  for (const g of stale) console.log(`  ${g.person}/${g.variant}`);
+  return 1;
+}
+
 const command: Command = {
   name: "build-resumes",
   summary: "Render resume variants from facts.yaml + variants/*.yaml (content/structure/style SSOT)",
-  usage: "resumes build-resumes [--person <slug>] [--variant <name>] [--theme <name>] [--out <dir>]",
+  usage: "resumes build-resumes [--person <slug>] [--variant <name>] [--theme <name>] [--out <dir>] | build-resumes --check",
   async run(argv) {
-    const a = parseArgs(argv);
+    const a = parseArgs(argv, ["check"]);
     const root = repoRoot();
+    if (has(a, "check")) return checkGenerated(root);
     const person = resolvePerson(flag(a, "person"), root);
     const out = flag(a, "out");
     const themeArg = flag(a, "theme");

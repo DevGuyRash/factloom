@@ -4,28 +4,20 @@
 import { spawnSync } from "node:child_process";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
-import { gh, git, PRIVATE_REMOTE_KEY, remotes, repoSlug, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
+import { DISABLED_PUSH, ensureUpstreamRemote, freeRemoteName, gh, git, PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
 import { repoRoot } from "../lib/repo.ts";
-
-const DISABLED_PUSH = "no-push--the-engine-takes-changes-through-pull-requests";
 
 function which(cmd: string): string | undefined {
   const r = spawnSync(process.platform === "win32" ? "where" : "sh", process.platform === "win32" ? [cmd] : ["-c", `command -v ${cmd}`], { encoding: "utf8" });
   return r.status === 0 ? r.stdout.trim().split("\n")[0] : undefined;
 }
 
-/** Points the engine remote at `upstream`, fetch-only, so updates come from it and nothing is ever pushed to it. */
+/** Makes sure a fetch-only engine remote exists, so updates come from it and nothing is ever pushed to it. */
 function linkUpstream(root: string, say: (s: string) => void): void {
-  const existing = upstreamRemote(root);
-  if (existing && existing.name !== "origin") {
-    if (existing.push !== DISABLED_PUSH) git(["remote", "set-url", "--push", existing.name, DISABLED_PUSH], root);
-    return;
-  }
-  if (!existing) {
-    git(["remote", "add", "upstream", upstreamUrl()], root);
-    git(["remote", "set-url", "--push", "upstream", DISABLED_PUSH], root);
-    say(`added remote upstream (${repoSlug(upstreamUrl())}) for updates; pushing to it is disabled`);
-  }
+  const r = ensureUpstreamRemote(root);
+  if ("error" in r) { say(r.error); return; }
+  if (r.remote.name !== "origin" && r.remote.push !== DISABLED_PUSH) git(["remote", "set-url", "--push", r.remote.name, DISABLED_PUSH], root);
+  if (r.added) say(`added remote ${r.added} (${repoSlug(upstreamUrl())}) for updates; pushing to it is disabled`);
 }
 
 function createPrivateCopy(name: string, root: string, say: (s: string) => void): boolean {
@@ -36,9 +28,12 @@ function createPrivateCopy(name: string, root: string, say: (s: string) => void)
   }
   if (!gh(["auth", "status"], root).ok) { say("the GitHub CLI is not signed in: run `gh auth login`, then run setup again"); return false; }
   if (origin) {
-    git(["remote", "rename", "origin", "upstream"], root);
-    git(["remote", "set-url", "--push", "upstream", DISABLED_PUSH], root);
-    say("renamed origin to upstream (the public engine; pushing to it is disabled)");
+    const engineName = freeRemoteName(root);
+    if (!engineName) { say("remotes named upstream, factloom, and factloom-engine all exist already; rename one, then run setup again"); return false; }
+    const renamed = git(["remote", "rename", "origin", engineName], root);
+    if (!renamed.ok) { say(`could not rename origin: ${renamed.err}`); return false; }
+    git(["remote", "set-url", "--push", engineName, DISABLED_PUSH], root);
+    say(`renamed origin to ${engineName} (the public engine; pushing to it is disabled)`);
   }
   const created = gh(["repo", "create", name, "--private", "--source", ".", "--remote", "origin"], root);
   if (!created.ok) { say(`could not create ${name}: ${created.err}`); return false; }
@@ -71,7 +66,8 @@ const command: Command = {
     if (pdftotext && !git(["config", "--get", "diff.pdf.textconv"], root).ok) { git(["config", "diff.pdf.textconv", `sh -c '${pdftotext} -layout "$0" -'`], root); say("PDF files now show as text in git diffs"); }
 
     if (has(a, "engine")) {
-      say("engine mode: remotes left as they are (contributions go through pull requests to the engine)");
+      if (git(["config", "--get", ROLE_KEY], root).out !== "engine") git(["config", ROLE_KEY, "engine"], root);
+      say(`engine mode: this checkout is for working on factloom itself (${ROLE_KEY} = engine); remotes left as they are`);
     } else {
       const privateRepo = flag(a, "private-repo");
       if (privateRepo && !createPrivateCopy(privateRepo, root, say)) return 1;
@@ -87,7 +83,9 @@ const command: Command = {
 
     console.log("\nDoctor:");
     spawnSync(process.execPath, [process.argv[1], "doctor"], { stdio: "inherit" });
-    console.log("\nNext: open Claude Code or Codex in this folder and say \"set me up\". The agent creates your person, turns your current resume into its source files, and runs onboarding.");
+    console.log(has(a, "engine")
+      ? "\nNext: open Claude Code or Codex in this folder to work on the engine (AGENTS.md, \"Working on the engine\", and CONTRIBUTING.md)."
+      : "\nNext: open Claude Code or Codex in this folder and say \"set me up\". The agent creates your person, turns your current resume into its source files, and runs onboarding.");
     return 0;
   },
 };

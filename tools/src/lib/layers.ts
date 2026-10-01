@@ -16,9 +16,14 @@ export const customDir = (root = repoRoot()): string => join(root, "custom");
 
 const unique = (dirs: string[]): string[] => [...new Set(dirs.map((d) => resolve(d)))];
 
-/** The shared/ directories to read defaults from: the data root's own, then the engine's. */
+/**
+ * The shared/ directories to read defaults from: the running engine's own first, so defaults always
+ * match the code that reads them, also when it runs against another copy (RESUMES_ROOT pointing at a
+ * person's repository to try an engine change on their data). A data root's own shared/ only supplies
+ * files this engine lacks, such as a test fixture's.
+ */
 export function sharedDirs(root = repoRoot()): string[] {
-  return unique([join(root, "shared"), join(engineRoot(), "shared")]);
+  return unique([join(engineRoot(), "shared"), join(root, "shared")]);
 }
 
 /**
