@@ -85,14 +85,18 @@ const command: Command = {
       const hookOn = hooks.stdout === ".githooks" && existsSync(join(root, ".githooks", "pre-push"));
       checks.push({ name: "push guard", ok: hookOn, detail: hookOn ? "on: people/ and custom/ go only to your private repository" : "off", fix: "run ./resumes setup" });
       const up = upstreamRemote(root);
-      checks.push({ name: "engine remote", ok: Boolean(up), note: Boolean(up), detail: up ? `${up.name} → ${repoSlug(up.fetch)} (updates: ./resumes update)` : "none", fix: "run ./resumes setup (adds it for ./resumes update)" });
+      checks.push(up
+        ? { name: "engine remote", ok: true, note: true, detail: `${up.name} → ${repoSlug(up.fetch)} (updates: ./resumes update)` }
+        : { name: "engine remote", ok: false, detail: "none", fix: "run ./resumes setup (adds it for ./resumes update)" });
       const origin = remotes(root).find((r) => r.name === "origin");
       if (people.length && origin) {
-        const vis = sameRepo(origin.fetch, upstreamUrl()) ? "PUBLIC" : visibility(origin.fetch, root);
+        const isEngine = sameRepo(origin.fetch, upstreamUrl());
+        const vis = isEngine ? "PUBLIC" : visibility(origin.fetch, root);
         const exposed = vis === "PUBLIC";
+        const where = isEngine ? `origin is the public engine (${repoSlug(origin.fetch)})` : `origin (${repoSlug(origin.fetch)}) is public`;
         checks.push({
           name: "privacy", ok: !exposed, fatal: exposed,
-          detail: exposed ? `origin (${repoSlug(origin.fetch)}) is public and people/ holds ${people.length} real person(s)` : `origin (${repoSlug(origin.fetch)}) is ${vis ? vis.toLowerCase() : "not verifiable (GitHub CLI unavailable)"}`,
+          detail: exposed ? `${where} and people/ holds ${people.length} real person(s)` : `origin (${repoSlug(origin.fetch)}) is ${vis ? vis.toLowerCase() : "not verifiable (GitHub CLI unavailable)"}`,
           fix: sameRepo(origin.fetch, upstreamUrl()) ? "this checkout still points at the public engine: run ./resumes setup --private-repo <name>" : "make the repository private on GitHub (Settings, Change visibility) before pushing again",
         });
         const allowed = run("git", ["config", "--get", PRIVATE_REMOTE_KEY], root).stdout;

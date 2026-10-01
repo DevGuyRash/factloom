@@ -17,10 +17,10 @@ export function gh(args: string[], cwd: string): Run {
   return { ok: r.status === 0 && !r.error, out: (r.stdout ?? "").trim(), err: (r.stderr ?? r.error?.message ?? "").trim() };
 }
 
-/** owner/name from any GitHub URL form (https, ssh, scp-like), lower-cased; other URLs are returned normalized. */
+/** owner/name from any GitHub URL form (https, ssh, scp-like), lower-cased; other URLs and paths keep their case. */
 export function repoSlug(url: string): string {
   const m = url.trim().match(/github\.com[:/]+([^/]+)\/([^/#?]+?)(?:\.git)?\/?$/i);
-  return m ? `${m[1]}/${m[2]}`.toLowerCase() : url.trim().replace(/\.git$/, "").replace(/\/$/, "").toLowerCase();
+  return m ? `${m[1]}/${m[2]}`.toLowerCase() : url.trim().replace(/\/$/, "").replace(/\.git$/, "");
 }
 
 export const sameRepo = (a: string, b: string): boolean => Boolean(a && b) && repoSlug(a) === repoSlug(b);
