@@ -85,6 +85,7 @@ A person's profile may carry a standing instruction, in their own words, on how 
 A checkout set up with `./resumes setup --engine` (`git config --get factloom.role` prints `engine`, and `people/` holds no one) is for changing factloom itself, for everyone who uses it. CONTRIBUTING.md has the details.
 
 - Change the engine's files directly. Never add files under `people/` or `custom/` here: the push guard and CI refuse them. Examples and tests use the fictional person in `examples/demo`.
+- Never copy a person's details into the engine; restate an inbox suggestion in general terms. The push guard checks pushes from here against the profiles of the private copies this checkout names (`git config factloom.privateCopy`, set with `./resumes setup --engine --private-copy <path>`).
 - Before committing, run the typecheck and the tests in `tools/`, and `./resumes check` on the checkout and on the demo (`RESUMES_ROOT=examples/demo ./resumes check`). When a change alters how resumes render, rebuild the demo person and refresh `docs/themes/`.
 - To see a change on a person's real resumes without touching their copy, run this checkout's tools against it: `RESUMES_ROOT=<their copy> ./resumes build-resumes --check` lists which of their generated resumes would change, and adding `--person <slug> --out <dir>` (without `--check`) renders them elsewhere. This checkout supplies the defaults; their `custom/` and personal overrides still apply.
 - A person's copy picks the change up with `./resumes update` once it is on the engine's main branch.

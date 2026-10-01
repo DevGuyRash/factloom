@@ -4,7 +4,7 @@ Thanks for helping. factloom is the engine (tools, themes, templates, the onboar
 
 ## Working on the engine
 
-1. Clone the engine (or your fork of it) on its own, separate from any copy that holds your data, and run `./resumes setup --engine`. That marks the checkout for engine work (`git config factloom.role engine`), so agents there change engine files directly instead of treating it as someone's copy.
+1. Clone the engine (or your fork of it) on its own, separate from any copy that holds your data, and run `./resumes setup --engine`. That marks the checkout for engine work (`git config factloom.role engine`), so agents there change engine files directly instead of treating it as someone's copy. Add `--private-copy <path to your own copy>` so the push guard also checks your engine changes for your name, email, phone number, and links.
 2. Make the change with tests: `cd tools && npm run typecheck && npm test`, and `./resumes check`. Rendering changes need LibreOffice for the PDF checks.
 3. Keep the single sources single: types and statuses in `tools/src/lib/schema.ts`, theme settings in `tools/src/render/theme.ts` (and `docs/themes.md`, which a test keeps complete), numbers in `shared/pipeline.yaml`, terms in `shared/lexicon.yaml`, documents in `shared/templates/`.
 4. Use the demo person (`examples/demo`) for examples and tests; never real people. If a change alters how resumes render, rebuild the demo (`RESUMES_ROOT=examples/demo ./resumes build-resumes --person jordan-rivera`) and refresh the gallery (`RESUMES_ROOT=examples/demo ./resumes themes preview --person jordan-rivera --variant data-analyst --out /tmp/gallery --png --dpi 80`, then copy the images into `docs/themes/`).

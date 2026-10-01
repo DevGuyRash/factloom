@@ -5,16 +5,19 @@ import { readFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
-import { dataPathsIn, ENGINE_OWNED_DATA, git, PRIVATE_REMOTE_KEY, remotes, repoSlug, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
+import { dataPathsIn, ENGINE_OWNED_DATA, git, PRIVATE_REMOTE_KEY, privateCopies, remotes, repoSlug, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
 import { findByType, listPeople, personDir, repoRoot } from "../lib/repo.ts";
 
 const ZERO = /^0+$/;
 
-/** Words that identify the real people in this repository (example people excluded), for the leak scan. */
-export function personalTokens(root: string): string[] {
+/**
+ * Words that identify the real people in this repository and in any `extraRoots` (the private copies an
+ * engine checkout names), example people excluded, for the leak scan.
+ */
+export function personalTokens(root: string, extraRoots: string[] = []): string[] {
   const out = new Set<string>();
-  for (const person of listPeople(root)) {
-    for (const path of findByType(personDir(person, root), "profile")) {
+  for (const r of [root, ...extraRoots]) for (const person of listPeople(r)) {
+    for (const path of findByType(personDir(person, r), "profile")) {
       const p = peek(path) ?? {};
       if (p.example === true) continue;
       const name = String(p.name ?? "").trim();
@@ -63,7 +66,7 @@ export function checkPush(remoteName: string, url: string, updates: RefUpdate[],
     const data = dataPathsIn(range, cwd);
     if (toUpstream) {
       if (data.length) problems.push(`this push would publish ${data.length} file(s) from people/ or custom/ to the public engine (${repoSlug(url)}), for example ${data.slice(0, 3).join(", ")}. Engine changes go from a branch based on the engine (see CONTRIBUTING.md).`);
-      const leaks = leaksIn(range, personalTokens(root), cwd);
+      const leaks = leaksIn(range, personalTokens(root, privateCopies(cwd)), cwd);
       if (leaks.length) problems.push(`these engine changes contain personal details from a profile: ${leaks.slice(0, 5).map((l) => `${l.file} (${l.token.length > 3 ? `${l.token.slice(0, 2)}…` : "…"})`).join(", ")}. Remove them before contributing.`);
       continue;
     }
@@ -106,6 +109,8 @@ function status(root: string): number {
   console.log(`engine (public): ${repoSlug(upstreamUrl())}`);
   console.log(`private data remote: ${allowed ? repoSlug(allowed) : "none yet (run ./resumes guard allow <remote> once your copy is private)"}`);
   for (const r of remotes(root)) console.log(`remote ${r.name}: fetch ${r.fetch}${r.push !== r.fetch ? `, push ${r.push}` : ""}`);
+  const copies = privateCopies(root);
+  if (copies.length) console.log(`engine pushes are also checked against the profiles in: ${copies.join(", ")}`);
   const hook = git(["config", "--get", "core.hooksPath"], root).out;
   console.log(`pre-push hook: ${hook === ".githooks" ? "on" : "off (run ./resumes setup)"}`);
   return 0;

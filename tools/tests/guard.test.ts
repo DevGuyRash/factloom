@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { checkPush, leaksIn, personalTokens } from "../src/commands/guard.ts";
 import { updateFrom } from "../src/commands/update.ts";
-import { DISABLED_PUSH, ensureUpstreamRemote, git, PRIVATE_REMOTE_KEY, upstreamUrl } from "../src/lib/git.ts";
+import { DISABLED_PUSH, ensureUpstreamRemote, git, PRIVATE_COPY_KEY, PRIVATE_REMOTE_KEY, upstreamUrl } from "../src/lib/git.ts";
 
 const ZERO = "0".repeat(40);
 
@@ -153,6 +153,26 @@ test("the engine remote is added under a free name and never takes over a remote
     const again = ensureUpstreamRemote(copy.dir);
     assert.ok(!("error" in again) && again.remote.name === "factloom" && again.added === undefined, "found the second time, not added again");
     assert.strictEqual(updateFrom(copy.dir).status, "no-history", "update goes through the engine remote it found");
+  } finally {
+    delete process.env.FACTLOOM_UPSTREAM;
+  }
+}));
+
+test("an engine checkout checks its pushes against the profiles of the private copies it names", () => withTemp((base) => {
+  process.env.FACTLOOM_UPSTREAM = "https://github.com/example-org/engine.git";
+  try {
+    const mine = repo(join(base, "mine"));
+    mine.write("people/pat-lee/profile.md", PROFILE);
+    mine.commit("pat");
+    const engine = repo(join(base, "engine"));
+    engine.write("README.md", "engine\n");
+    const first = engine.commit("engine");
+    engine.write("docs/notes.md", "Questions go to pat.lee@example.org.\n");
+    const leaky = engine.commit("docs");
+    const push = () => checkPush("origin", upstreamUrl(), [{ localSha: leaky, remoteSha: first }], engine.dir);
+    assert.deepStrictEqual(push(), [], "with no private copy named, the engine checkout knows no one's details");
+    git(["config", "--add", PRIVATE_COPY_KEY, mine.dir], engine.dir);
+    assert.ok(push().some((p) => p.includes("personal details")), "once named, the copy's profile details are refused");
   } finally {
     delete process.env.FACTLOOM_UPSTREAM;
   }

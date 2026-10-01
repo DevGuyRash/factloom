@@ -1,7 +1,7 @@
 // Git and GitHub helpers for setup, update, and the push guard. Every call is local except the `gh`
 // ones, which only read a repository's visibility.
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { engineRoot } from "./layers.ts";
 
@@ -64,6 +64,17 @@ export function visibility(url: string, cwd: string): string | undefined {
 
 /** The git config key holding the one remote URL allowed to receive people/ and custom/ data. */
 export const PRIVATE_REMOTE_KEY = "factloom.privateRemote";
+
+/**
+ * The git config key, one value per path, naming people's private copies whose profiles the push
+ * guard checks an engine checkout's pushes against (an engine checkout has no profiles of its own).
+ */
+export const PRIVATE_COPY_KEY = "factloom.privateCopy";
+
+/** The private copies this checkout names (factloom.privateCopy) that exist on this machine. */
+export function privateCopies(cwd: string): string[] {
+  return git(["config", "--type=path", "--get-all", PRIVATE_COPY_KEY], cwd).out.split("\n").map((s) => s.trim()).filter((p) => p && existsSync(p));
+}
 
 /** The git config key marking a checkout for working on the engine itself (`./resumes setup --engine`). */
 export const ROLE_KEY = "factloom.role";

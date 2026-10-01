@@ -2,9 +2,11 @@
 // (the public engine to update from, and the person's own private repository for their data), then
 // doctor and check. Safe to run again at any time; it only changes what is not set up yet.
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
-import { DISABLED_PUSH, ensureUpstreamRemote, freeRemoteName, gh, git, PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
+import { DISABLED_PUSH, ensureUpstreamRemote, freeRemoteName, gh, git, PRIVATE_COPY_KEY, PRIVATE_REMOTE_KEY, privateCopies, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
 import { repoRoot } from "../lib/repo.ts";
 
 function which(cmd: string): string | undefined {
@@ -50,7 +52,7 @@ function createPrivateCopy(name: string, root: string, say: (s: string) => void)
 const command: Command = {
   name: "setup",
   summary: "Set up this checkout: git hooks, diff drivers, the engine remote, and optionally your private GitHub copy",
-  usage: "resumes setup [--private-repo <name>] [--engine]   (--private-repo creates a private GitHub repository for your data; --engine is for working on the engine itself)",
+  usage: "resumes setup [--private-repo <name>] [--engine [--private-copy <path>]]   (--private-repo creates a private GitHub repository for your data; --engine is for working on the engine itself, and --private-copy names your own copy so engine pushes are checked against your profile)",
   run(argv) {
     const a = parseArgs(argv, ["engine"]);
     const root = repoRoot();
@@ -68,6 +70,17 @@ const command: Command = {
     if (has(a, "engine")) {
       if (git(["config", "--get", ROLE_KEY], root).out !== "engine") git(["config", ROLE_KEY, "engine"], root);
       say(`engine mode: this checkout is for working on factloom itself (${ROLE_KEY} = engine); remotes left as they are`);
+      const copy = flag(a, "private-copy");
+      if (copy) {
+        const abs = resolve(copy);
+        if (!existsSync(join(abs, "people"))) say(`${abs} has no people/ directory; not recording it as a private copy`);
+        else if (!privateCopies(root).map((p) => resolve(p)).includes(abs)) {
+          git(["config", "--add", PRIVATE_COPY_KEY, abs], root);
+          say(`pushes from here are now checked for the names, emails, phone numbers, and links in the profiles of ${abs}`);
+        }
+      } else if (!privateCopies(root).length) {
+        say("tip: add --private-copy <path to your own copy>, so pushes from here are checked for your name, email, phone number, and links");
+      }
     } else {
       const privateRepo = flag(a, "private-repo");
       if (privateRepo && !createPrivateCopy(privateRepo, root, say)) return 1;
