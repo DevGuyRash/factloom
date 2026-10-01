@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 import { checkPush, leaksIn, personalTokens } from "../src/commands/guard.ts";
 import { updateFrom } from "../src/commands/update.ts";
 import { DISABLED_PUSH, ensureUpstreamRemote, git, PRIVATE_COPY_KEY, PRIVATE_REMOTE_KEY, upstreamUrl } from "../src/lib/git.ts";
+import { REAL_ROOT } from "./helpers/fixture.ts";
 
 const ZERO = "0".repeat(40);
 
@@ -26,9 +27,9 @@ function repo(dir: string): { dir: string; write: (rel: string, text: string) =>
   };
 }
 
-function withTemp<T>(fn: (base: string) => T): T {
+async function withTemp<T>(fn: (base: string) => T | Promise<T>): Promise<T> {
   const base = mkdtempSync(join(tmpdir(), "guard-"));
-  try { return fn(base); } finally { rmSync(base, { recursive: true, force: true }); }
+  try { return await fn(base); } finally { rmSync(base, { recursive: true, force: true }); }
 }
 
 const PROFILE = "---\ntype: profile\nperson: pat-lee\nname: Pat Lee-Example\nemail: pat.lee@example.org\nphone: (555) 010-7788\nlinks:\n  - https://example.org/patlee\napply: enabled\n---\n";
@@ -42,7 +43,7 @@ test("personal tokens come from real profiles only: name, its longer parts, emai
   assert.ok(!tokens.some((t) => t.includes("Demo")), "example people are not personal");
 }));
 
-test("data goes only to the verified private remote; never to the engine; engine changes may not carry profile details", () => withTemp((base) => {
+test("data goes only to the verified private remote; never to the engine; engine changes may not carry profile details", () => withTemp(async (base) => {
   process.env.FACTLOOM_UPSTREAM = "https://github.com/example-org/engine.git";
   try {
     const r = repo(join(base, "copy"));
@@ -53,29 +54,29 @@ test("data goes only to the verified private remote; never to the engine; engine
     const privateUrl = join(base, "private.git");
 
     // A new branch pushed to an unverified remote with people/ in it: refused.
-    const refused = checkPush("origin", privateUrl, [{ localSha: withData, remoteSha: ZERO }], r.dir);
+    const refused = await checkPush("origin", privateUrl, [{ localSha: withData, remoteSha: ZERO }], r.dir);
     assert.strictEqual(refused.length, 1);
     assert.match(refused[0], /people\/ or custom\/.*not verified as private.*guard allow origin/s);
 
     // Once recorded as the private data remote, the same push is allowed.
     git(["config", PRIVATE_REMOTE_KEY, privateUrl], r.dir);
-    assert.deepStrictEqual(checkPush("origin", privateUrl, [{ localSha: withData, remoteSha: ZERO }], r.dir), []);
+    assert.deepStrictEqual(await checkPush("origin", privateUrl, [{ localSha: withData, remoteSha: ZERO }], r.dir), []);
 
     // The engine never receives people/, whatever is configured.
-    const toEngine = checkPush("upstream", upstreamUrl(), [{ localSha: withData, remoteSha: engineOnly }], r.dir);
+    const toEngine = await checkPush("upstream", upstreamUrl(), [{ localSha: withData, remoteSha: engineOnly }], r.dir);
     assert.ok(toEngine.some((p) => p.includes("public engine")), "people/ refused for the engine");
 
     // An engine-only change that mentions the person is refused for the engine; a clean one passes.
     r.write("docs/notes.md", "Thanks to Pat Lee-Example for the idea.\n");
     const leaky = r.commit("docs");
     assert.ok(leaksIn([`${withData}..${leaky}`], personalTokens(r.dir), r.dir).length > 0);
-    assert.ok(checkPush("upstream", upstreamUrl(), [{ localSha: leaky, remoteSha: withData }], r.dir).some((p) => p.includes("personal details")));
+    assert.ok((await checkPush("upstream", upstreamUrl(), [{ localSha: leaky, remoteSha: withData }], r.dir)).some((p) => p.includes("personal details")));
     r.write("docs/notes.md", "Thanks for the idea.\n");
     const clean = r.commit("docs: no names");
-    assert.deepStrictEqual(checkPush("upstream", upstreamUrl(), [{ localSha: clean, remoteSha: leaky }], r.dir), []);
+    assert.deepStrictEqual(await checkPush("upstream", upstreamUrl(), [{ localSha: clean, remoteSha: leaky }], r.dir), []);
 
     // Deleting a branch sends nothing.
-    assert.deepStrictEqual(checkPush("upstream", upstreamUrl(), [{ localSha: ZERO, remoteSha: clean }], r.dir), []);
+    assert.deepStrictEqual(await checkPush("upstream", upstreamUrl(), [{ localSha: ZERO, remoteSha: clean }], r.dir), []);
   } finally {
     delete process.env.FACTLOOM_UPSTREAM;
   }
@@ -158,7 +159,7 @@ test("the engine remote is added under a free name and never takes over a remote
   }
 }));
 
-test("an engine checkout checks its pushes against the profiles of the private copies it names", () => withTemp((base) => {
+test("an engine checkout checks its pushes against the profiles of the private copies it names", () => withTemp(async (base) => {
   process.env.FACTLOOM_UPSTREAM = "https://github.com/example-org/engine.git";
   try {
     const mine = repo(join(base, "mine"));
@@ -172,11 +173,66 @@ test("an engine checkout checks its pushes against the profiles of the private c
     engine.write("docs/notes.md", "Questions go to pat.lee@example.org.\n");
     const leaky = engine.commit("docs");
     const push = (from: string, to: string) => checkPush("origin", upstreamUrl(), [{ localSha: to, remoteSha: from }], engine.dir);
-    assert.deepStrictEqual(push(ownAddress, leaky), [], "with no private copy named, the engine checkout knows no one's details");
+    assert.deepStrictEqual(await push(ownAddress, leaky), [], "with no private copy named, the engine checkout knows no one's details");
     git(["config", "--add", PRIVATE_COPY_KEY, mine.dir], engine.dir);
-    assert.ok(push(ownAddress, leaky).some((p) => p.includes("personal details")), "once named, the copy's profile details are refused");
-    assert.deepStrictEqual(push(first, ownAddress), [], "the engine's own address is not a leak, though the profile links to its owner");
+    assert.ok((await push(ownAddress, leaky)).some((p) => p.includes("personal details")), "once named, the copy's profile details are refused");
+    assert.deepStrictEqual(await push(first, ownAddress), [], "the engine's own address is not a leak, though the profile links to its owner");
   } finally {
     delete process.env.FACTLOOM_UPSTREAM;
   }
+}));
+
+test("Word and PDF files bound for the engine are checked for personal details too", () => withTemp(async (base) => {
+  process.env.FACTLOOM_UPSTREAM = "https://github.com/example-org/engine.git";
+  try {
+    const mine = repo(join(base, "mine"));
+    mine.write("people/pat-lee/profile.md", PROFILE);
+    mine.commit("pat");
+    const engine = repo(join(base, "engine"));
+    git(["config", "--add", PRIVATE_COPY_KEY, mine.dir], engine.dir);
+    engine.write("README.md", "engine\n");
+    const first = engine.commit("engine");
+    const { Document, Packer, Paragraph } = await import("docx");
+    const docx = (text: string) => Packer.toBuffer(new Document({ sections: [{ children: [new Paragraph(text)] }] }));
+    writeFileSync(join(engine.dir, "sample.docx"), await docx("A sample resume for a made-up person."));
+    const clean = engine.commit("a clean sample");
+    assert.deepStrictEqual(await checkPush("origin", upstreamUrl(), [{ localSha: clean, remoteSha: first }], engine.dir), []);
+    writeFileSync(join(engine.dir, "sample.docx"), await docx("Contact pat.lee@example.org"));
+    const leaky = engine.commit("a sample with a real email");
+    const problems = await checkPush("origin", upstreamUrl(), [{ localSha: leaky, remoteSha: clean }], engine.dir);
+    assert.ok(problems.some((p) => p.includes("personal details") && p.includes("sample.docx")), problems.join("; "));
+  } finally {
+    delete process.env.FACTLOOM_UPSTREAM;
+  }
+}));
+
+test("a broken diff driver cannot cut the leak check short", () => withTemp(async (base) => {
+  process.env.FACTLOOM_UPSTREAM = "https://github.com/example-org/engine.git";
+  try {
+    const mine = repo(join(base, "mine"));
+    mine.write("people/pat-lee/profile.md", PROFILE);
+    mine.commit("pat");
+    const engine = repo(join(base, "engine"));
+    git(["config", "--add", PRIVATE_COPY_KEY, mine.dir], engine.dir);
+    git(["config", "diff.pdf.textconv", "false"], engine.dir);
+    engine.write(".gitattributes", "*.pdf binary diff=pdf\n");
+    engine.write("README.md", "engine\n");
+    const first = engine.commit("engine");
+    engine.write("docs/notes.md", "Questions go to pat.lee@example.org.\n");
+    engine.commit("an older commit with a leak");
+    writeFileSync(join(engine.dir, "sample.pdf"), readFileSync(join(REAL_ROOT, "examples", "demo", "people", "jordan-rivera", "resumes", "active", "data-analyst", "Jordan_Rivera_Resume.pdf")));
+    const tip = engine.commit("a newer commit with a PDF, whose diff driver fails");
+    const problems = await checkPush("origin", upstreamUrl(), [{ localSha: tip, remoteSha: first }], engine.dir);
+    assert.ok(problems.some((p) => p.includes("personal details") && p.includes("docs/notes.md")), problems.join("; "));
+  } finally {
+    delete process.env.FACTLOOM_UPSTREAM;
+  }
+}));
+
+test("a push that cannot be read is refused rather than allowed", () => withTemp(async (base) => {
+  const r = repo(join(base, "copy"));
+  r.write("README.md", "x\n");
+  r.commit("x");
+  const problems = await checkPush("origin", join(base, "elsewhere.git"), [{ localSha: "f".repeat(40), remoteSha: ZERO }], r.dir);
+  assert.ok(problems.some((p) => p.includes("could not be checked")), problems.join("; "));
 }));

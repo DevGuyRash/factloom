@@ -8,8 +8,8 @@ import { engineRoot } from "./layers.ts";
 export type Run = { ok: boolean; out: string; err: string };
 
 export function git(args: string[], cwd: string, input?: string): Run {
-  const r = spawnSync("git", args, { cwd, encoding: "utf8", input });
-  return { ok: r.status === 0, out: (r.stdout ?? "").trim(), err: (r.stderr ?? "").trim() };
+  const r = spawnSync("git", args, { cwd, encoding: "utf8", input, maxBuffer: 1 << 30 });
+  return { ok: r.status === 0 && !r.error, out: (r.stdout ?? "").trim(), err: (r.stderr || r.error?.message || "").trim() };
 }
 
 export function gh(args: string[], cwd: string): Run {
@@ -110,8 +110,9 @@ export function ensureUpstreamRemote(cwd: string): { remote: Remote; added?: str
 /** Paths under people/ and custom/ that the public engine itself ships (and so may be pushed anywhere). */
 export const ENGINE_OWNED_DATA = new Set(["people/.gitkeep", "custom/README.md"]);
 
-/** Paths a commit range touches under people/ or custom/, beyond the files the engine itself ships. */
+/** Paths a commit range touches under people/ or custom/, beyond the files the engine itself ships. Throws when git cannot tell. */
 export function dataPathsIn(range: string[], cwd: string): string[] {
   const r = git(["log", "--format=", "--name-only", ...range, "--", "people", "custom"], cwd);
+  if (!r.ok) throw new Error(`git could not list the changed files (${r.err.split("\n")[0]})`);
   return [...new Set(r.out.split("\n").map((s) => s.trim()).filter((p) => p && !ENGINE_OWNED_DATA.has(p)))].sort();
 }

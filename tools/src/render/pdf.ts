@@ -5,8 +5,9 @@ import { dirname } from "node:path";
 
 /**
  * Returns the PDF path, or null when no working LibreOffice binary exists (the .docx is still
- * usable on its own). /usr/bin/soffice is tried before /usr/local/bin/soffice because on this
- * host /usr/local/bin/soffice is a firejail wrapper that cannot read files under /tmp.
+ * usable on its own). The distribution's own binaries are tried before PATH, because sandbox
+ * wrappers placed earlier on PATH (such as firejail's) can be unable to read files in the temp
+ * directory.
  */
 export function toPdf(docxPath: string): string | null {
   const candidates = [process.env.SOFFICE, "/usr/bin/soffice", "/usr/lib/libreoffice/program/soffice",

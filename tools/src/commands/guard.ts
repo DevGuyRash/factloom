@@ -1,11 +1,15 @@
 // The push guard. Personal data (people/ and custom/) may go only to the one private repository the
 // person verified, never to the public engine; engine changes may go anywhere, but not with a person's
 // name, email, phone, or links in them. The pre-push hook (.githooks/pre-push) runs `guard pre-push`.
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { extname, join } from "node:path";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
 import { dataPathsIn, ENGINE_OWNED_DATA, git, PRIVATE_REMOTE_KEY, privateCopies, remotes, repoSlug, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
+import { extractDocumentText } from "../lib/pii.ts";
 import { findByType, listPeople, personDir, repoRoot } from "../lib/repo.ts";
 
 const ZERO = /^0+$/;
@@ -36,41 +40,92 @@ export function personalTokens(root: string, extraRoots: string[] = []): string[
   return [...out];
 }
 
-/** Added lines in a commit range, outside people/ and custom/, that contain a personal token. */
+/** The tokens `text` contains: phone digits match digits anywhere, everything else matches case-insensitively. */
+export function tokensIn(text: string, tokens: string[]): string[] {
+  const lower = text.toLowerCase(), digits = text.replace(/\D/g, "");
+  return tokens.filter((t) => (/^\d+$/.test(t) ? digits.includes(t) : lower.includes(t.toLowerCase())));
+}
+
+/**
+ * Added lines in a commit range, outside people/ and custom/, that contain a personal token. Diffs
+ * are read without diff drivers, so a broken driver cannot cut the check short (Word and PDF files
+ * are checked by documentsIn). Throws when git cannot produce the diff.
+ */
 export function leaksIn(range: string[], tokens: string[], cwd: string): { file: string; token: string }[] {
   if (!tokens.length) return [];
-  const diff = git(["log", "-p", "--format=", "--no-color", "--unified=0", ...range, "--", ".", ":(exclude)people", ":(exclude)custom"], cwd).out;
+  const r = git(["log", "-p", "--no-textconv", "--no-ext-diff", "--format=", "--no-color", "--unified=0", ...range, "--", ".", ":(exclude)people", ":(exclude)custom"], cwd);
+  if (!r.ok) throw new Error(`git could not show the changes (${r.err.split("\n")[0]})`);
   const hits: { file: string; token: string }[] = [];
   let file = "";
-  for (const line of diff.split("\n")) {
+  for (const line of r.out.split("\n")) {
     if (line.startsWith("+++ ")) { file = line.replace(/^\+\+\+ (b\/)?/, ""); continue; }
     if (!line.startsWith("+") || line.startsWith("+++")) continue;
-    const digitsOnly = line.replace(/\D/g, "");
-    for (const t of tokens) {
-      const hit = /^\d+$/.test(t) ? digitsOnly.includes(t) : line.toLowerCase().includes(t.toLowerCase());
-      if (hit) hits.push({ file, token: t });
-    }
+    for (const token of tokensIn(line, tokens)) hits.push({ file, token });
   }
   return hits.filter((h, i) => hits.findIndex((o) => o.file === h.file && o.token === h.token) === i);
 }
 
+/**
+ * The text of every Word and PDF file version a push sends outside people/ and custom/ (null when
+ * one cannot be read), so documents are checked for personal details as well as text files.
+ */
+export async function documentsIn(range: string[], cwd: string): Promise<{ file: string; text: string | null }[]> {
+  const r = git(["rev-list", "--objects", ...range], cwd);
+  if (!r.ok) throw new Error(`git could not list what the push sends (${r.err.split("\n")[0]})`);
+  const docs = r.out.split("\n").flatMap((line) => {
+    const i = line.indexOf(" ");
+    const path = i > 0 ? line.slice(i + 1) : "";
+    return /\.(docx|pdf)$/i.test(path) && !/^(people|custom)\//.test(path) ? [{ id: line.slice(0, i), path }] : [];
+  });
+  if (!docs.length) return [];
+  const tmp = mkdtempSync(join(tmpdir(), "factloom-guard-"));
+  try {
+    const out: { file: string; text: string | null }[] = [];
+    for (const d of docs) {
+      const blob = spawnSync("git", ["cat-file", "blob", d.id], { cwd, maxBuffer: 1 << 30 });
+      if (blob.status !== 0) { out.push({ file: d.path, text: null }); continue; }
+      const file = join(tmp, `${d.id}${extname(d.path)}`);
+      writeFileSync(file, blob.stdout);
+      out.push({ file: d.path, text: await extractDocumentText(file) });
+    }
+    return out;
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
 type RefUpdate = { localSha: string; remoteSha: string };
 
-/** Checks one push; returns the reasons to refuse it (empty to allow). */
-export function checkPush(remoteName: string, url: string, updates: RefUpdate[], cwd: string, root = cwd): string[] {
+/** Checks one push; returns the reasons to refuse it (empty to allow). Anything that cannot be checked is a reason. */
+export async function checkPush(remoteName: string, url: string, updates: RefUpdate[], cwd: string, root = cwd): Promise<string[]> {
   const problems: string[] = [];
   const toUpstream = sameRepo(url, upstreamUrl());
   for (const u of updates) {
     if (ZERO.test(u.localSha)) continue; // deleting a branch sends no content
     const range = ZERO.test(u.remoteSha) ? [u.localSha, "--not", `--remotes=${remoteName}`] : [`${u.remoteSha}..${u.localSha}`];
-    const data = dataPathsIn(range, cwd);
+    let data: string[];
+    try {
+      data = dataPathsIn(range, cwd);
+    } catch (e) {
+      problems.push(`the push could not be checked (${e instanceof Error ? e.message : String(e)}); fix that, then push again`);
+      continue;
+    }
     if (toUpstream) {
       if (data.length) problems.push(`this push would publish ${data.length} file(s) from people/ or custom/ to the public engine (${repoSlug(url)}), for example ${data.slice(0, 3).join(", ")}. Engine changes go from a branch based on the engine (see CONTRIBUTING.md).`);
       // The engine's own address is public by definition, even when it contains a person's link.
       const engineAddress = upstreamUrl().toLowerCase();
       const tokens = personalTokens(root, privateCopies(cwd)).filter((t) => !engineAddress.includes(t.toLowerCase()));
-      const leaks = leaksIn(range, tokens, cwd);
-      if (leaks.length) problems.push(`these engine changes contain personal details from a profile: ${leaks.slice(0, 5).map((l) => `${l.file} (${l.token.length > 3 ? `${l.token.slice(0, 2)}…` : "…"})`).join(", ")}. Remove them before contributing.`);
+      if (!tokens.length) continue;
+      try {
+        const leaks = leaksIn(range, tokens, cwd);
+        for (const d of await documentsIn(range, cwd)) {
+          if (d.text === null) problems.push(`${d.file}: this document could not be read to check it for personal details (install pdftotext from poppler-utils), so check it yourself first`);
+          else for (const token of tokensIn(d.text, tokens)) leaks.push({ file: d.file, token });
+        }
+        if (leaks.length) problems.push(`these engine changes contain personal details from a profile: ${leaks.slice(0, 5).map((l) => `${l.file} (${l.token.length > 3 ? `${l.token.slice(0, 2)}…` : "…"})`).join(", ")}. Remove them before contributing.`);
+      } catch (e) {
+        problems.push(`the changes could not be checked for personal details (${e instanceof Error ? e.message : String(e)}); fix that, then push again`);
+      }
       continue;
     }
     if (!data.length) continue;
@@ -83,11 +138,11 @@ export function checkPush(remoteName: string, url: string, updates: RefUpdate[],
   return problems;
 }
 
-function prePush(remoteName: string, url: string, root: string): number {
+async function prePush(remoteName: string, url: string, root: string): Promise<number> {
   let input = "";
   try { if (!process.stdin.isTTY) input = readFileSync(0, "utf8"); } catch { input = ""; }
   const updates = input.split("\n").map((l) => l.trim().split(/\s+/)).filter((p) => p.length === 4).map(([, localSha, , remoteSha]) => ({ localSha, remoteSha }));
-  const problems = checkPush(remoteName, url, updates, root);
+  const problems = await checkPush(remoteName, url, updates, root);
   if (!problems.length) return 0;
   console.error(`push refused by the factloom guard:\n  - ${problems.join("\n  - ")}\n(If you are certain, \`git push --no-verify\` skips this check.)`);
   return 1;
@@ -135,13 +190,13 @@ const command: Command = {
   name: "guard",
   summary: "Keep personal data in your private repository: the pre-push check, and which remote may receive it",
   usage: USAGE,
-  run(argv) {
+  async run(argv) {
     const a = parseArgs(argv, ["force"]);
     const root = repoRoot();
     switch (a._[0] ?? "status") {
       case "status": return status(root);
       case "allow": return allow(a._[1] ?? flag(a, "remote") ?? "origin", root, has(a, "force"));
-      case "pre-push": return a._[1] && a._[2] ? prePush(a._[1], a._[2], root) : (console.error(`usage: ${USAGE}`), 2);
+      case "pre-push": return a._[1] && a._[2] ? await prePush(a._[1], a._[2], root) : (console.error(`usage: ${USAGE}`), 2);
       case "upstream": return upstreamCheck(root);
       default: console.error(`usage: ${USAGE}`); return 2;
     }

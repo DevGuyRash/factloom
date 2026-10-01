@@ -74,7 +74,9 @@ Enables `.githooks/pre-commit`, which runs `resumes check` and `resumes pii --st
 commit (skipping itself with a message when `tools/node_modules` is missing), and
 `.githooks/pre-push`, which runs `resumes guard pre-push`: pushes carrying `people/` or `custom/` go
 only to the remote recorded by `resumes guard allow` (or one GitHub reports private), never to the
-public engine, and engine changes bound for the engine may not contain profile details. Without the
+public engine, and engine changes bound for the engine may not contain profile details, in text files or in
+the text of Word and PDF files (images are not read, so examples and screenshots come from the demo person).
+A push the guard cannot read is refused. Without the
 tools installed the pre-push hook refuses, since a privacy check must not be skipped silently.
 
 ## CI

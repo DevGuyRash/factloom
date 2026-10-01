@@ -9,9 +9,9 @@ import JSZip from "jszip";
 import YAML from "yaml";
 import { dataLayers } from "./layers.ts";
 
-// /usr/local/bin/pdftotext on this host is a firejail wrapper, not the real binary; only the
-// real path is safe to shell out to, so there is no PATH fallback here.
-const PDFTOTEXT = "/usr/bin/pdftotext";
+// The distribution's own pdftotext first, then whatever PATH finds: sandbox wrappers placed earlier on
+// PATH (such as firejail's) can be unable to read files in the temp directory.
+const PDFTOTEXT_CANDIDATES = ["/usr/bin/pdftotext", "pdftotext"];
 
 async function extractDocxText(path: string): Promise<string | null> {
   try {
@@ -27,12 +27,15 @@ async function extractDocxText(path: string): Promise<string | null> {
 }
 
 function extractPdfText(path: string): string | null {
-  if (!existsSync(PDFTOTEXT)) return null;
-  try {
-    return execFileSync(PDFTOTEXT, [path, "-"], { encoding: "utf8" });
-  } catch {
-    return null;
+  for (const bin of PDFTOTEXT_CANDIDATES) {
+    if (bin.startsWith("/") && !existsSync(bin)) continue;
+    try {
+      return execFileSync(bin, [path, "-"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    } catch {
+      // try the next candidate
+    }
   }
+  return null;
 }
 
 /** Text content of a resume file, or null when its format cannot be read (e.g. no pdftotext). */

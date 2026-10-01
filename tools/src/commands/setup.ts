@@ -63,7 +63,8 @@ const command: Command = {
       git(["config", "core.hooksPath", ".githooks"], root);
       say("enabled the git hooks (checks before each commit; the privacy guard before each push)");
     }
-    const pandoc = which("pandoc"), pdftotext = which("pdftotext");
+    // The distribution's pdftotext first: a sandbox wrapper earlier on PATH may not read git's temp files.
+    const pandoc = which("pandoc"), pdftotext = ["/usr/bin/pdftotext"].find((p) => existsSync(p)) ?? which("pdftotext");
     if (pandoc && !git(["config", "--get", "diff.docx.textconv"], root).ok) { git(["config", "diff.docx.textconv", "pandoc --to=plain --wrap=none"], root); say("Word files now show as text in git diffs"); }
     if (pdftotext && !git(["config", "--get", "diff.pdf.textconv"], root).ok) { git(["config", "diff.pdf.textconv", `sh -c '${pdftotext} -layout "$0" -'`], root); say("PDF files now show as text in git diffs"); }
 
