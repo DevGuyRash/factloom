@@ -16,7 +16,7 @@ Truthful, agent-driven job applications. You write every fact about your work on
 - **Truth-locked.** A claim you have not confirmed carries a `confirm` flag: the resume is marked for review, tailoring refuses it, and cover letters may not repeat it until you confirm.
 - **Applies for you.** Open job postings or job sites in the browser your agent controls and say "apply to the jobs open in my browser." The agent captures each posting, picks and tailors a resume, writes a cover letter when wanted, fills the form from your answers, submits or holds it, and records what it sent.
 - **Knows what to apply for.** Each resume version's guide is written from current research: the titles employers use, the seniority the facts support, pay, and saved searches that find those roles. `./resumes status` flags guides due for fresh research (every 90 days by default).
-- **Accounts and codes, if you allow it.** Name an account email, a password source (your password manager, or a file for one session), and whether the agent may read verification emails. Whether a given agent will create accounts or type passwords also depends on that agent's own rules.
+- **Accounts and codes, if you allow it.** Onboarding asks who handles sign-ins and new accounts (you, or the agent with your password manager or with a password you type once per session into a hidden prompt), which email new accounts use, and who reads verification emails. You never edit a file for it. Whether a given agent will create accounts or type passwords also depends on that agent's own rules.
 - **Asks before it guesses.** Each session starts with onboarding (work authorization, travel, salary approach, and so on). New questions from forms land in your inbox for review, so the next session already knows them.
 - **Keeps your data private.** Your people and settings live in your own private repository; a pre-push guard refuses to send them anywhere else.
 
@@ -69,7 +69,7 @@ On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode
 - `people/` and `custom/` hold your data. They belong only in your private repository: the pre-push guard refuses to push them anywhere else, and refuses personal details in changes bound for the public engine. `./resumes doctor` warns if your repository is public.
 - Street addresses and anything else you keep out of git go in `*.local.*` files, which git ignores. Session answers are kept in one of those too.
 - Government ID numbers, dates of birth, and bank details are never stored: you type them into the form yourself, and the agent holds the application for you.
-- Passwords never go in tracked files. Your password manager fills them, or, if you choose, a git-ignored file holds an account email and password for a single session, and the agent deletes it at the end.
+- Passwords never go in tracked files. Your password manager fills them, or, if you choose, a password you type into a hidden prompt is kept in a git-ignored file for a single session and cleared at its end.
 - The pre-commit hook scans staged files for personal data such as street addresses, card numbers, and keys.
 
 ## Updating

@@ -110,7 +110,7 @@ const command: Command = {
     // A password file left behind after a session ends.
     for (const p of listPeople(root)) {
       for (const file of findByType(personDir(p, root), "session-credentials")) {
-        checks.push({ name: "session credentials", ok: true, note: true, detail: `${rel(file, root)} holds a password for one session`, fix: "delete it once that session is over" });
+        checks.push({ name: "session credentials", ok: true, note: true, detail: `${rel(file, root)} holds a password for one session`, fix: "./resumes credentials clear once that session is over" });
       }
     }
 

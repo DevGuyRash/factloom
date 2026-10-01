@@ -9,7 +9,8 @@ Onboarding gets the session the answers it needs to start applying. They are kep
 3. Derive what the repository already shows (employment history, education, links, government employment, how-heard) and have the person confirm it in the same batches.
 4. Ask for experience-years figures for the skills the target roles name most (languages, platforms, domains), proposing each from the profile and evidence with its basis, so later screening questions are covered.
 5. Salary answers come from the person: a figure or range per kind of role and wording for free-text fields.
-6. Write the answers to the session-answers file, then begin applying. Questions met later go to the person as they arise, or onto the waiting list when the person is away; add each answer they give to the file.
+6. When `accounts.handling` calls for a session password and `./resumes credentials status` shows none, have the person run `./resumes credentials set` in a terminal; open one for them when the host can. It asks for the password without showing it, so never ask for a password in the chat.
+7. Write the answers to the session-answers file, then begin applying. Questions met later go to the person as they arise, or onto the waiting list when the person is away; add each answer they give to the file.
 
 ### Session-answers file
 
@@ -48,7 +49,7 @@ When the person asks to save answers (at any point, or when offered at the end o
 - Answers the person chooses to keep: the `answers` file.
 - A street address and anything else the person wants out of git: `people/<person>/private.local.md` (frontmatter `type: private`), read when filling forms.
 - Government ID numbers, date of birth, and bank or payment details are entered by the person on the form itself, so they are never written into files.
-- Passwords never go in tracked files. They come from the person's password manager, or, when the profile's "Accounts and email" section says so, from `people/<person>/accounts.local.md` (`type: session-credentials`): a git-ignored file the person writes for one session, holding the account email and a password used nowhere else, which you delete when the session ends.
+- Passwords never go in tracked files. They come from the person's password manager, or, when `accounts.handling` calls for a session password, from `people/<person>/accounts.local.md` (`type: session-credentials`): a git-ignored file that `./resumes credentials set` writes from a hidden prompt, holding the account email and a password used nowhere else, and that `./resumes credentials clear` removes when the session ends.
 
 ## Inbox
 

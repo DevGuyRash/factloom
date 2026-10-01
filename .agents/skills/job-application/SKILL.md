@@ -10,7 +10,7 @@ You work through whatever browser or computer-use tools the host provides, in th
 ## Start of a session
 
 1. Settle whose applications these are: the person you are talking with unless they name someone else. Skip profiles with `apply: disabled`. When the person has no directory yet, or asks to be set up, start with "First run" in AGENTS.md.
-2. Read that person's profile (including any standing instruction and its "Accounts and email" section), evidence, stories, inbox, and active resume guides, plus the site notes (`shared/` and `custom/`); `./resumes status` summarizes what is pending.
+2. Read that person's profile (including any standing instruction), evidence, stories, inbox, and active resume guides, plus the site notes (`shared/` and `custom/`); `./resumes status` summarizes what is pending.
 3. Onboard for this session ([onboarding](references/onboarding.md)): `./resumes onboarding` lists saved answers to confirm and the open core questions; `onboarding start` and `onboarding answer` keep the session-answers file, which you re-read before each application.
 4. In the same exchange, settle the `review` items of every guide with `status: needs-review`. A correction changes the resume itself: edit `resumes/source/facts.yaml` (or have the person provide a corrected file when there is no source), rebuild, and commit ([resumes](references/resumes.md)). Research any guide that `./resumes status` lists as needing it before relying on its targets ([resumes](references/resumes.md), "Writing and refreshing a guide").
 5. `./resumes run start`, then in one message list the queue, the open tabs, and the searches due (`./resumes searches due`), invite the person to add anything missed, and begin. If `./resumes doctor` shows no himalaya, recommend it in that message ([communications](references/communications.md)).
@@ -37,7 +37,7 @@ When the person stops you or the sources run dry:
 
 - `./resumes run end`, `./resumes dashboard`, and summarize: submitted (with confirmations), held (with exactly what each needs from the person), and skipped (with reasons).
 - Show new inbox entries (`./resumes inbox`) and offer to review them now; offer to save this session's answers (`onboarding answer … --save`).
-- Delete the session credentials file (`type: session-credentials`) if the person wrote one for this session.
+- Clear the session password, if there is one: `./resumes credentials clear`.
 - Add dated notes to `custom/site-notes.md` for anything a future session should know, run `./resumes check`, commit, and push.
 
 ## Other requests

@@ -20,6 +20,21 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: choice
 - Policy: auto
 
+### accounts.handling (core)
+- Ask: When an application needs a sign-in or a new account on a job site, who handles it: you (the agent holds those steps for you), the agent with passwords from your password manager, or the agent with a password you type once per session into a hidden prompt (`./resumes credentials set`)? An agent whose own rules forbid creating accounts or typing passwords holds those steps whatever the answer.
+- Shape: choice: the person, the agent with the password manager, or the agent with a session password
+- Policy: confirm
+
+### accounts.email (core)
+- Ask: Which email address should new job-site accounts use? Offer the profile's email. An address used only for the job search keeps the mailbox an agent may read to application mail.
+- Shape: email address
+- Policy: confirm
+
+### mail.verification (core)
+- Ask: When a site emails a verification code or link, who reads it: you, or the agent? The agent needs mailbox access through himalaya and reads only the newest message from that site.
+- Shape: choice: the person or the agent
+- Policy: confirm
+
 ## Identity and contact
 
 ### identity.legal-name (core)
