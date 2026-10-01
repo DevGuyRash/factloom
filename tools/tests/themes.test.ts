@@ -158,13 +158,15 @@ test("docs/themes.md documents every theme setting", () => {
   assert.deepStrictEqual(missing, [], "add these settings to docs/themes.md");
 });
 
-test("an engine run against another copy uses its own defaults, while that copy's custom/ themes still apply", () => {
+test("defaults follow the engine: against another full copy the running engine's apply; a bare data root supplies its own", () => {
   const fx = makeFixture({
     "shared/templates/themes/modern.yaml": "description: an older modern from another copy\n",
     "custom/templates/themes/mine.yaml": "extends: modern\ncolors: { accent: \"0F766E\" }\n",
   });
   try {
-    assert.match(loadTheme("modern", fx.root).description, /^Clean sans-serif/, "the running engine's modern, not the copy's older one");
+    assert.strictEqual(loadTheme("modern", fx.root).description, "an older modern from another copy", "a data root without an engine of its own supplies its defaults");
+    fx.write("tools/src/cli.ts", "// the engine this copy carries\n");
+    assert.match(loadTheme("modern", fx.root).description, /^Clean sans-serif/, "against a full copy, the running engine's modern wins over the copy's older one");
     const mine = loadTheme("mine", fx.root);
     assert.strictEqual(mine.colors.accent, "0F766E", "the copy's own theme applies");
     assert.strictEqual(mine.fonts.body, "Calibri", "and it extends the running engine's modern");

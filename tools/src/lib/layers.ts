@@ -17,13 +17,16 @@ export const customDir = (root = repoRoot()): string => join(root, "custom");
 const unique = (dirs: string[]): string[] => [...new Set(dirs.map((d) => resolve(d)))];
 
 /**
- * The shared/ directories to read defaults from: the running engine's own first, so defaults always
- * match the code that reads them, also when it runs against another copy (RESUMES_ROOT pointing at a
- * person's repository to try an engine change on their data). A data root's own shared/ only supplies
- * files this engine lacks, such as a test fixture's.
+ * The shared/ directories to read defaults from, most specific first. Defaults belong to an engine:
+ * when this engine runs against another full copy (RESUMES_ROOT pointing at a person's repository, to
+ * try an engine change on their data), that copy's shared/ came with its own engine version, so this
+ * engine's defaults come first. A data root without an engine of its own (a test fixture standing in
+ * for a whole repository) supplies its defaults first.
  */
 export function sharedDirs(root = repoRoot()): string[] {
-  return unique([join(engineRoot(), "shared"), join(root, "shared")]);
+  const own = join(root, "shared"), engine = join(engineRoot(), "shared");
+  const rootHasEngine = existsSync(join(root, "tools", "src", "cli.ts"));
+  return unique(rootHasEngine ? [engine, own] : [own, engine]);
 }
 
 /**
