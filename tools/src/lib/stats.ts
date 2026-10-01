@@ -83,6 +83,8 @@ export type PendingSnapshot = {
   followupsDue: { dir: string; company: string; role: string; followUp: string }[];
   inboxCount: number;
   guidesNeedingReview: { path: string }[];
+  /** Guides never researched, or researched longer ago than the pipeline's guide_research_days. */
+  guidesNeedingResearch: { path: string; researched: string | null }[];
   searchesDue: number;
 };
 
@@ -126,5 +128,10 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
   const guidesNeedingReview = findByType(personDir(person, root), "resume-guide")
     .filter((p) => peek(p)?.status === "needs-review")
     .map((path) => ({ path }));
-  return { statusCounts, held, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, searchesDue: dueSearches(person, root).length };
+  const guidesNeedingResearch = findByType(personDir(person, root), "resume-guide").flatMap((path) => {
+    const value = peek(path)?.researched;
+    const researched = typeof value === "string" && value ? value : null;
+    return !researched || daysSince(researched) >= cfg.guide_research_days ? [{ path, researched }] : [];
+  });
+  return { statusCounts, held, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length };
 }

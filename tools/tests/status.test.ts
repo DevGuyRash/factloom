@@ -47,3 +47,22 @@ test(
     },
   ),
 );
+
+test(
+  "status lists guides never researched or researched longer ago than guide_research_days",
+  withFixture(
+    {
+      "people/pat-lee/resumes/active/fresh/guide.md": `---\ntype: resume-guide\nperson: pat-lee\nstatus: ready\nuse_for: [a]\nresearched: "${new Date(Date.now() - 10 * 86400000).toLocaleDateString("en-CA")}"\n---\n`,
+      "people/pat-lee/resumes/active/old/guide.md": '---\ntype: resume-guide\nperson: pat-lee\nstatus: ready\nuse_for: [a]\nresearched: "2020-01-01"\n---\n',
+      "people/pat-lee/resumes/active/never/guide.md": "---\ntype: resume-guide\nperson: pat-lee\nstatus: ready\nuse_for: [a]\n---\n",
+    },
+    async () => {
+      const { lines } = await captureLog(() => command.run(["--person", "pat-lee"]));
+      const text = lines.join("\n");
+      assert.match(text, /guides needing research: 2/);
+      assert.match(text, /old\/guide\.md \(researched 2020-01-01\)/);
+      assert.match(text, /never\/guide\.md \(never researched\)/);
+      assert.doesNotMatch(text, /fresh\/guide\.md/);
+    },
+  ),
+);

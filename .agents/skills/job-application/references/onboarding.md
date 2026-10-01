@@ -47,7 +47,8 @@ When the person asks to save answers (at any point, or when offered at the end o
 - The session's answers: the session-answers file.
 - Answers the person chooses to keep: the `answers` file.
 - A street address and anything else the person wants out of git: `people/<person>/private.local.md` (frontmatter `type: private`), read when filling forms.
-- Government ID numbers, date of birth, passwords, and bank or payment details are entered by the person on the form itself, so they are never written into files.
+- Government ID numbers, date of birth, and bank or payment details are entered by the person on the form itself, so they are never written into files.
+- Passwords never go in tracked files. They come from the person's password manager, or, when the profile's "Accounts and email" section says so, from `people/<person>/accounts.local.md` (`type: session-credentials`): a git-ignored file the person writes for one session, holding the account email and a password used nowhere else, which you delete when the session ends.
 
 ## Inbox
 

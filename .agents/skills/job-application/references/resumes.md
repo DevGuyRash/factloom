@@ -16,6 +16,19 @@ When a person has only an existing resume file:
 2. Write `resumes/source/facts.yaml` from that text (`./resumes person new` created a starter): keep each claim as the person wrote it; put any number or claim you reword, merge, or cannot trace in that bullet's `confirm` list.
 3. `./resumes variant new <name> --person <slug> [--theme <theme>]` writes a structure listing every fact and builds it; trim and reorder the structure for that kind of role, then `./resumes build-resumes --person <slug> --variant <name>`. Make further variants with `--from <variant>` and change what differs.
 4. Compare the built resume with the original line by line, show it to the person, and settle the guide's `review` items before using it.
+5. Research the market for each variant and write its guide (below).
+
+## Writing and refreshing a guide
+
+A guide says what its resume is for: the roles to apply to with it, the ones to leave to a sibling variant, and how to find them. Write it from current research, not from the resume alone, when a variant is new, when `./resumes status` lists it as needing research (its `researched` date is missing or older than the pipeline's `guide_research_days`), or when the person changes direction.
+
+1. Research the market for what this variant shows the person can do: read a broad sample of recent postings (twenty or more, across the boards the person uses and employers' own career pages) and current pay data for the person's locations. Keep the date and source of everything you use.
+2. Decide the targets from that research: the titles employers use for this work today, newer titles included; the seniority the person's facts support; the industries and kinds of employers hiring; and the qualifications postings commonly require. Keep only targets the person's facts support, and list stretch roles apart for the person to approve.
+3. Write the guide: `headline`, `use_for` (role families, best fits first), `avoid_for` (naming the sibling variant to use instead), `keywords` (terms postings use that the person's facts truthfully support), the "Target roles" section (titles, seniority, industries, pay ranges by location), and dated "Market notes" with their sources. Set `researched` to today.
+4. Save searches that find these roles in the person's searches file (`type: searches`; each item has an `id`, this `variant`, the `site`, a `url`, the `query` and `filters`, and `every_days`), so `./resumes searches due` brings them back on schedule.
+5. Show the person the targets and the stretch roles; anything they question goes in the guide's `review`.
+
+Research shapes the targeting only. It never adds a claim to a resume: a qualification the market wants that the person's facts do not show is a gap to tell them about, never a keyword to add.
 
 ## Choosing a theme
 

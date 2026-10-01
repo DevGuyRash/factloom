@@ -18,6 +18,8 @@ test("person new renders profile, answers, inbox, evidence from templates; varia
     assert.equal(profile.apply, "disabled");
     assert.deepEqual(profile.links, ["https://example.com/jr"]);
     for (const f of ["answers.md", "inbox.md", "evidence.md"]) assert.ok(existsSync(join(dir, f)), f);
+    const profileText = readFileSync(join(dir, "profile.md"), "utf8");
+    assert.match(profileText, /## Accounts and email[\s\S]*- New site accounts: held for the person[\s\S]*- Passwords: entered by the person[\s\S]*- Verification emails: read by the person/, "accounts stay with the person until they choose otherwise");
     assert.equal(await person.run(["new", "Jamie", "Rivera"]), 1);
     const variant = (await import("../src/commands/variant.ts")).default;
     assert.equal(await variant.run(["new", "Data Analyst", "--person", "jamie-rivera", "--headline", "Data Analyst | SQL"]), 0);
@@ -25,6 +27,8 @@ test("person new renders profile, answers, inbox, evidence from templates; varia
     assert.equal(guide.type, "resume-guide");
     assert.equal(guide.status, "needs-review");
     assert.equal(guide.headline, "Data Analyst | SQL");
+    assert.ok("researched" in guide && !guide.researched, "a new guide starts unresearched");
+    assert.match(readFileSync(join(dir, "resumes/active/data-analyst/guide.md"), "utf8"), /## Target roles[\s\S]*## Market notes/);
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
 });
 

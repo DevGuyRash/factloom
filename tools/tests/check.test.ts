@@ -269,3 +269,15 @@ test("docs-consistency warns on a type missing from AGENTS.md", async () => {
     fx.cleanup();
   }
 });
+
+test("a session credentials file is a known type, and check names no password", async () => {
+  const fx = await validFixture();
+  try {
+    fx.write("people/pat-lee/accounts.local.md", "---\ntype: session-credentials\nperson: pat-lee\nemail: jobs@example.com\npassword: correct-horse-battery\n---\n");
+    const { errors, warnings } = await run(fx.root);
+    assert.deepEqual(errors, []);
+    assert.ok(![...errors, ...warnings].some((m) => m.includes("correct-horse-battery")));
+  } finally {
+    fx.cleanup();
+  }
+});

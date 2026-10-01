@@ -7,6 +7,7 @@ export const DOC_TYPES = {
   answers: ["person"],
   "session-answers": ["person"],
   private: ["person"],
+  "session-credentials": ["person"],
   evidence: ["person"],
   inbox: ["person"],
   notes: ["person"],
@@ -79,4 +80,5 @@ export const FILE_NAMES = {
   stories: "stories.md",
   dashboard: "dashboard.md",
   sessionAnswers: "session.local.md",
+  sessionCredentials: "accounts.local.md",
 } as const;

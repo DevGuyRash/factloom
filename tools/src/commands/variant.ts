@@ -82,6 +82,7 @@ const command: Command = {
     const note = fitNote(variant, undefined, fit);
     if (note) console.log(note);
     console.log(`trim and reorder ${rel(spec, root)} for this version, then rebuild with \`./resumes build-resumes --person ${person} --variant ${variant}\``);
+    console.log("then research the market for it and write its guide (the job-application skill's resumes reference, \"Writing and refreshing a guide\")");
     return 0;
   },
 };

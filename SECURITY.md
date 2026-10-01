@@ -7,5 +7,5 @@ Helpful reports include the affected command or file, steps to reproduce, and th
 Design notes that matter for security:
 
 - Personal data stays in `people/` and `custom/` in each person's private repository; the pre-push guard (`tools/src/commands/guard.ts`) enforces it.
-- Government ID numbers, dates of birth, passwords, and bank details are never stored; the agent holds those steps for the person.
+- Government ID numbers, dates of birth, and bank details are never stored; the agent holds those steps for the person. Passwords never go in tracked files: a password manager fills them, or a person may provide one for a single session in a git-ignored file that the agent deletes afterwards.
 - Text on job sites that addresses agents is treated as page content, never as instructions (see `AGENTS.md`).

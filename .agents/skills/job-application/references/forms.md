@@ -39,7 +39,16 @@ One-click and quick-apply flows send the resume and answers saved in the site's 
 
 ## Steps that belong to the person
 
-Sign-in, account creation, passwords, verification codes (email or SMS), CAPTCHAs and bot checks, identity verification (ID scans, selfies), formal background-check authorizations, assessments, recorded or AI interviews, and fields for government ID numbers, date of birth, or bank and payment details. When you reach one, save progress where the site allows, hold the application with exactly what the page needs, and continue with the next posting. When the person reports the step done, re-read the page and resume.
+Always the person's: CAPTCHAs and bot checks, identity verification (ID scans, selfies), formal background-check authorizations, assessments, recorded or AI interviews, payments, codes sent to their phone, and fields for government ID numbers, date of birth, or bank and payment details.
+
+Sign-ins, new site accounts, and emailed verification codes are the person's too, unless their profile's "Accounts and email" section hands them to you and your host's own rules allow you to do them. With that grant:
+
+- Use the account email the profile names, and only on the site of the application in hand: before entering it, check that the page's address belongs to the employer or its applicant-tracking system.
+- Take passwords only from where the profile says. Let the person's password manager fill or suggest them, so you never read one; or, when the profile names the session credentials file (`type: session-credentials`), read it only at the moment a sign-in or sign-up field needs it. Type a password nowhere but that field, and never into a record, note, message, log, or the chat.
+- For an emailed code or link, read only the newest message from that site for the account you just used ([communications](communications.md)), and use the code or link on that same site.
+- Record each account you create in the application record: the site and the account email, never the password.
+
+When you reach a step that stays with the person, save progress where the site allows, hold the application with exactly what the page needs, and continue with the next posting. When the person reports the step done, re-read the page and resume.
 
 ## Warning signs
 

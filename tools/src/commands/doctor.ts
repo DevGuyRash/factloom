@@ -5,7 +5,7 @@ import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
 import { PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
 import { engineRoot } from "../lib/layers.ts";
-import { findByType, listPeople, personDir, repoRoot } from "../lib/repo.ts";
+import { findByType, listPeople, personDir, rel, repoRoot } from "../lib/repo.ts";
 import { listVariants, loadVariant } from "../render/spec.ts";
 import { loadTheme } from "../render/theme.ts";
 import { missingFonts } from "./themes.ts";
@@ -104,6 +104,13 @@ const command: Command = {
         });
         const allowed = run("git", ["config", "--get", PRIVATE_REMOTE_KEY], root).stdout;
         checks.push({ name: "private data remote", ok: Boolean(allowed), detail: allowed ? repoSlug(allowed) : "not set: pushes of people/ are refused until it is", fix: "./resumes guard allow origin (after making origin private)" });
+      }
+    }
+
+    // A password file left behind after a session ends.
+    for (const p of listPeople(root)) {
+      for (const file of findByType(personDir(p, root), "session-credentials")) {
+        checks.push({ name: "session credentials", ok: true, note: true, detail: `${rel(file, root)} holds a password for one session`, fix: "delete it once that session is over" });
       }
     }
 

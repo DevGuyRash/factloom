@@ -13,6 +13,10 @@ stale_queue_days: 10
 # `pay`: hours in a work-year, for normalizing an hourly pay_min/pay_max to annual.
 hours_per_year: 2080
 
+# `status` lists a resume guide for fresh market research once its `researched` date is this many
+# days old, or when it has none, so each guide's targets keep up with the market.
+guide_research_days: 90
+
 score:
   # Weights for each dimension of a record's `fit:` map (see tools/src/lib/scoring.ts). A
   # dimension missing from `fit:` is left out of both the earned and possible totals, so the

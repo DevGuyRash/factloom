@@ -3,7 +3,7 @@ import type { Command } from "../lib/command.ts";
 import { rel, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { pendingSnapshot } from "../lib/stats.ts";
 
-/** One-screen "what's pending": held apps + reasons, queue counts, follow-ups due, inbox size, guides needing review, searches due. */
+/** One-screen "what's pending": held apps + reasons, queue counts, follow-ups due, inbox size, guides needing review or research, searches due. */
 const command: Command = {
   name: "status",
   summary: "One-screen summary of what's pending",
@@ -22,6 +22,8 @@ const command: Command = {
     console.log(`inbox entries: ${s.inboxCount}`);
     console.log(`guides needing review: ${s.guidesNeedingReview.length}`);
     for (const g of s.guidesNeedingReview) console.log(`  - ${rel(g.path, root)}`);
+    console.log(`guides needing research: ${s.guidesNeedingResearch.length}`);
+    for (const g of s.guidesNeedingResearch) console.log(`  - ${rel(g.path, root)} (${g.researched ? `researched ${g.researched}` : "never researched"})`);
     console.log(`searches due: ${s.searchesDue}`);
     return 0;
   },
