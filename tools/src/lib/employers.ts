@@ -28,10 +28,22 @@ export function saveEmployers(person: string, items: EmployerItem[], root = repo
   return path;
 }
 
-/** The employer record matching `name` (via normalizeCompany), or null. */
+/** Whether two normalized names are one employer by their leading words ("swca" and "swca environmental consultants"). */
+function leadingWordsMatch(a: string, b: string): boolean {
+  if (!a || !b || a === b) return a === b && a !== "";
+  const [shorter, longer] = a.length < b.length ? [a, b] : [b, a];
+  return longer.startsWith(`${shorter} `);
+}
+
+/**
+ * The employer record `name` refers to: the same name (via normalizeCompany), else one whose name
+ * is a shorter or longer form of it by whole leading words, so a block on "SWCA Environmental
+ * Consultants" also catches "SWCA" (while "Meta" does not catch "Metabolic Labs"). Null when none.
+ */
 export function findEmployer(person: string, name: string, root = repoRoot()): EmployerItem | null {
   const key = normalizeCompany(name);
-  return loadEmployers(person, root).items.find((e) => normalizeCompany(e.company) === key) ?? null;
+  const items = loadEmployers(person, root).items;
+  return items.find((e) => normalizeCompany(e.company) === key) ?? items.find((e) => leadingWordsMatch(normalizeCompany(e.company), key)) ?? null;
 }
 
 export const isBlocked = (person: string, name: string, root = repoRoot()): boolean => findEmployer(person, name, root)?.blocked === true;

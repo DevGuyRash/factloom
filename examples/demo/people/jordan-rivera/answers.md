@@ -32,3 +32,8 @@ Answers kept across sessions, keyed by the ids in the onboarding catalog. Sessio
 - Answer: When the form offers one
 - Policy: auto
 - Confirmed: 2026-09-01
+
+### prefs.constraints
+- Answer: No commission-only roles; no roles that need a security clearance; a commute of 45 minutes at most from Denver
+- Policy: confirm
+- Confirmed: 2026-09-01

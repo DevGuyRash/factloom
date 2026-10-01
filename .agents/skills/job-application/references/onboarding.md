@@ -10,7 +10,7 @@ Onboarding gets the session the answers it needs to start applying. They are kep
 4. Ask for experience-years figures for the skills the target roles name most (languages, platforms, domains), proposing each from the profile and evidence with its basis, so later screening questions are covered.
 5. Salary answers come from the person: a figure or range per kind of role and wording for free-text fields.
 6. When `accounts.handling` calls for a session password and `./resumes credentials status` shows none, have the person run `./resumes credentials set` in a terminal; open one for them when the host can. It asks for the password without showing it, so never ask for a password in the chat.
-7. Write the answers to the session-answers file, then begin applying. Questions met later go to the person as they arise, or onto the waiting list when the person is away; add each answer they give to the file.
+7. Write the answers to the session-answers file, then begin applying. Questions met later go to the person as they arise, or onto the waiting list when the person is away; add each answer they give to the file. Constraints the person states later go into `prefs.constraints` the same way, and employers to avoid onto the block list (`./resumes employers block`).
 
 ### Session-answers file
 

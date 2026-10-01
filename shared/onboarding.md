@@ -128,6 +128,18 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: yes / no with limits
 - Policy: confirm
 
+### prefs.constraints (core)
+- Ask: What rules a job out for you that the questions above do not cover? For example: hours, shifts, weekends, or on-call work; how long a commute you accept, or driving for work; physical demands; industries or kinds of work you avoid; commission-only pay; benefits you need; how many applications a day, or how soon to apply to the same employer again. Record schedule, driving, and pace limits under `prefs.schedule`, `background.drivers-license`, and `prefs.pace` as well, so forms reuse them.
+- Use: screens every posting before applying, alongside the other answers; a constraint the person states mid-session is added here at once
+- Shape: list, one constraint per line
+- Policy: confirm
+
+### employers.avoid (core)
+- Ask: Which employers should never get an application from you: your current employer, recent ones, or any others?
+- Use: add each to the blocked employers with its reason (`./resumes employers block <name> --reason <why>`); `queue add` and `app new` refuse them, also under a shorter or longer form of the name
+- Shape: employer names, each with a reason
+- Policy: confirm
+
 ## Timing
 
 ### availability.start (core)
