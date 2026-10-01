@@ -31,5 +31,6 @@ test("doctor reports every check and exits 0 on a machine with a current Node", 
   for (const name of ["node", "tools/node_modules", "soffice", "pandoc", "pdftotext", "git hooks path", "gh auth status"]) {
     assert.ok(lines.some((l) => l.includes(name)), `expected a check line for ${name}`);
   }
-  assert.ok(lines.every((l) => l.startsWith("[OK]") || l.startsWith("[MISSING]")));
+  assert.ok(lines.every((l) => /^\[(OK|MISSING|NOTE|DANGER)\]/.test(l)), "every line has a status");
+  assert.ok(!lines.some((l) => l.startsWith("[DANGER]")), "the engine itself never holds real people's data");
 });
