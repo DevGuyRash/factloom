@@ -66,7 +66,10 @@ export function checkPush(remoteName: string, url: string, updates: RefUpdate[],
     const data = dataPathsIn(range, cwd);
     if (toUpstream) {
       if (data.length) problems.push(`this push would publish ${data.length} file(s) from people/ or custom/ to the public engine (${repoSlug(url)}), for example ${data.slice(0, 3).join(", ")}. Engine changes go from a branch based on the engine (see CONTRIBUTING.md).`);
-      const leaks = leaksIn(range, personalTokens(root, privateCopies(cwd)), cwd);
+      // The engine's own address is public by definition, even when it contains a person's link.
+      const engineAddress = upstreamUrl().toLowerCase();
+      const tokens = personalTokens(root, privateCopies(cwd)).filter((t) => !engineAddress.includes(t.toLowerCase()));
+      const leaks = leaksIn(range, tokens, cwd);
       if (leaks.length) problems.push(`these engine changes contain personal details from a profile: ${leaks.slice(0, 5).map((l) => `${l.file} (${l.token.length > 3 ? `${l.token.slice(0, 2)}…` : "…"})`).join(", ")}. Remove them before contributing.`);
       continue;
     }

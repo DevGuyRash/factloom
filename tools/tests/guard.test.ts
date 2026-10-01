@@ -162,17 +162,20 @@ test("an engine checkout checks its pushes against the profiles of the private c
   process.env.FACTLOOM_UPSTREAM = "https://github.com/example-org/engine.git";
   try {
     const mine = repo(join(base, "mine"));
-    mine.write("people/pat-lee/profile.md", PROFILE);
+    mine.write("people/pat-lee/profile.md", PROFILE.replace("  - https://example.org/patlee\n", "  - https://example.org/patlee\n  - https://github.com/example-org\n"));
     mine.commit("pat");
     const engine = repo(join(base, "engine"));
     engine.write("README.md", "engine\n");
     const first = engine.commit("engine");
+    engine.write("README.md", "engine\n\ngit clone https://github.com/example-org/engine.git\n");
+    const ownAddress = engine.commit("readme: clone command");
     engine.write("docs/notes.md", "Questions go to pat.lee@example.org.\n");
     const leaky = engine.commit("docs");
-    const push = () => checkPush("origin", upstreamUrl(), [{ localSha: leaky, remoteSha: first }], engine.dir);
-    assert.deepStrictEqual(push(), [], "with no private copy named, the engine checkout knows no one's details");
+    const push = (from: string, to: string) => checkPush("origin", upstreamUrl(), [{ localSha: to, remoteSha: from }], engine.dir);
+    assert.deepStrictEqual(push(ownAddress, leaky), [], "with no private copy named, the engine checkout knows no one's details");
     git(["config", "--add", PRIVATE_COPY_KEY, mine.dir], engine.dir);
-    assert.ok(push().some((p) => p.includes("personal details")), "once named, the copy's profile details are refused");
+    assert.ok(push(ownAddress, leaky).some((p) => p.includes("personal details")), "once named, the copy's profile details are refused");
+    assert.deepStrictEqual(push(first, ownAddress), [], "the engine's own address is not a leak, though the profile links to its owner");
   } finally {
     delete process.env.FACTLOOM_UPSTREAM;
   }
