@@ -161,3 +161,26 @@ test("build-resumes --check lists generated resumes that would render differentl
     fx.cleanup();
   }
 });
+
+test("a page-fitted resume is reproduced from the fitting step its guide records, with no PDF to measure", async () => {
+  const fx = makeFixture();
+  try {
+    seedFixture(fx);
+    const { FIT_STEPS, tighten } = await import("../src/render/fit.ts");
+    const { render } = await import("../src/render/docx.ts");
+    const { loadTheme } = await import("../src/render/theme.ts");
+    const { loadFacts, loadVariant, resolveContent } = await import("../src/render/spec.ts");
+    fx.write("people/pat-lee/resumes/source/variants/test-variant.yaml", readFileSync(join(fx.root, "people/pat-lee/resumes/source/variants/test-variant.yaml"), "utf8") + "pages: 1\n");
+    const step = FIT_STEPS[3];
+    const content = resolveContent(loadFacts("pat-lee", fx.root), loadVariant("pat-lee", "test-variant", fx.root));
+    await render(tighten(loadTheme("classic-blue", fx.root), step), content, join(fx.root, "people/pat-lee/resumes/active/test-variant/Pat_Lee_Resume.docx"));
+    const guide = "people/pat-lee/resumes/active/test-variant/guide.md";
+    const guideText = (fitted: string) => `---\ntype: resume-guide\nperson: pat-lee\nstatus: ready\nuse_for: [a]\ngenerated: true\nfitted: "${fitted}"\n---\n`;
+    fx.write(guide, guideText(step.label));
+    assert.deepStrictEqual(await staleGenerated(fx.root), [], "rendered with the recorded step, it matches exactly");
+    fx.write(guide, guideText(FIT_STEPS[0].label));
+    assert.deepStrictEqual((await staleGenerated(fx.root)).map((g) => g.variant), ["test-variant"], "a different recorded step renders differently");
+  } finally {
+    fx.cleanup();
+  }
+});

@@ -21,9 +21,10 @@ export const DERIVED_REVIEW_PREFIX = "Confirm: ";
  * Updates only `review`, `status`, and `generated` in an existing guide: derived items are replaced by
  * the current `confirm` phrases, hand-written items stay, and the guide is ready only when no item
  * remains. `generated: true` records that the active files are built from resumes/source, so they are
- * rebuilt rather than edited (and the reproduction test checks them).
+ * rebuilt rather than edited (and the reproduction test checks them). `fitted` records the page-fitting
+ * step the build used for a variant with `pages`, so a check reproduces the file without LibreOffice.
  */
-function updateGuide(person: string, variant: string, confirms: string[], root: string): void {
+function updateGuide(person: string, variant: string, confirms: string[], root: string, fitted?: string): void {
   const path = guidePathFor(person, variant, root);
   if (!existsSync(path)) return;
   const { data, body } = readDoc(path);
@@ -31,6 +32,8 @@ function updateGuide(person: string, variant: string, confirms: string[], root: 
   data.review = [...manual, ...confirms.map((c) => DERIVED_REVIEW_PREFIX + c)];
   data.status = (data.review as string[]).length ? "needs-review" : "ready";
   data.generated = true;
+  if (fitted) data.fitted = fitted;
+  else delete data.fitted;
   writeDoc(path, data, body);
 }
 
@@ -47,7 +50,7 @@ export async function buildVariantFitted(person: string, variantName: string, di
   const fit = await writeFitted(theme, content, dir, variant.output, variant.pages);
   // Only a build into the active variant directory speaks for the guide; review copies (--out, --theme) leave it alone.
   const active = join(personDir(person, root), "resumes", "active", variantName);
-  if (resolve(dir) === resolve(active) && !opts.theme) updateGuide(person, variantName, confirmsUsed(facts, variant), root);
+  if (resolve(dir) === resolve(active) && !opts.theme) updateGuide(person, variantName, confirmsUsed(facts, variant), root, variant.pages ? fit.step : undefined);
   return fit;
 }
 

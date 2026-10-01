@@ -43,7 +43,7 @@ Research shapes the targeting only. It never adds a claim to a resume: a qualifi
 
 ## Review-item derivation
 
-After each variant builds into its active directory, its `guide.md` `review` and `status` fields are rewritten from the `confirm` phrases of the bullets that variant actually uses (`status: needs-review` when any remain, `ready` otherwise), keeping review items the person wrote by hand; `generated: true` records that the files come from `resumes/source/`. Edit `confirm` lists in `facts.yaml`, not the guide, and rebuild.
+After each variant builds into its active directory, its `guide.md` `review` and `status` fields are rewritten from the `confirm` phrases of the bullets that variant actually uses (`status: needs-review` when any remain, `ready` otherwise), keeping review items the person wrote by hand; `generated: true` records that the files come from `resumes/source/`, and `fitted` records the page-fitting step a variant with `pages` needed, so checks reproduce the file without LibreOffice. Edit `confirm` lists in `facts.yaml`, not the guide, and rebuild.
 
 ## Keywords
 

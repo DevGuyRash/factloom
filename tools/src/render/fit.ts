@@ -19,6 +19,9 @@ export const FIT_STEPS: Step[] = [
   { label: "spacing 60%, type -1 pt, margins 80%", spacing: 0.6, shrink: 2, margins: 0.8 },
 ];
 
+/** The fitting step with this label (as a build records it in a guide's `fitted`), if there is one. */
+export const stepByLabel = (label: string): Step | undefined => FIT_STEPS.find((s) => s.label === label);
+
 const scale = (v: number, f: number) => Math.round(v * f);
 
 /** The theme with spacing scaled, text sizes reduced by `shrink` half-points (body never below 9 pt), and margins scaled. */

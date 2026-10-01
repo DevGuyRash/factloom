@@ -8,7 +8,7 @@ import JSZip from "jszip";
 import { readDoc } from "./frontmatter.ts";
 import { listPeople, personDir, repoRoot } from "./repo.ts";
 import { render } from "../render/docx.ts";
-import { writeFitted } from "../render/fit.ts";
+import { stepByLabel, tighten, writeFitted } from "../render/fit.ts";
 import { listVariants, loadFacts, loadVariant, resolveContent } from "../render/spec.ts";
 import { loadTheme } from "../render/theme.ts";
 
@@ -41,8 +41,17 @@ export async function renderDocx(person: string, variantName: string, dir: strin
   const variant = loadVariant(person, variantName, root);
   const theme = loadTheme(variant.theme, root, { person, overrides: variant.style });
   const content = resolveContent(loadFacts(person, root), variant);
-  // A page target is met by measuring the PDF, so it renders the way a build does; otherwise the .docx is enough.
-  if (variant.pages) return (await writeFitted(theme, content, dir, variant.output, variant.pages)).files.find((f) => f.endsWith(".docx"))!;
+  // A page target was met with the fitting step the build recorded in the guide; reuse it, so no PDF is needed.
+  // Without a recorded step, measure the way a build does.
+  if (variant.pages) {
+    const guide = join(personDir(person, root), "resumes", "active", variantName, "guide.md");
+    const recorded = existsSync(guide) ? readDoc(guide).data.fitted : undefined;
+    const step = typeof recorded === "string" ? stepByLabel(recorded) : undefined;
+    if (!step) return (await writeFitted(theme, content, dir, variant.output, variant.pages)).files.find((f) => f.endsWith(".docx"))!;
+    const out = join(dir, `${variant.output}.docx`);
+    await render(tighten(theme, step), content, out);
+    return out;
+  }
   const out = join(dir, `${variant.output}.docx`);
   await render(theme, content, out);
   return out;
