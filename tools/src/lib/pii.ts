@@ -20,7 +20,14 @@ async function extractDocxText(path: string): Promise<string | null> {
     for (const name of Object.keys(zip.files)) {
       if (/^word\/(document|header\d*|footer\d*)\.xml$/.test(name)) parts.push(await zip.files[name].async("text"));
     }
-    return parts.join(" ").replace(/<[^>]+>/g, " ");
+    // Only the text runs (<w:t>), with tabs, breaks, and paragraph ends as separators: the numbers in
+    // drawing offsets and field codes are not text and would read as long digit runs.
+    let text = "";
+    for (const m of parts.join("\n").matchAll(/<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>|<w:tab\/>|<w:(?:br|cr)\b[^>]*\/>|<\/w:p>/g)) {
+      if (m[1] !== undefined) text += m[1];
+      else text += m[0].startsWith("<w:tab") ? "\t" : "\n";
+    }
+    return text.replace(/&(amp|lt|gt|quot|apos);/g, (_, e: string) => ({ amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" })[e] ?? _);
   } catch {
     return null;
   }

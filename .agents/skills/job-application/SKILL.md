@@ -9,7 +9,7 @@ You work through whatever browser or computer-use tools the host provides, in th
 
 ## Start of a session
 
-1. Settle whose applications these are: the person you are talking with unless they name someone else. Skip profiles with `apply: disabled`. When the person has no directory yet, or asks to be set up, start with "First run" in AGENTS.md.
+1. Settle whose applications these are: the person you are talking with unless they name someone else. Skip profiles with `apply: disabled`. When the person has no directory yet, or asks to be set up, start with "First run" in AGENTS.md. When `./resumes status --person <slug>` shows resume intake pending (files in `drop/`, imported resumes not yet `merged`, or no jobs in `facts.yaml`), finish it first ([intake](references/intake.md)).
 2. Read that person's profile (including any standing instruction), evidence, stories, inbox, and active resume guides, plus the site notes (`shared/` and `custom/`); `./resumes status` summarizes what is pending.
 3. Onboard for this session ([onboarding](references/onboarding.md)): `./resumes onboarding` lists saved answers to confirm and the open core questions, essential ones first. Ask the essential ones before the first application and the rest in batches once applying has started; `onboarding start` and `onboarding answer` keep the session-answers file, which you re-read before each application.
 4. In the same exchange, settle the `review` items of every guide with `status: needs-review`. A correction changes the resume itself: edit `resumes/source/facts.yaml` (or have the person provide a corrected file when there is no source), rebuild, and commit ([resumes](references/resumes.md)). Research any guide that `./resumes status` lists as needing it before relying on its targets ([resumes](references/resumes.md), "Writing and refreshing a guide").
@@ -44,6 +44,7 @@ When the person stops you or the sources run dry:
 
 ## Other requests
 
+- Bringing in a person's existing resumes (any format, several versions) or building their first one: [intake](references/intake.md).
 - Onboarding, saving answers, or reviewing the inbox: [onboarding](references/onboarding.md).
 - "What's pending?", follow-ups (`./resumes followups`, `./resumes draft follow-up`), outcomes (`./resumes outcome`), and what is working (`./resumes stats`, `./resumes dashboard`): [pipeline](references/pipeline.md).
 - Interview prep, thank-you notes, company dossiers, email codes and alerts: [communications](references/communications.md).

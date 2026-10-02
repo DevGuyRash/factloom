@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { listApplications } from "./applications.ts";
 import { peek, readDoc } from "./frontmatter.ts";
+import { dropWaiting, factsWithoutJobs, importedNotes } from "./intake.ts";
 import { loadPipelineConfig } from "./pipeline-config.ts";
 import { loadQueue } from "./queue.ts";
 import { findByType, personDir, repoRoot, today } from "./repo.ts";
@@ -86,6 +87,8 @@ export type PendingSnapshot = {
   /** Guides never researched, or researched longer ago than the pipeline's guide_research_days. */
   guidesNeedingResearch: { path: string; researched: string | null }[];
   searchesDue: number;
+  /** Resume intake: files waiting in drop/, and imported resumes not yet written into facts.yaml. */
+  intake: { dropWaiting: number; pending: { path: string; status: string }[]; noJobsYet: boolean };
 };
 
 function daysSince(dateStr: string): number {
@@ -133,5 +136,10 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     const researched = typeof value === "string" && value ? value : null;
     return !researched || daysSince(researched) >= cfg.guide_research_days ? [{ path, researched }] : [];
   });
-  return { statusCounts, held, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length };
+  const intake = {
+    dropWaiting: dropWaiting(person, root).length,
+    pending: importedNotes(person, root).filter((n) => n.status !== "merged").map((n) => ({ path: n.path, status: n.status })),
+    noJobsYet: factsWithoutJobs(person, root),
+  };
+  return { statusCounts, held, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
 }

@@ -9,4 +9,5 @@
 #   - "000-00-0000"
 paths:
   - "tools/tests/pii.test.ts"
+  - "tools/tests/intake.test.ts"
 strings: []

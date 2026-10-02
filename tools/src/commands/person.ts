@@ -38,7 +38,7 @@ const command: Command = {
     mkdirSync(join(dir, "resumes", "source", "variants"), { recursive: true });
     writeFileSync(join(dir, "resumes", "source", "facts.yaml"), renderTemplate("facts.yaml", ctx, person));
     console.log(`created ${rel(dir)} (apply: disabled until the person wants applications run)`);
-    console.log(`next: \`./resumes import <their resume.docx|pdf> --person ${person}\`, then fill resumes/source/facts.yaml from it and \`./resumes variant new <name> --person ${person}\``);
+    console.log(`next: put their resumes (any format) in drop/ and run \`./resumes import --person ${person}\`, or build one with them from scratch; the job-application skill's intake reference has the steps`);
     return 0;
   },
 };

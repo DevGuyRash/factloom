@@ -42,9 +42,10 @@ You need [git](https://git-scm.com), [Node.js](https://nodejs.org) 22.18 or late
    ./resumes setup --private-repo my-job-search
    ```
 
-4. Open Claude Code or Codex in the folder and say **"set me up"**. The agent creates your profile, imports your current resume, turns it into your facts file, shows it to you in a few themes, and runs onboarding.
-5. Optionally, say **"run a trial"** first: the agent applies, as a fictional person, to mock postings on your machine, and a grader checks what it submitted and skipped.
-6. Open job postings in your agent's browser and say **"apply to the jobs open in my browser."**
+4. Put every resume you have in `drop/`: any format, any number of versions, even a photo or a LinkedIn "Save to PDF". No resume yet is fine too.
+5. Open Claude Code or Codex in the folder and say **"set me up"**. The agent creates your profile, imports and reads your resumes (or builds one with you from your history, LinkedIn, and GitHub), reconciles them into your facts file, shows it to you in a few themes, and runs onboarding.
+6. Optionally, say **"run a trial"** first: the agent applies, as a fictional person, to mock postings on your machine, and a grader checks what it submitted and skipped.
+7. Open job postings in your agent's browser and say **"apply to the jobs open in my browser."**
 
 On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode before cloning so git can create the skill links (`git config --global core.symlinks true`), or use WSL.
 
@@ -91,6 +92,7 @@ custom/                      your themes, templates, settings, site notes, compa
 shared/                      the engine's defaults: themes, templates, onboarding catalog, settings
 tools/                       the command-line tools (./resumes help)
 .agents/skills/              the job-application skill; .claude/skills and .codex/skills link here
+drop/                        resumes you put in for import, in any format (git ignores its contents)
 examples/demo/               a complete fictional person to try every command on
 ```
 

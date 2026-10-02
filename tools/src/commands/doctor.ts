@@ -5,6 +5,7 @@ import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
 import { PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
 import { engineRoot } from "../lib/layers.ts";
+import { dropWaiting } from "../lib/intake.ts";
 import { findByType, listPeople, personDir, rel, repoRoot } from "../lib/repo.ts";
 import { listVariants, loadVariant } from "../render/spec.ts";
 import { loadTheme } from "../render/theme.ts";
@@ -124,6 +125,8 @@ const command: Command = {
         } catch { /* a broken variant is check's to report */ }
       }
     }
+    const waiting = dropWaiting(null, root).length;
+    if (waiting) checks.push({ name: "drop/", ok: true, note: true, detail: `${waiting} file(s) waiting to be imported`, fix: "./resumes import --person <slug>" });
     if (fontNotes.size) checks.push({ name: "theme fonts", ok: true, note: true, detail: [...fontNotes].map(([f, s]) => `${f} not installed (PDFs use ${s})`).join("; "), fix: "install the fonts for PDFs that match the design" });
 
     for (const c of checks) console.log(`${c.note ? "[NOTE]   " : c.ok ? "[OK]     " : c.fatal ? "[DANGER] " : "[MISSING]"} ${c.name}: ${c.detail}${(!c.ok || c.note) && c.fix ? ` — fix: ${c.fix}` : ""}`);

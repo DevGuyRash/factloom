@@ -1,6 +1,6 @@
 import { flag, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
-import { rel, repoRoot, resolvePerson } from "../lib/repo.ts";
+import { listPeople, rel, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { pendingSnapshot } from "../lib/stats.ts";
 
 /** One-screen "what's pending": held apps + reasons, queue counts, follow-ups due, inbox size, guides needing review or research, searches due. */
@@ -10,7 +10,15 @@ const command: Command = {
   usage: "resumes status [--person p]",
   run(argv) {
     const a = parseArgs(argv);
-    const person = resolvePerson(flag(a, "person"));
+    let person: string;
+    try {
+      person = resolvePerson(flag(a, "person"));
+    } catch (e) {
+      // During setup the only person still has applying disabled; status still covers them.
+      const people = listPeople();
+      if (flag(a, "person") || people.length !== 1) throw e;
+      person = people[0];
+    }
     const root = repoRoot();
     const s = pendingSnapshot(person, root);
     console.log(`status for ${person}`);
@@ -25,6 +33,10 @@ const command: Command = {
     console.log(`guides needing research: ${s.guidesNeedingResearch.length}`);
     for (const g of s.guidesNeedingResearch) console.log(`  - ${rel(g.path, root)} (${g.researched ? `researched ${g.researched}` : "never researched"})`);
     console.log(`searches due: ${s.searchesDue}`);
+    if (s.intake.dropWaiting || s.intake.pending.length || s.intake.noJobsYet) {
+      console.log(`resume intake: ${s.intake.dropWaiting} file(s) waiting in drop/, ${s.intake.pending.length} imported resume(s) not yet merged${s.intake.noJobsYet ? "; facts.yaml has no jobs yet" : ""} (the job-application skill's intake reference)`);
+      for (const n of s.intake.pending) console.log(`  - ${n.status.padEnd(13)} ${rel(n.path, root)}`);
+    }
     return 0;
   },
 };
