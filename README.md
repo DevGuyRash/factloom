@@ -13,16 +13,17 @@ Truthful, agent-driven job applications. You write every fact about your work on
 ## What it does
 
 - **One source of truth.** Each claim lives once in `facts.yaml`. Resume versions (variants) pick and order facts for a kind of role; themes decide the look. Fix a typo once and every resume picks it up.
+- **Starts from what you have.** Drop every resume you have in `drop/`: any format, any number of versions, even a scan, a photo, or a LinkedIn "Save to PDF". `./resumes import` archives each one and extracts its text, and the agent reads what no converter can, asks you about every place your versions disagree, and turns them into one facts file. With no resume at all, the agent builds one with you from your history, LinkedIn, and GitHub.
 - **Truth-locked.** A claim you have not confirmed carries a `confirm` flag: the resume is marked for review, tailoring refuses it, and cover letters may not repeat it until you confirm.
 - **Applies for you.** Open job postings or job sites in the browser your agent controls and say "apply to the jobs open in my browser." The agent captures each posting, picks and tailors a resume, writes a cover letter when wanted, fills the form from your answers, submits or holds it, and records what it sent.
 - **Knows what to apply for.** Each resume version's guide is written from current research: the titles employers use, the seniority the facts support, pay, and saved searches that find those roles. `./resumes status` flags guides due for fresh research (every 90 days by default). Each posting gets a fit score: postings where you meet fewer than half the requirements, or that score below the minimum you choose in onboarding, are skipped.
 - **Accounts and codes, if you allow it.** Onboarding asks who handles sign-ins and new accounts (you, or the agent with your password manager or with a password you type once per session into a hidden prompt), which email new accounts use, and who reads verification emails. You never edit a file for it. Whether a given agent will create accounts or type passwords also depends on that agent's own rules.
-- **Asks before it guesses.** Each session starts with onboarding: about fifteen essential questions first (work authorization, salary, arrangement, what rules a job out, how good a match to require), then the rest in batches while applications run, and only what your saved answers leave open. New questions from forms land in your inbox for review, so the next session already knows them.
+- **Asks before it guesses.** Each session starts with onboarding: about twenty essential questions first (work authorization, salary, arrangement, what rules a job out, how good a match to require), then the rest in batches while applications run, and only what your saved answers leave open. New questions from forms land in your inbox for review, so the next session already knows them.
 - **Keeps your data private.** Your people and settings live in your own private repository; a pre-push guard refuses to send them anywhere else.
 
 ## Quick start
 
-You need [git](https://git-scm.com), [Node.js](https://nodejs.org) 22.18 or later, and for PDFs [LibreOffice](https://www.libreoffice.org). The [GitHub CLI](https://cli.github.com) makes the private copy in step 3 one command.
+You need [git](https://git-scm.com), [Node.js](https://nodejs.org) 22.18 or later, and [LibreOffice](https://www.libreoffice.org) for PDFs and for importing older formats (`.doc`, `.rtf`, `.odt`, `.pages`; without it, the agent reads those files itself or asks you for a PDF or Word copy). The [GitHub CLI](https://cli.github.com) makes the private copy in step 3 one command.
 
 1. Clone this repository (do not fork it: a fork of a public repository is public, and so would your resume be).
 
@@ -70,6 +71,7 @@ On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode
 
 - `people/` and `custom/` hold your data. They belong only in your private repository: the pre-push guard refuses to push them anywhere else, and refuses personal details in changes bound for the public engine. `./resumes doctor` warns if your repository is public.
 - Street addresses and anything else you keep out of git go in `*.local.*` files, which git ignores. Session answers are kept in one of those too.
+- Nothing in `drop/` is committed. When a resume is imported, lines the scan recognizes as personal details (a street address, a Social Security number, a labeled birth date, a card number, a key) go to git-ignored `.local` files, and any original the scan could not check is kept git-ignored on your computer.
 - Government ID numbers, dates of birth, and bank details are never stored: you type them into the form yourself, and the agent holds the application for you.
 - Passwords never go in tracked files. Your password manager fills them, or, if you choose, a password you type into a hidden prompt is kept in a git-ignored file for a single session and cleared at its end.
 - The pre-commit hook scans staged files for personal data such as street addresses, card numbers, and keys.
