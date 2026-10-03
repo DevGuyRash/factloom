@@ -51,7 +51,7 @@ export async function run(root: string): Promise<{ errors: string[]; warnings: s
 const command: Command = {
   name: "check",
   summary: "Validate the repository's conventions (exit 1 on errors)",
-  usage: "resumes check [root]",
+  usage: "resumes check [<root>]",
   async run(argv) {
     const root = argv[0] ? resolve(argv[0]) : repoRoot();
     const { errors, warnings } = await run(root);

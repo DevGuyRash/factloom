@@ -8,7 +8,7 @@ import { findOne, personDir, rel, resolvePerson, today } from "../lib/repo.ts";
 const command: Command = {
   name: "inbox",
   summary: "List inbox entries or add one (new questions and suggestions for the person's review)",
-  usage: 'resumes inbox [list] [--person p] | inbox add --company X --site S --question "..." --answer "..." [--decided person|derived:<source>] [--id catalog.id] [--suggest "..."] [--person p]',
+  usage: 'resumes inbox [list] [--person p] | inbox add --company X --site S --question "..." --answer "..." [--decided person|derived:<source>] [--id <catalog-id>] [--suggest "..."] [--person p]',
   run(argv) {
     const a = parseArgs(argv);
     const person = resolvePerson(flag(a, "person"));

@@ -21,7 +21,7 @@ function stagedFiles(root: string): string[] {
 const command: Command = {
   name: "pii",
   summary: "Scan for personal data and secrets (exit 1 on findings)",
-  usage: "resumes pii [--staged] [paths...]",
+  usage: "resumes pii [--staged] [<path> ...]",
   async run(argv) {
     const a = parseArgs(argv, ["staged"]);
     const root = repoRoot();

@@ -4,6 +4,8 @@ setlocal
 set "DIR=%~dp0"
 where node >nul 2>nul || (echo Node.js is not installed: get version 22.18 or later from https://nodejs.org 1>&2 & exit /b 1)
 if not exist "%DIR%tools\node_modules" (
+  rem Tab completion (docs/completion.md) must never install anything: say nothing until the tools are set up.
+  if "%~1"=="__complete" exit /b 0
   echo First run: installing the tools' dependencies... 1>&2
   pushd "%DIR%tools" && call npm ci --no-audit --no-fund 1>&2 && popd || (echo npm ci failed 1>&2 & exit /b 1)
 )

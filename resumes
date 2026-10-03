@@ -11,6 +11,8 @@ if ! node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.e
   exit 1
 fi
 if [ ! -d "$dir/tools/node_modules" ]; then
+  # Tab completion (docs/completion.md) must never install anything: say nothing until the tools are set up.
+  [ "$1" = "__complete" ] && exit 0
   echo "First run: installing the tools' dependencies..." >&2
   (cd "$dir/tools" && npm ci --no-audit --no-fund >&2) || { echo "npm ci failed; see the messages above." >&2; exit 1; }
 fi

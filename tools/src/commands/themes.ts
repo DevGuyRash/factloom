@@ -155,7 +155,7 @@ function scaffold(a: ReturnType<typeof parseArgs>, root: string): number {
   return 0;
 }
 
-const USAGE = "resumes themes list [--person p] | themes show <name> [--person p] | themes check [name ...] [--person p] | themes preview [--person p] [--variant v] [--themes a,b] [--out dir] [--png] [--with-style] [--fit] | themes new <name> [--from theme] [--person p] [--force]";
+const USAGE = "resumes themes list [--person p] | themes show <theme> [--person p] | themes check [<theme> ...] [--person p] | themes preview [--person p] [--variant v] [--themes a,b] [--out dir] [--png] [--dpi N] [--with-style] [--fit] | themes new <name> [--from theme] [--person p] [--force]";
 
 const command: Command = {
   name: "themes",

@@ -11,7 +11,7 @@ function fmt(s: SearchItem): string {
 const command: Command = {
   name: "searches",
   summary: "List saved searches, show which are due, or mark one run",
-  usage: "resumes searches list|due [--person p]\n       resumes searches mark <id> [--person p]",
+  usage: "resumes searches list|due [--person p]\n       resumes searches mark <search-id> [--person p]",
   run(argv) {
     const [sub, ...rest] = argv;
     const a = parseArgs(rest);

@@ -63,6 +63,7 @@ On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode
   ```
 
   Every setting is listed in [docs/themes.md](docs/themes.md). `./resumes themes check` warns about hard-to-read colors and fonts your machine lacks.
+- **Tab completion.** `./resumes completion bash|zsh|fish|powershell` prints a script that completes commands, flags, and your people, resume variants, and themes as you type; [docs/completion.md](docs/completion.md) says where to load it.
 - **Page targets.** Set `pages: 2` in a variant and the build tightens spacing, then type (never below 9 pt), then margins until it fits.
 - **Applicant tracking systems.** Themes marked `ats: safe` read cleanly in job portals; the sidebar layout is marked `ats: caution`, for resumes a person reads first.
 - **Your own layer.** Put changes in `custom/` (themes, document templates, extra onboarding questions, scoring numbers, skill terms, site notes) or in `people/<you>/templates/`. They override the engine's defaults and survive every update.

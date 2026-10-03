@@ -12,7 +12,7 @@ async function main(argv: string[]): Promise<number> {
     const target = rest[0] && commands.get(rest[0]);
     if (target) { console.log(`${target.name}: ${target.summary}\n\nusage: ${target.usage}`); return 0; }
     console.log("usage: resumes <command> [args]\n");
-    for (const c of [...commands.values()].sort((a, b) => a.name.localeCompare(b.name))) console.log(`  ${c.name.padEnd(16)} ${c.summary}`);
+    for (const c of [...commands.values()].filter((c) => !c.hidden).sort((a, b) => a.name.localeCompare(b.name))) console.log(`  ${c.name.padEnd(16)} ${c.summary}`);
     return name && name !== "help" && name !== "--help" ? 2 : 0;
   }
   return await cmd.run(rest);

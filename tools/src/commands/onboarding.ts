@@ -21,7 +21,7 @@ function upsert(path: string, header: string, entry: string, id: string) {
 const command: Command = {
   name: "onboarding",
   summary: "Show open core questions, start the session-answers file, record answers",
-  usage: "resumes onboarding [--person p] | onboarding start [--person p] | onboarding answer <id> <answer> [--policy auto|confirm|ask|person] [--save] [--person p]",
+  usage: "resumes onboarding [--person p] | onboarding start [--person p] | onboarding answer <catalog-id> <answer> [--policy auto|confirm|ask|person] [--save] [--person p]",
   run(argv) {
     const a = parseArgs(argv, ["save"]);
     const person = resolvePerson(flag(a, "person"));

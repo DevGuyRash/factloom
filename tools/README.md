@@ -20,6 +20,7 @@ does the same for those who use `just`.
 | `resumes pii [--staged] [paths...]` | Scans Markdown/text/docx content for SSNs, labeled birth dates, card numbers (Luhn-checked), API-key/token shapes, and street addresses. `--staged` scans only files staged in git. Exit 1 on any finding not covered by `shared/pii-allow.yaml` or `custom/pii-allow.yaml`. Never prints a full matched secret. |
 | `resumes themes list\|show\|check\|preview\|new` | Themes: see `docs/themes.md`. |
 | `resumes setup`, `resumes update`, `resumes guard` | First-time setup, engine updates, and the push guard that keeps `people/` and `custom/` in the private repository. |
+| `resumes completion bash\|zsh\|fish\|powershell` | Prints the tab-completion script for a shell: see `docs/completion.md`. |
 | `resumes person new`, `resumes import`, `resumes variant new` | A new person; their existing resumes imported from `drop/` in any format (originals archived, text extracted, unreadable files marked for the agent); resume variants built from `facts.yaml`. |
 
 Run `resumes help` for the full command list and `resumes help <command>` for one command's usage.

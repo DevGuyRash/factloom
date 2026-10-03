@@ -184,7 +184,7 @@ function upstreamCheck(root: string): number {
   return 0;
 }
 
-const USAGE = "resumes guard status | guard allow [remote] [--force] | guard pre-push <remote> <url> (run by the git hook) | guard upstream (CI in the public engine)";
+const USAGE = "resumes guard status | guard allow [<remote>] [--remote <remote>] [--force] | guard pre-push <remote> <url> (run by the git hook) | guard upstream (CI in the public engine)";
 
 const command: Command = {
   name: "guard",

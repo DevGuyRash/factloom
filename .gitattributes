@@ -1,3 +1,10 @@
 *.docx binary diff=docx
 *.pdf  binary diff=pdf
 *.zip  binary
+
+# Unix shells choke on CRLF line endings, so the launcher and the shell completion scripts stay LF
+# even where git converts text files on Windows.
+resumes                    text eol=lf
+tools/completions/*.bash   text eol=lf
+tools/completions/*.zsh    text eol=lf
+tools/completions/*.fish   text eol=lf

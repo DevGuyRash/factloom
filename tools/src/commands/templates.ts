@@ -8,7 +8,7 @@ import { rel } from "../lib/repo.ts";
 const command: Command = {
   name: "template",
   summary: "List document templates or render one (person overrides win)",
-  usage: "resumes template [list] | resumes template <name> --person <slug> [--out <file>] [--force] [--set key=value ...]",
+  usage: "resumes template [list] | resumes template <template> --person <slug> [--out <file>] [--force] [--set key=value ...]",
   run(argv) {
     const a = parseArgs(argv, ["force"]);
     const person = flag(a, "person");

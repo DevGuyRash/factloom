@@ -25,5 +25,8 @@ jobs:
         run: RESUMES_ROOT=examples/demo node tools/src/cli.ts check
       - name: No personal data in the public engine
         run: node tools/src/cli.ts guard upstream
+      # The completion tests run each script in its own shell; PowerShell is already on the runner.
+      - name: Install the shells the completion tests run in
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq fish zsh
       - run: npm test
         working-directory: tools
