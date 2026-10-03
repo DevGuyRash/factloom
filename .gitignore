@@ -3,6 +3,7 @@ node_modules/
 
 # Private overlays kept out of git (addresses and other personal details)
 *.local.*
+*.local*
 
 # Resumes dropped in for import (./resumes import); only the folder's README is tracked
 drop/*
