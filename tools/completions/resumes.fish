@@ -8,7 +8,11 @@ function __resumes_complete
     set -l cmd $tokens[1]
     set -e tokens[1]
     set -l fallback none
-    for line in ($cmd __complete "--cur=$cur" -- $tokens 2>/dev/null)
+    set -l lines ($cmd __complete "--cur=$cur" -- $tokens 2>/dev/null)
+    # A real answer ends in a directive line; anything else (an older engine's help text, another program) is ignored.
+    test (count $lines) -gt 0; or return
+    contains -- $lines[-1] ':files' ':dirs' ':none'; or return
+    for line in $lines
         switch $line
             case ':files' ':dirs' ':none'
                 set fallback (string sub -s 2 -- $line)

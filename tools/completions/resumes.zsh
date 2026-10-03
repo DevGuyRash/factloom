@@ -8,6 +8,8 @@ _resumes() {
   local cmd=${words[1]/#\~/$HOME} out line value desc fallback=none ret=1
   local -a described
   out=$("$cmd" __complete "--cur=${words[CURRENT]}" -- "${(@)words[2,CURRENT-1]}" 2>/dev/null) || return 1
+  # A real answer ends in a directive line; anything else (an older engine's help text, another program) is ignored.
+  case ${out##*$'\n'} in :files | :dirs | :none) ;; *) return 1 ;; esac
   for line in "${(@f)out}"; do
     case $line in
       :files | :dirs | :none) fallback=${line#:} ;;

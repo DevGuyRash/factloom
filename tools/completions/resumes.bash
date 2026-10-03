@@ -10,6 +10,8 @@ _resumes_complete() {
   [[ $cur == "=" || $prev == "=" ]] && return 0
   local out line fallback=none
   out=$("$cmd" __complete "--cur=$cur" -- "${COMP_WORDS[@]:1:COMP_CWORD-1}" 2>/dev/null) || return 0
+  # A real answer ends in a directive line; anything else (an older engine's help text, another program) is ignored.
+  case ${out##*$'\n'} in :files | :dirs | :none) ;; *) return 0 ;; esac
   while IFS= read -r line; do
     case $line in
       :files | :dirs | :none) fallback=${line#:} ;;

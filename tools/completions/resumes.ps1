@@ -15,7 +15,9 @@ Register-ArgumentCompleter -Native -CommandName 'resumes', 'resumes.cmd', './res
     $current = $parts[$parts.Count - 1]
     $earlier = @()
     if ($parts.Count -gt 2) { $earlier = $parts[1..($parts.Count - 2)] }
-    $output = & $program __complete "--cur=$current" -- @earlier 2>$null
+    $output = @(& $program __complete "--cur=$current" -- @earlier 2>$null)
+    # A real answer ends in a directive line; anything else (an older engine's help text, another program) is ignored.
+    if ($output.Count -eq 0 -or $output[$output.Count - 1] -notmatch '^:(none|files|dirs)$') { return }
     foreach ($entry in $output) {
         if ($entry -match '^:(none|files|dirs)$') { continue }
         $value, $description = $entry -split "`t", 2

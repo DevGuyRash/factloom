@@ -2,7 +2,7 @@
 // `resumes __complete` protocol, usage strings staying complete, and the four shell scripts.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -310,3 +310,33 @@ test("PowerShell: the argument completer returns completion results", { skip: pr
   assert.equal(out[1], "check list new preview show", out.join("\n"));
   assert.equal(out[2], "data-analyst operations", out.join("\n"));
 });
+
+// A program named resumes that does not speak the protocol (an older engine, which prints its help for an
+// unknown command) must yield no completions. It exits 0 here, so only the answer's shape can tell.
+function withOlderEngine<T>(fn: (dir: string) => T): T {
+  const dir = mkdtempSync(join(tmpdir(), "factloom-older-"));
+  try {
+    writeFileSync(join(dir, "resumes"), "#!/bin/sh\necho 'usage: resumes <command> [args]'\necho '  themes   List, show, check'\necho '  th       Not a completion'\n", { mode: 0o755 });
+    return fn(dir);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+const asked = (bin: string, args: string[], cwd: string) => spawnSync(bin, args, { cwd, encoding: "utf8", env: { ...process.env, RESUMES_ROOT: cwd } });
+
+test("bash and zsh ignore an answer that is not a protocol answer", { skip: present("bash") && present("zsh") ? false : "bash or zsh is not installed" }, () => withOlderEngine((dir) => {
+  const completions = join(REAL_ROOT, "tools", "completions");
+  const bash = asked("bash", ["-c", `source ${completions}/resumes.bash; COMP_WORDS=(${dir}/resumes th); COMP_CWORD=1; _resumes_complete; echo "[\${COMPREPLY[*]}]"`], dir);
+  assert.equal(bash.stdout.trim(), "[]", bash.stderr);
+  const zsh = asked("zsh", ["-f", "-c", `autoload -Uz compinit && compinit -u -d ${dir}/zd; source ${completions}/resumes.zsh; _describe() { print DESCRIBED }; _files() { print FILES }; words=(${dir}/resumes th); CURRENT=2; _resumes; print "status $?"`], dir);
+  assert.equal(zsh.stdout.trim(), "status 1", zsh.stderr + zsh.stdout);
+}));
+
+test("fish ignores an answer that is not a protocol answer", { skip: present("fish") ? false : "fish is not installed (CI installs it)" }, () => withOlderEngine((dir) => {
+  const r = asked("fish", ["--no-config", "-c", `${join(REAL_ROOT, "resumes")} completion fish | source; complete -C './resumes th'`], dir);
+  assert.equal(r.stdout.trim(), "", r.stderr + r.stdout);
+}));
+
+test("PowerShell ignores an answer that is not a protocol answer", { skip: present("pwsh", ["-NoProfile", "-Command", "$PSVersionTable.PSVersion"]) ? false : "pwsh is not installed (CI has it)" }, () => withOlderEngine((dir) => {
+  const script = `${join(REAL_ROOT, "tools", "completions", "resumes.ps1")}`;
+  const r = asked("pwsh", ["-NoProfile", "-Command", `. '${script}'; ((TabExpansion2 './resumes th' 12).CompletionMatches | ForEach-Object { $_.CompletionText }) -join ' '`], dir);
+  assert.equal(r.stdout.trim(), "", r.stderr + r.stdout);
+}));
