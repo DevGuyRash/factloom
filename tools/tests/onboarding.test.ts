@@ -80,6 +80,27 @@ test("notes stay with their answers through onboarding start, answer, and --save
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
 });
 
+test("an answer the catalog stores locally is saved only in the git-ignored private file, and still counts as answered", async () => {
+  const catalog = `${CATALOG}\n## Identity and contact\n\n### contact.address (core)\n- Ask: Which mailing address?\n- Shape: street, city, state, ZIP\n- Stored: local\n- Policy: confirm\n`;
+  const fx = makeFixture({ "shared/onboarding.md": catalog });
+  process.env.RESUMES_ROOT = fx.root;
+  try {
+    const { loadAnswers, openCoreQuestions } = await import("../src/lib/catalog.ts");
+    const cmd = (await import("../src/commands/onboarding.ts")).default;
+    // Built at run time, so this file holds no address-shaped text for the personal-data scan to flag.
+    const address = [1, "Example", "Way,", "Springfield,", "ST", "00000"].join(" ");
+    assert.equal(await cmd.run(["answer", "contact.address", address, "--save", "--person", "pat-lee"]), 0);
+    assert.ok(!existsSync(join(fx.root, "people/pat-lee/answers.md")) || !readFileSync(join(fx.root, "people/pat-lee/answers.md"), "utf8").includes("Example"));
+    const kept = readFileSync(join(fx.root, "people/pat-lee/private.local.md"), "utf8");
+    assert.match(kept, /^---\ntype: private\n/);
+    assert.equal(loadAnswers(join(fx.root, "people/pat-lee/private.local.md")).get("contact.address")?.answer, address);
+    // A fresh session still has it, and it no longer shows as an open question.
+    assert.equal(await cmd.run(["start", "--fresh", "--person", "pat-lee"]), 0);
+    assert.equal(loadAnswers(join(fx.root, "people/pat-lee/session.local.md")).get("contact.address")?.answer, address);
+    assert.ok(!openCoreQuestions("pat-lee", fx.root).some((e) => e.id === "contact.address"));
+  } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
+});
+
 test("one skill's years take the policy of the catalog's experience.years.<skill> entry", async () => {
   const catalog = `${CATALOG}\n## Experience\n\n### experience.years.<skill>\n- Ask: Derived from dated evidence.\n- Shape: number with basis\n- Policy: auto\n`;
   const fx = makeFixture({ "shared/onboarding.md": catalog });

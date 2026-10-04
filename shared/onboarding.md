@@ -41,6 +41,21 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: choice: the person or the agent
 - Policy: confirm
 
+### prefs.role-focus (core)
+- Ask: Of your target roles, which matter most right now? The agent searches and applies for those first, and comes back to the others when they run dry. Change it any time.
+- Shape: roles in order, or "all equally"
+- Policy: auto
+
+### mail.application-replies (core)
+- Ask: May the agent look in your mailbox (or a signed-in webmail tab) for replies to your applications: confirmations, rejections, interview invitations, recruiter messages? It searches only for the employers and sites you applied to, never replies, and tells you at once about an interview invitation or a recruiter message.
+- Shape: yes / no
+- Policy: confirm
+
+### mail.receipts (core)
+- Ask: Once a routine receipt ("we received your application") is saved in its application record, may the agent archive it? Replies, interview requests, rejections, and anything asking you to act stay where they are, and nothing is ever deleted.
+- Shape: yes / no
+- Policy: confirm
+
 ### browser.tabs (core)
 - Ask: The agent closes the browser tabs it opens once it is done with them. May it also close tabs you opened yourself, once their posting is worked (applied, held, or skipped, with its link saved in the record)?
 - Shape: yes / no
@@ -70,10 +85,11 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: text, or leave blank
 - Policy: auto
 
-### contact.address
-- Ask: Which mailing address should forms use? It stays out of the repository: keep it in your local overlay file, or have it asked each time.
+### contact.address (essential)
+- Ask: Which mailing address should forms use? It is kept only on this computer, in a file git ignores, never in the repository, and goes only into address fields a form requires; optional ones stay empty.
 - Seen as: "Street address", "Address line 1", "ZIP code", "What is the address from which you plan on working?"
 - Shape: street, city, state, ZIP
+- Stored: local
 - Policy: confirm
 
 ### location.residence
@@ -109,20 +125,28 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: confirm
 
 ### work-auth.clearance (core)
-- Ask: Do you hold an active security clearance, and would you be willing to obtain one?
-- Shape: clearance level or none; willing yes/no
+- Ask: Do you hold an active security clearance or public-trust determination, and would you be willing to undergo the government background investigation to obtain one? These roles often require U.S. citizenship (ask `work-auth.citizenship-category` with this) and sometimes years of U.S. residence.
+- Seen as: "Ability to obtain a Public Trust", "Active Secret clearance required", "U.S. citizens only", "Must be able to pass a federal background investigation"
+- Shape: clearance or public-trust level, or none; willing yes / no
 - Policy: auto
 
-### eligibility.age-18 (core)
+### eligibility.age-18 (essential)
 - Ask: Are you at least 18 years old?
+- Seen as: "Are you 18 years of age or older?", "Are you at least 18?"
 - Shape: yes / no
 - Policy: auto
+
+### eligibility.essential-functions (essential)
+- Ask: Forms ask whether you can perform the job's essential functions, with or without reasonable accommodation, and some ask about physical demands (lifting, standing, driving). What should they say, and are there demands you cannot meet?
+- Seen as: "Are you able to perform the essential functions of this position with or without reasonable accommodation?", "Can you lift up to 25 pounds?", "This role requires standing for long periods"
+- Shape: yes / no, with any limits
+- Policy: confirm
 
 ## Location, arrangement, travel
 
 ### prefs.work-arrangement (essential)
 - Ask: Which arrangements will you accept (remote, hybrid, on-site), and for hybrid or on-site, which metro areas and how many office days a week?
-- Seen as: "This role requires in-office work three days per week… do you acknowledge and agree?", "Do you currently live in, or plan to relocate to, the specified location?"; some remote roles exclude listed states
+- Seen as: "This role requires in-office work three days per week… do you acknowledge and agree?", "Do you currently live in, or plan to relocate to, the specified location?"; some remote roles exclude listed states or require residence in one
 - Use: answers arrangement questions and screens postings before applying
 - Shape: list with limits
 - Policy: auto
@@ -133,8 +157,9 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: yes / no with conditions
 - Policy: confirm
 
-### prefs.travel (core)
+### prefs.travel (essential)
 - Ask: What is the most travel you will accept, as a percentage of time?
+- Seen as: "Are you willing to travel up to 25% of the time?", "This role requires occasional travel to client sites"
 - Use: answers travel questions and screens postings that mention travel
 - Shape: percentage
 - Policy: auto
@@ -143,6 +168,12 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Ask: Can you work the hours, time zone, shifts, weekends, or on-call schedule a posting describes? How many hours a week can you commit, and how many hours can you overlap with other time zones?
 - Seen as: "How many hours per week can you commit?", "Can you overlap at least 4 hours with Pacific time?", "Are you available on weekends?"
 - Shape: hours per week; time-zone overlap; yes / no with limits
+- Policy: confirm
+
+### prefs.remote-setup (core)
+- Ask: For remote work, what should forms say about your setup: a quiet workspace, reliable high-speed internet, your own computer, a webcam, and whether you accept monitoring software on a company device?
+- Seen as: "Do you have a dedicated home office?", "Do you have reliable internet of at least 25 Mbps?", "Are you comfortable with time-tracking or monitoring software?"
+- Shape: yes / no for each, with limits
 - Policy: confirm
 
 ### prefs.constraints (essential)
@@ -168,7 +199,7 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ## Compensation and employment type
 
 ### comp.minimum (essential)
-- Ask: What is the least you would accept: a base salary, and an hourly rate for hourly or contract work (with a separate rate for 1099 or corp-to-corp contracts when it differs)? Postings whose pay cannot reach it are skipped, and no form is ever given a lower figure.
+- Ask: What is the least you would accept: a base salary, and an hourly rate for hourly or contract work (with a separate rate for 1099 or corp-to-corp contracts when it differs)? Postings whose pay cannot reach it are skipped, and no form is ever given a lower figure (for part-time or short contracts, see `employment.engagement`).
 - Seen as: "Minimum salary requirement", "Lowest acceptable rate"
 - Shape: salary; hourly rate; contract rate when it differs
 - Policy: auto
@@ -191,10 +222,22 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: salary or hourly figure, or decline, with wording
 - Policy: confirm
 
-### employment.type (core)
+### employment.type (essential)
 - Ask: Which employment types will you accept: full-time, part-time, contract, contract-to-hire; W-2, 1099, corp-to-corp?
 - Shape: list
 - Policy: auto
+
+### employment.engagement (core)
+- Ask: For contract work: what is the shortest contract you would take, how many hours a week (fewest and most), and does your hourly minimum hold for part-time or short contracts too?
+- Seen as: "This is a 3-month contract", "10 to 20 hours per week", "Are you available full time for the duration of the project?"
+- Shape: shortest length; hours per week; minimum rule
+- Policy: confirm
+
+### prefs.agencies (core)
+- Ask: Many contract roles come through staffing or recruiting firms that submit you to a client, sometimes without naming it, and one client role is often posted by several firms. Should the agent apply through such firms: any, only those that name the client, or none (direct employers only)? A client gets one submission per role either way.
+- Seen as: "Has another agency submitted you for this role?", "Do you give us the right to represent you?", "Who is the end client?"
+- Shape: choice
+- Policy: confirm
 
 ### employment.business-entity (core)
 - Ask: If you take corp-to-corp (C2C) contracts, which business do you contract through: its legal name and the state where it is registered? Answer "none" if you contract only as an individual.
@@ -204,11 +247,11 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 ## Background, history, and conflicts
 
-These appear mostly on Workday, iCIMS, and public-sector forms.
+These appear mostly on Workday, iCIMS, and public-sector forms. The essential ones form the screening batch asked before the first application, in one message with one line per question; the rest follow with the core questions.
 
 ### background.check-consent (essential)
-- Ask: Are you willing to undergo a pre-employment background check? (A formal authorization form is signed by the person.)
-- Seen as: "Are you willing to submit to a background check?", "Do you consent to a background check?", "This position requires a background check. Are you comfortable with that?"
+- Ask: Are you willing to undergo a pre-employment background check, including fingerprinting where an employer requires it (common in public-sector, healthcare, and education roles)? (A formal authorization form is signed by the person.)
+- Seen as: "Are you willing to submit to a background check?", "Do you consent to a background check?", "This position requires a background check. Are you comfortable with that?", "Are you willing to be fingerprinted?", "Public Trust background investigation"
 - Shape: yes / no
 - Policy: auto
 
@@ -218,15 +261,35 @@ These appear mostly on Workday, iCIMS, and public-sector forms.
 - Shape: willing: yes / no; can pass: yes / no, or left for the person
 - Policy: auto
 
-### background.criminal-history (core)
-- Ask: How should conviction-history questions be answered? The answer must be truthful; the person supplies the wording.
-- Shape: wording
+### background.criminal-history (essential)
+- Ask: How should conviction-history questions be answered? The answer must be truthful; the person supplies the wording, or asks to answer each one themselves. (Many places bar employers from asking on the first application; a form that asks anyway still gets the truthful answer.)
+- Seen as: "Have you ever been convicted of a felony?", "Have you been convicted of a crime in the last seven years?"
+- Shape: wording, or the person answers each one
 - Policy: confirm
 
-### background.drivers-license
-- Ask: Do you have a valid driver's license and reliable transportation?
+### history.contact-employer (essential)
+- Ask: May employers contact your current employer to verify your employment, and your past employers? Many people answer "not my current employer until an offer".
+- Seen as: "May we contact your current employer?", "May we contact this employer for a reference?"
+- Shape: current employer: yes / no / after an offer; past employers: yes / no
+- Policy: auto
+
+### background.credit-check (core)
+- Ask: Are you willing to undergo a credit check, which some finance, cash-handling, and security-sensitive roles require?
+- Seen as: "Do you consent to a credit check?", "This position requires a credit check"
 - Shape: yes / no
 - Policy: auto
+
+### background.drivers-license (core)
+- Ask: Do you have a valid driver's license and reliable transportation, and would you consent to a driving-record check for a role that involves driving?
+- Seen as: "Do you have a valid driver's license?", "Do you have reliable transportation?", "Will you consent to a motor vehicle record check?"
+- Shape: yes / no for each
+- Policy: auto
+
+### background.health-screening (core)
+- Ask: Some employers, mostly in healthcare, education, and food service, require vaccinations, a tuberculosis test, or a physical before starting. Are you willing, and are there exceptions to note?
+- Seen as: "Are you willing to comply with the vaccination requirements of this role?", "Are you willing to complete a pre-employment physical?"
+- Shape: yes / no with exceptions
+- Policy: confirm
 
 ### history.government-employment (core)
 - Ask: Derived from the profile's employment history: have you worked for a government entity as an employee or contractor? Confirm the wording.
@@ -250,6 +313,17 @@ These appear mostly on Workday, iCIMS, and public-sector forms.
 - Ask: Are you bound by a non-compete, non-solicitation, or other agreement that could limit this work?
 - Seen as: "Are you currently subject to any non-compete or non-solicitation agreement…?", "…any agreement with a former employer or third party"
 - Shape: yes / no with details
+- Policy: confirm
+
+### history.omitted-roles (core)
+- Ask: Is there a job or a gap you leave off your resumes? A form that asks for your complete employment history, or an employment verification, lists it truthfully. What should it say, or should those applications wait for you?
+- Shape: roles to list on full-history forms, or "hold for me"
+- Policy: confirm
+
+### history.terminated (core)
+- Ask: Have you ever been terminated or asked to resign? Forms ask it plainly; the answer must be truthful, and you supply any explanation, or ask to answer each one yourself.
+- Seen as: "Have you ever been discharged or asked to resign from a position?", "Reason for leaving"
+- Shape: yes / no, with wording; or the person answers each one
 - Policy: confirm
 
 ### company.relatives (core)
@@ -316,6 +390,12 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Shape: yes / no
 - Policy: confirm
 
+### interviews.assessments (core)
+- Ask: Are you willing to complete skills assessments as part of an application: timed online tests, take-home tasks, and how long a take-home you would accept unpaid?
+- Seen as: "Are you willing to complete a skills assessment?", "This role includes a take-home exercise"
+- Shape: yes / no, with limits
+- Policy: confirm
+
 ### interviews.ai-assessment (core)
 - Ask: Do you consent to AI-scored assessments or AI interview tools when an employer asks?
 - Shape: yes / no
@@ -370,6 +450,23 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 
 ## Education and experience
 
+### experience.counting-basis (core)
+- Ask: When a form asks for years of experience with a tool or skill, may hands-on time outside paid jobs count (personal projects, open source, a home lab, school), or only paid work? Forms that say "professional" or "work" experience get paid work either way.
+- Shape: paid work only; or paid work plus dated hands-on projects, each figure kept with its basis
+- Policy: confirm
+
+### experience.unlisted-skills (core)
+- Ask: When a form requires a figure for a skill, tool, or certification your records do not show at all, should the agent answer none (0 years, no), hold the application for you (once per skill), or skip postings that require it? A figure is never invented.
+- Seen as: "How many years of work experience do you have with <tool>?" as a required number field
+- Shape: choice
+- Policy: confirm
+
+### credentials.held (core)
+- Ask: Which degrees (completed or in progress, with dates), certifications (issuer, year, and whether active), and licenses do you hold? A form asking about a credential not listed gets no.
+- Seen as: "Highest level of education completed", "How many <vendor> certifications do you hold?", "Do you hold an active <license>?"
+- Shape: list, or none
+- Policy: auto
+
 ### education.gpa
 - Ask: Do you want to share a GPA when a form asks? Which one?
 - Shape: number or leave blank
@@ -398,10 +495,12 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 
 ## Documents and references
 
-### documents.references
-- Ask: Who are your references, and have they agreed to be contacted? Provide only people the person names.
-- Shape: list
-- Policy: ask
+### documents.references (essential)
+- Ask: Do you have references to include when a form asks for them? For each: name, relationship, company, phone, email, and whether they have agreed to be contacted. Only people you name, and only those who agreed; their details are kept only on this computer, in a file git ignores.
+- Seen as: "Professional references", "Reference name", "Reference phone", "Please provide three references"
+- Shape: list of references with consent, or none
+- Stored: local
+- Policy: confirm
 
 ### documents.additional
 - Ask: Transcripts, certifications, writing samples, or portfolios requested by a posting: which file, if any?

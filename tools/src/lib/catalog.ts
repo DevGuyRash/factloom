@@ -7,7 +7,8 @@ import { FILE_NAMES, POLICIES } from "./schema.ts";
 
 export type Policy = (typeof POLICIES)[number];
 /** `essential` entries are core entries asked before the first application; `core` covers both. */
-export type CatalogEntry = { id: string; core: boolean; essential: boolean; section: string; ask: string; seenAs?: string; shape?: string; policy: Policy };
+/** `local`: the answer is someone's private detail (an address, references' contact details) and is kept only in git-ignored files. */
+export type CatalogEntry = { id: string; core: boolean; essential: boolean; section: string; ask: string; seenAs?: string; shape?: string; policy: Policy; local: boolean };
 export type Answer = { id: string; answer: string; policy: Policy; confirmed?: string; notes?: string; source?: string };
 
 const field = (block: string, name: string) => block.match(new RegExp(`^- ${name}:[ \\t]*(.*)$`, "m"))?.[1].trim();
@@ -34,7 +35,7 @@ function catalogEntries(path: string): CatalogEntry[] {
     if (!h3) continue;
     out.push({
       id: h3[1], core: /\((?:core|essential)\)/.test(h3[2]), essential: /\(essential\)/.test(h3[2]), section, ask: field(chunk, "Ask") ?? "",
-      seenAs: field(chunk, "Seen as"), shape: field(chunk, "Shape"), policy: (field(chunk, "Policy") as Policy) ?? "ask",
+      seenAs: field(chunk, "Seen as"), shape: field(chunk, "Shape"), policy: (field(chunk, "Policy") as Policy) ?? "ask", local: field(chunk, "Stored") === "local",
     });
   }
   return out;
@@ -81,6 +82,13 @@ export function savedAnswersPath(person: string, root = repoRoot()) {
   return findOne(person, "answers", root) ?? join(personDir(person, root), "answers.md");
 }
 export const sessionAnswersPath = (person: string, root = repoRoot()) => join(personDir(person, root), FILE_NAMES.sessionAnswers);
+/** Kept answers that must stay out of git: `private.local.md` (`type: private`), which git ignores. */
+export const privateAnswersPath = (person: string, root = repoRoot()) => findOne(person, "private", root) ?? join(personDir(person, root), "private.local.md");
+
+/** Answers the person chose to keep: the committed answers file, plus the private ones kept out of git. */
+export function loadKeptAnswers(person: string, root = repoRoot()): Map<string, Answer> {
+  return new Map([...loadAnswers(savedAnswersPath(person, root)), ...loadAnswers(privateAnswersPath(person, root))]);
+}
 
 export function loadAnswers(path: string): Map<string, Answer> {
   return existsSync(path) ? parseAnswers(parse(readFileSync(path, "utf8")).body) : new Map();
@@ -88,7 +96,7 @@ export function loadAnswers(path: string): Map<string, Answer> {
 
 /** Core catalog questions (essential ones included) that neither the saved answers nor this session's answers settle. */
 export function openCoreQuestions(person: string, root = repoRoot()): CatalogEntry[] {
-  const saved = loadAnswers(savedAnswersPath(person, root));
+  const saved = loadKeptAnswers(person, root);
   const session = loadAnswers(sessionAnswersPath(person, root));
   return loadCatalog(root).filter((e) => e.core && !(session.get(e.id)?.answer) && !(saved.get(e.id)?.answer && saved.get(e.id)?.confirmed));
 }

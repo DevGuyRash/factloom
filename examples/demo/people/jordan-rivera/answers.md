@@ -112,3 +112,38 @@ Answers kept across sessions, keyed by the ids in the onboarding catalog. Sessio
 - Answer: Willing: yes. Can pass: yes
 - Policy: auto
 - Confirmed: 2026-09-01
+
+### background.criminal-history
+- Answer: No convictions
+- Policy: confirm
+- Confirmed: 2026-09-01
+
+### history.contact-employer
+- Answer: Current employer: after an offer. Past employers: yes
+- Policy: auto
+- Confirmed: 2026-09-01
+
+### eligibility.essential-functions
+- Answer: Yes
+- Policy: confirm
+- Confirmed: 2026-09-01
+
+### eligibility.age-18
+- Answer: Yes
+- Policy: auto
+- Confirmed: 2026-09-01
+
+### contact.address
+- Answer: Jordan types it on each form
+- Policy: person
+- Confirmed: 2026-09-01
+
+### documents.references
+- Answer: None for now
+- Policy: confirm
+- Confirmed: 2026-09-01
+
+### employment.type
+- Answer: Full-time, W-2
+- Policy: auto
+- Confirmed: 2026-09-01

@@ -39,7 +39,8 @@ test("the shipped catalog's essentials settle what to apply for and what nearly 
   for (const id of ["prefs.min-fit", "work-auth.us-authorized", "work-auth.sponsorship", "prefs.work-arrangement", "prefs.constraints", "employers.avoid", "comp.strategy", "comp.minimum", "availability.start", "consent.required-terms", "experience.years-total", "eeo.gender", "accounts.handling"]) {
     assert.ok(essential.has(id), `${id} is essential`);
   }
-  assert.ok(essential.size <= 20, `quick start stays short (${essential.size} essential ids)`);
+  // About two dozen, asked in a few grouped messages: the essentials, the four eeo.* answers, and the screening batch.
+  assert.ok(essential.size <= 28, `quick start stays short (${essential.size} essential ids)`);
   assert.ok(catalog.filter((e) => e.core && !e.essential).length > 10, "the rest are still asked, after applying starts");
 });
 

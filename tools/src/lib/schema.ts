@@ -54,7 +54,7 @@ export const ENUMS: ReadonlyArray<{ type: DocType; field: string; values: readon
 ];
 
 /** Answers whose values stay out of committed records (records name the id only). */
-export const SENSITIVE_ANSWER_PREFIXES = ["eeo.", "background.criminal-history", "accommodations.", "contact.address"] as const;
+export const SENSITIVE_ANSWER_PREFIXES = ["eeo.", "background.criminal-history", "background.drug-screen", "history.terminated", "background.health-screening", "eligibility.essential-functions", "accommodations.", "contact.address", "documents.references"] as const;
 
 export const RESUME_EXTENSIONS = [".pdf", ".docx"] as const;
 /** Text that marks a draft or sample; it never belongs in a sendable resume or letter. */

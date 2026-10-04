@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
-import { formatAnswer, loadAnswers, loadCatalog, openCoreQuestions, savedAnswersPath, sessionAnswersPath, sessionHeader, type Answer, type CatalogEntry, type Policy } from "../lib/catalog.ts";
+import { formatAnswer, loadAnswers, loadCatalog, loadKeptAnswers, openCoreQuestions, privateAnswersPath, savedAnswersPath, sessionAnswersPath, sessionHeader, type Answer, type CatalogEntry, type Policy } from "../lib/catalog.ts";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
 import { listApplications } from "../lib/applications.ts";
@@ -32,7 +32,7 @@ const command: Command = {
     const savedPath = savedAnswersPath(person), sessionPath = sessionAnswersPath(person);
     const catalog = new Map(loadCatalog().map((e) => [e.id, e]));
     if (sub === "start") {
-      const saved = loadAnswers(savedPath);
+      const saved = loadKeptAnswers(person);
       // The last session's answers carry over: the person gave them, and they stand until changed. A saved
       // answer confirmed after that session is newer and wins. --fresh starts from the saved answers alone.
       const previous = has(a, "fresh") || !existsSync(sessionPath) ? new Map<string, Answer>() : loadAnswers(sessionPath);
@@ -68,8 +68,9 @@ const command: Command = {
         .sort((x, y) => y.s - x.s)
         .slice(0, 5);
       for (const { e, s } of ranked) {
-        const answer = session.get(e.id)?.answer ?? saved.get(e.id)?.answer;
-        console.log(`${e.id} (${e.policy}, match ${s.toFixed(2)}): ${answer ? `answer: ${answer}` : "no answer yet"}\n  ask: ${e.ask}`);
+        const answer = session.get(e.id)?.answer ?? saved.get(e.id)?.answer ?? loadAnswers(privateAnswersPath(person)).get(e.id)?.answer;
+        const shown = answer && e.local ? "answered (kept privately; read it from the private file)" : answer ? `answer: ${answer}` : "no answer yet";
+        console.log(`${e.id} (${e.policy}, match ${s.toFixed(2)}): ${shown}\n  ask: ${e.ask}`);
       }
       return 0;
     }
@@ -87,18 +88,32 @@ const command: Command = {
       const notes = flag(a, "notes") ?? sessionPrev?.notes ?? (savedPrev?.answer === answer ? savedPrev.notes : undefined);
       upsert(sessionPath, sessionHeader(person), formatAnswer({ id, answer, policy, notes, source: sessionPrev?.source }), id);
       if (has(a, "save")) {
-        const savedNotes = flag(a, "notes") ?? notes ?? savedPrev?.notes;
-        upsert(savedPath, `---\ntype: answers\nperson: ${person}\n---\n\n# Answers\n`, formatAnswer({ id, answer, policy, confirmed: today(), notes: savedNotes, source: savedPrev?.source }), id);
+        // A private detail is kept, but only in the git-ignored private file, never in the committed answers file.
+        const keepPath = entry?.local ? privateAnswersPath(person) : savedPath;
+        const header = entry?.local ? `---\ntype: private\nperson: ${person}\n---\n\n# Private details (kept out of git)\n` : `---\ntype: answers\nperson: ${person}\n---\n\n# Answers\n`;
+        const keptPrev = loadAnswers(keepPath).get(id);
+        const savedNotes = flag(a, "notes") ?? notes ?? keptPrev?.notes;
+        upsert(keepPath, header, formatAnswer({ id, answer, policy, confirmed: today(), notes: savedNotes, source: keptPrev?.source }), id);
       }
-      console.log(`${id}: ${answer}${has(a, "save") ? " (saved)" : ""}${notes ? `\n  notes: ${notes}` : ""}`);
+      console.log(`${id}: ${answer}${has(a, "save") ? (entry?.local ? " (saved in the private file, which git ignores)" : " (saved)") : ""}${notes ? `\n  notes: ${notes}` : ""}`);
       // Held applications waiting on this answer can go ahead now.
-      const waiting = listApplications(person).filter((x) => x.record?.status === "blocked" && x.record.waits_on === id);
+      const apps = listApplications(person);
+      const waiting = apps.filter((x) => x.record?.status === "blocked" && x.record.waits_on === id);
       if (waiting.length) console.log(`held applications waiting on ${id}: ${waiting.map((x) => x.name).join(", ")} (reopen them: app reopen <dir> --reason "answered")`);
+      const pendingOn = apps.filter((x) => x.record?.status === "submitted" && x.record.pending_waits_on === id);
+      if (pendingOn.length) console.log(`sent applications with a step waiting on ${id}: ${pendingOn.map((x) => x.name).join(", ")}`);
+      // An answer is the value a form takes; who said it and when belong in --notes.
+      if (/^(\d{4}-\d{2}-\d{2}\b|[A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?,? (?:\d{4}-\d{2}-\d{2}|said|wrote)\b)/.test(answer)) {
+        console.log("note: an answer is the value a form takes; put who said it and when, and their own words, in --notes");
+      }
       return 0;
     }
     const saved = loadAnswers(savedPath);
     console.log(`saved answers (${rel(savedPath)}):`);
     for (const x of saved.values()) console.log(`  ${x.confirmed ? "✓" : "?"} ${x.id}: ${x.answer || "(blank)"}${x.confirmed ? "" : "  ← confirm with the person"}`);
+    // Private answers are named, not shown: read the private file when a form needs one.
+    const kept = [...loadAnswers(privateAnswersPath(person)).values()].filter((x) => x.answer);
+    if (kept.length) console.log(`kept privately (${rel(privateAnswersPath(person))}, ignored by git): ${kept.map((x) => x.id).join(", ")}`);
     const open = openCoreQuestions(person);
     const groups: [string, CatalogEntry[]][] = [
       [`open essential questions (${open.filter((q) => q.essential).length}): forms ask these most; settle them before applying while the person is here, otherwise the applications that need one wait on it`, open.filter((q) => q.essential)],
