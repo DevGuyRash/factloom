@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
-import { formatAnswer, loadAnswers, loadCatalog, openCoreQuestions, savedAnswersPath, sessionAnswersPath, sessionHeader, type CatalogEntry, type Policy } from "../lib/catalog.ts";
+import { formatAnswer, loadAnswers, loadCatalog, openCoreQuestions, savedAnswersPath, sessionAnswersPath, sessionHeader, type Answer, type CatalogEntry, type Policy } from "../lib/catalog.ts";
 import type { Command } from "../lib/command.ts";
+import { peek } from "../lib/frontmatter.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
 import { POLICIES } from "../lib/schema.ts";
 
@@ -21,19 +22,33 @@ function upsert(path: string, header: string, entry: string, id: string) {
 const command: Command = {
   name: "onboarding",
   summary: "Show open core questions, start the session-answers file, record answers",
-  usage: "resumes onboarding [--person p] | onboarding start [--person p] | onboarding answer <catalog-id> <answer> [--policy auto|confirm|ask|person] [--save] [--person p]",
+  usage: "resumes onboarding [--person p] | onboarding start [--fresh] [--person p] | onboarding answer <catalog-id> <answer> [--policy auto|confirm|ask|person] [--save] [--person p]",
   run(argv) {
-    const a = parseArgs(argv, ["save"]);
+    const a = parseArgs(argv, ["save", "fresh"]);
     const person = resolvePerson(flag(a, "person"));
     const sub = a._[0] ?? "status";
     const savedPath = savedAnswersPath(person), sessionPath = sessionAnswersPath(person);
     const catalog = new Map(loadCatalog().map((e) => [e.id, e]));
     if (sub === "start") {
       const saved = loadAnswers(savedPath);
-      const entries = [...saved.values()].filter((x) => x.answer).map((x) => formatAnswer({ id: x.id, answer: x.answer, policy: x.policy }));
+      // The last session's answers carry over: the person gave them, and they stand until changed. A saved
+      // answer confirmed after that session is newer and wins. --fresh starts from the saved answers alone.
+      const previous = has(a, "fresh") || !existsSync(sessionPath) ? new Map<string, Answer>() : loadAnswers(sessionPath);
+      const previousDate = existsSync(sessionPath) ? String(peek(sessionPath)?.session ?? "") : "";
+      const merged = new Map<string, Answer>();
+      for (const x of saved.values()) if (x.answer) merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy });
+      let carried = 0;
+      for (const x of previous.values()) {
+        if (!x.answer) continue;
+        const newerSaved = saved.get(x.id)?.confirmed && previousDate && saved.get(x.id)!.confirmed! > previousDate;
+        if (newerSaved) continue;
+        if (saved.get(x.id)?.answer !== x.answer) carried++;
+        merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy, notes: x.notes, source: x.source });
+      }
+      const entries = [...merged.values()].map(formatAnswer);
       writeFileSync(sessionPath, `${sessionHeader(person)}\n${entries.join("\n\n")}${entries.length ? "\n" : ""}`);
       const unconfirmed = [...saved.values()].filter((x) => x.answer && !x.confirmed).length;
-      console.log(`wrote ${rel(sessionPath)} with ${entries.length} saved answers${unconfirmed ? `; confirm the ${unconfirmed} without a Confirmed date with the person` : ""}`);
+      console.log(`wrote ${rel(sessionPath)} with ${entries.length} answers (${carried} carried over from the last session)${unconfirmed ? `; confirm the ${unconfirmed} saved answers without a Confirmed date with the person` : ""}`);
       return 0;
     }
     if (sub === "answer") {

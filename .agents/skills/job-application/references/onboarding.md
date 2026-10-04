@@ -4,16 +4,16 @@
 
 Onboarding gets the session the answers it needs to start applying. They are kept for the session in a git-ignored file and reach the committed repository only when the person asks to save them.
 
-1. Gather the person's saved answers. In one message, list them and say they apply unless the person changes any. Saved answers without a `Confirmed` date came from earlier notes or were derived from the profile: ask about those explicitly.
+1. Gather the answers: `./resumes onboarding start` writes the session-answers file from the last session's answers and the saved ones. In one message, list them and say they apply unless the person changes any. Saved answers without a `Confirmed` date came from earlier notes or were derived from the profile: ask about those explicitly.
 2. Ask the open **essential** questions (`./resumes onboarding` lists them first) a few at a time (about five per message), grouped by catalog section and offering the usual choices so the person can answer briefly. Ask the four `eeo.*` questions as one. When `accounts.handling` hands sign-ins or new accounts to the agent, ask `accounts.email` and `mail.verification` with it. Propose `experience.years-total` from the profile and evidence, with its basis. When the person's facts have no jobs yet, or `./resumes status --person <slug>` shows resume intake pending, finish [intake](intake.md) before the first application. Salary answers come from the person: a figure or range per kind of role and wording for free-text fields.
 3. When `accounts.handling` calls for a session password and `./resumes credentials status` shows none, have the person run `./resumes credentials set` in a terminal; open one for them when the host can. It asks for the password without showing it, so never ask for a password in the chat.
-4. Write the answers to the session-answers file, then begin applying. When the person prefers to finish onboarding first, ask the other open core questions (step 5) before starting.
+4. Write the answers to the session-answers file, then begin applying. When the person prefers to finish onboarding first, or the run will be unattended (they will be away, or a schedule or automation runs it), ask the other open core questions (step 5) before starting: nobody will be there to answer them later.
 5. Once applying has started, put the other open core questions to the person in batches while they are present: between applications, or together with held questions. In the same batches, have them confirm what the repository already shows (employment history, education, links, government employment, how-heard) and experience-years figures for the skills the target roles name most (languages, platforms, domains), each proposed from the profile and evidence with its basis.
 6. Questions met later go to the person as they arise, or onto the waiting list when the person is away; add each answer they give to the file. Constraints the person states later go into `prefs.constraints` the same way, and employers to avoid onto the block list (`./resumes employers block`).
 
 ### Session-answers file
 
-`people/<person>/session.local.md` (ignored by git), replaced at each session's onboarding:
+`people/<person>/session.local.md` (ignored by git). `./resumes onboarding start` rewrites it at the start of each session from the last session's answers, which stand until the person changes them, and the saved answers; a saved answer confirmed after the last session wins, and `--fresh` starts from the saved answers alone:
 
 ```markdown
 ---
@@ -38,7 +38,7 @@ When the person asks to save answers (at any point, or when offered at the end o
 | Policy | During the session |
 |---|---|
 | `auto` | Use the answer. |
-| `confirm` | Confirm it once during onboarding, then use it. |
+| `confirm` | Confirm it once during onboarding, then use it for every application in the run. |
 | `ask` | Ask the person for each application that needs it; hold the application when they are away. |
 | `person` | The person enters it themselves; hold the application for them. |
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { makeFixture } from "./helpers/fixture.ts";
 
@@ -26,6 +26,36 @@ test("catalog parsing, open core questions, session file, and saving", async () 
     assert.equal(saved.get("availability.start")?.answer, "One week");
     assert.ok(saved.get("availability.start")?.confirmed);
     assert.equal(loadAnswers(join(fx.root, "people/pat-lee/session.local.md")).get("availability.start")?.answer, "One week");
+  } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
+});
+
+test("onboarding start keeps the last session's answers, unless a saved answer is newer or --fresh starts over", async () => {
+  const fx = makeFixture({ "shared/onboarding.md": CATALOG });
+  process.env.RESUMES_ROOT = fx.root;
+  try {
+    const { loadAnswers, openCoreQuestions } = await import("../src/lib/catalog.ts");
+    const cmd = (await import("../src/commands/onboarding.ts")).default;
+    const sessionFile = join(fx.root, "people/pat-lee/session.local.md");
+    const answer = (id: string) => loadAnswers(sessionFile).get(id)?.answer;
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(await cmd.run(["answer", "availability.start", "Immediately", "--person", "pat-lee"]), 0);
+    assert.equal(await cmd.run(["answer", "work-auth.sponsorship", "No", "--person", "pat-lee"]), 0);
+    // A new session: answers the person gave last time stand until they change them.
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(answer("availability.start"), "Immediately");
+    assert.equal(answer("work-auth.sponsorship"), "No");
+    assert.deepEqual(openCoreQuestions("pat-lee", fx.root).map((e) => e.id), [], "so onboarding does not ask them again");
+    // A saved answer confirmed after that session is newer and wins.
+    const fm = readFileSync(sessionFile, "utf8").replace(/^session: .*$/m, "session: 2020-01-01");
+    writeFileSync(sessionFile, fm);
+    writeFileSync(join(fx.root, "people/pat-lee/answers.md"), "---\ntype: answers\nperson: pat-lee\n---\n\n### availability.start\n- Answer: In two weeks\n- Policy: auto\n- Confirmed: 2026-10-01\n");
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(answer("availability.start"), "In two weeks");
+    assert.equal(answer("work-auth.sponsorship"), "No");
+    // --fresh starts from the saved answers alone.
+    assert.equal(await cmd.run(["start", "--fresh", "--person", "pat-lee"]), 0);
+    assert.equal(answer("availability.start"), "In two weeks");
+    assert.equal(answer("work-auth.sponsorship"), undefined);
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
 });
 

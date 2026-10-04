@@ -12,6 +12,7 @@ The person's profile lists job sources (search engines, job boards, saved search
 2. Work through results in order. Screen from the listing card before opening a posting when the card already shows a conflict (pay, location, arrangement, schedule, a blocked employer, required clearance, or any other constraint).
 3. Open the employer's own posting and apply there; record both the source link and the employer link.
 4. Where a source can mark a posting as applied or hidden, mark it after submitting or skipping, so the source stays deduplicated for future sessions.
-5. A source is done when its recent results hold no new postings that pass the screen; move to the next source.
+5. Save a search that finds postings for a target title (`./resumes searches add`), so later passes run it again ("Searching" in [SKILL.md](../SKILL.md)). A search is done for this pass when its newest results hold nothing new; move to the next. When a whole pass comes up empty, follow "When leads run out" before treating the search as finished.
+6. A saved search's query, filters, and notes can lag behind the person's answers (an employment type they now accept, a new pay floor). When they disagree, search by the answers and correct the saved search.
 
 Site notes record how each source and applicant system behaves: `shared/site-notes.md` ships with the engine, and `custom/site-notes.md` (`type: site-notes`) holds this repository's own. Read both; add what you learn, dated, to `custom/site-notes.md`.

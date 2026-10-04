@@ -36,12 +36,11 @@ How the skill uses company dossiers, stories, drafts, email helpers, alerts, and
 
 - Use `resumes notify "<message>" [--title T]` when a run needs the person's attention (a held application, a question only they can answer) or when a long unattended run finishes.
 - It posts to `RESUMES_NTFY_URL` when the person has set it, falls back to a desktop `notify-send`, and otherwise just prints — so it is always safe to call even when nothing is configured.
-- Do not invent urgency; one notification per natural stopping point is enough.
+- Do not invent urgency; one notification per natural stopping point is enough, and a blocker already reported is not reported again.
 
 ## Sign-ins
 
-- When a form needs the person signed in, prefer the host's own password-manager integration so the person approves each use and credentials never pass through a file or chat message you write.
-- If no such integration is available, stop and ask the person to sign in themselves; never type or store a password or one-time code for them.
+Sign-ins, new accounts, and emailed codes follow [forms](forms.md), "Steps that belong to the person": they are yours only when the session's answers hand them to you and your host allows it, and then a password comes from the person's password manager or the session credentials file, never from the chat. When one stays with the person, hold that application with what the page needs and continue with the next posting.
 
 ## Submission proof
 

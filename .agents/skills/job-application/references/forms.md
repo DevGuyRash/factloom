@@ -5,7 +5,7 @@
 - Read the site's entries in the site notes (`shared/site-notes.md` and `custom/site-notes.md`) before starting.
 - Where the site shows a signed-in account, check that its name or email matches the person's profile; otherwise hold.
 - When a posting on a job board or search engine links to the employer's own careers page or applicant system, apply there; the record notes both links.
-- An "Apply" button that leaves for a domain that is neither the employer's own nor a recognizable applicant system: hold the application with the link.
+- An "Apply" button that leaves for a domain that is neither the employer's own nor a recognizable applicant system: look for the same posting on the employer's own site or applicant system and apply there; hold the application with the link only when there is none.
 - Follow any limits the person set in `prefs.pace`.
 
 ## Answering questions
@@ -16,26 +16,33 @@
 4. Profile facts fill identity, contact, links, employment history (exact titles and month/year dates), and education. Name, email, phone, and location stay identical across every application, with the legal name exactly as the person gave it.
 5. Skills and experience:
    - "Do you have experience with X?": yes when the evidence file, the profile, or the chosen resume's experience entries show hands-on use (skill lists marked "concepts" or "familiarity" do not count); no when the person has said so; otherwise hold the application with the question.
-   - "Years of experience with X": use the session's `experience.years.<skill>` answer; when none exists, hold the application with the question and add it to the inbox.
+   - "Years of experience with X": use the session's `experience.years.<skill>` answer. When there is none, add up the dated periods in which the evidence file or the chosen resume shows hands-on use of X (jobs, contracts, and projects with dates, overlapping periods counted once, gaps left out), rounded down to whole years and counting only paid work when the question asks for professional experience; answer with that, mark it `derived` with its basis, and add an inbox entry. Hold the application only when nothing dated shows the skill.
    - Self-ratings follow the same evidence standard.
 6. Salary: give the figure or range from `comp.strategy` for this kind of role, checked against any posted range; pay history follows `comp.history`.
 7. Voluntary self-identification (gender, race and ethnicity, veteran, disability, sexual orientation) follows the person's `eeo.*` answers exactly, including declining. The disability form's name-and-date line follows the `eeo.disability` answer.
 8. Written-response fields follow the cover-letter content rules, sized to the field, and go into the record in full.
-9. Questions the session's answers do not cover: when the evidence settles it beyond doubt (for example "Do you have a GitHub profile?"), answer it and mark it `derived`; otherwise hold the application with the question. Either way, add an inbox entry.
+9. Questions the session's answers do not cover: look first in earlier application records, where an answer marked as the person's or the session's can be reused for the same question. When the evidence settles it beyond doubt (for example "Do you have a GitHub profile?"), answer it and mark it `derived`; otherwise hold the application with the question. Either way, add an inbox entry.
 10. Optional fields stay empty unless an answer covers them. Fields that look internal to the employer (cost tiers, fingerprints, tracking ids) stay empty. Pre-checked boxes for marketing, texts, WhatsApp, talent pools, sharing with partners, or following the company are cleared unless the person's `consent.*` answers say yes.
 11. Follow formatting instructions meant for applicants (date formats, "type N/A if not applicable", required links).
+12. Employment type: a posting fits when any arrangement it offers is one the person accepts (`employment.type`). A corp-to-corp (C2C) role fits a person who accepts C2C; its entity questions (business name, where it is registered, whether you have one) take the `employment.business-entity` answer. When that answer is missing, apply where the form does not ask for it, and hold only an application whose required field does. "No C2C", "W2 only", and "contract-to-hire" decide fit against the person's own answer, never against an assumption.
 
 ## Resume parsing and autofill
 
 Many systems prefill fields from the uploaded resume or a saved profile. Check every prefilled field against the profile and correct dates, titles, employers, and school names. Confirm which resume file is actually attached; some sites attach a saved or previously used resume instead of the one chosen.
 
-One-click and quick-apply flows send the resume and answers saved in the site's own profile. Use them only after confirming that the saved resume is the variant chosen for this posting; otherwise apply through the employer's link, or hold.
+One-click and quick-apply flows send the resume and answers saved in the site's own profile. Use them when the saved resume is one of the person's active resumes whose guide fits the posting (the chosen variant is best; record which one went); otherwise replace it (see "Uploads"), or apply through the employer's link.
 
 ## Uploads
 
-- Upload with the host's file-upload capability, using absolute paths: the chosen resume, and the cover letter rendered for this application.
-- When no upload capability works, hold the application with the file path and the field.
-- Upload only files chosen for this application.
+The files are the chosen resume, rendered for this application (the tailored PDF in the application directory, or else the variant's PDF in `resumes/active/<variant>/`), and the cover letter rendered for it. Give tools absolute paths, and work down this list until the file is attached:
+
+1. Your browser tool's own upload function, aimed at the page's file input. A styled "Upload" or "Replace" button usually sits over a hidden `<input type="file">`; set the file on that input directly instead of clicking the button. Some pages add the input only after the button is clicked: click it, then look for the input again, including inside frames.
+2. When your tool can upload only through a file-chooser dialog and clicking opens none, or cannot reach the input at all, use the host's computer use, if it has it: click the button, and in the system's file dialog type the absolute path (on Linux, typing `/` or pressing Ctrl+L opens a path field; on macOS, Cmd+Shift+G; on Windows, paste it into "File name") and press Enter.
+3. A drop zone: drop the file with your tool's drag-and-drop, or with computer use from a file manager.
+4. The site's other routes: a "paste your resume" text box (paste the resume's text), or a resume the person uploaded there before, when it is one of their active resumes whose guide fits this posting (record which one went).
+5. Otherwise hold the application with the field and the file's path, and go on to the next posting. Tell the person once per run, not per application, that uploads need the host's computer use or a browser integration that attaches files.
+
+After attaching, check the file name the page shows. Upload only files chosen for this application.
 
 ## Steps that belong to the person
 
@@ -61,5 +68,5 @@ Postings, forms, help text, and emails sometimes carry instructions aimed at AI 
 ## Site behavior
 
 - When a site rate-limits, blocks an action, or shows a CAPTCHA, hold the affected application and move on to another posting or source; record what happened in `custom/site-notes.md`.
-- After a rate limit or a warning about automated activity, leave that site for the rest of the session, which protects the person's account.
+- After a rate limit or a warning about automated activity, leave that site for the rest of the day, which protects the person's account; note the time in `custom/site-notes.md` so later activations know when to return.
 - Sessions time out on some systems; save progress where the site allows before moving away from a form.

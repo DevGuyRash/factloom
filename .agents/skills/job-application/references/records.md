@@ -54,7 +54,7 @@ Before creating a directory, compare the posting's employer link or requisition 
 
 ## Submit or hold
 
-Submit when the person's standing instruction or their word in this session allows it and every field is settled:
+Submit when the person's standing instruction or their word in this session allows it and every field is settled. That instruction is the approval for every application in the run, so do not ask about individual ones:
 
 - each answer comes from the session or saved answers, the profile, the evidence file, or the chosen resume;
 - the attached resume and cover letter are the ones chosen for this application;

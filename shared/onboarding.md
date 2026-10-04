@@ -177,6 +177,12 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: list
 - Policy: auto
 
+### employment.business-entity (core)
+- Ask: If you take corp-to-corp (C2C) contracts, which business do you contract through: its legal name and the state where it is registered? Answer "none" if you contract only as an individual.
+- Seen as: "Are you able to work C2C?", "Company name (if C2C)", "Do you have your own corporation or LLC?", "Name of your incorporated business", "Employer of record"
+- Shape: legal name and state, or none
+- Policy: auto
+
 ## Background, history, and conflicts
 
 These appear mostly on Workday, iCIMS, and public-sector forms.

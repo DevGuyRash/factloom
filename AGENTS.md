@@ -56,7 +56,7 @@ When a person has no directory yet, or asks to be set up:
 
 The job-application skill under `.agents/skills/` holds the procedure: session onboarding, finding postings in open tabs and job sources, filling and submitting applications, cover letters, records, and the inbox. Skills live only in `.agents/skills/`; `.claude/skills` and `.codex/skills` are links to it, so every skill added there reaches both hosts. Hosts without skill support read a skill's `SKILL.md` and its references directly.
 
-A person's profile may carry a standing instruction, in their own words, on how autonomously to apply for them. Follow it. Where it grants autonomy, apply and submit without further approval once the session's onboarding is done, and keep going until the person stops you or no new matching postings remain. Without one, ask at the start of the session whether to submit on your own or show each application first.
+A person's profile may carry a standing instruction, in their own words, on how autonomously to apply for them. Follow it. Where it grants autonomy, apply and submit without further approval once the session's onboarding is done: the instruction approves every application, so never ask about one. Keep going until the person stops you; when the leads run out, the job-application skill says how to widen the search and keep watching for new postings. Without an instruction, ask once at the start of the session whether to submit on your own or show each application first.
 
 ## Rules for every session
 
