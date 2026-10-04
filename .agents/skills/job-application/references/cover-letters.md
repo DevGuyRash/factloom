@@ -35,4 +35,6 @@ Write a letter when the form requires one, or when it accepts one and the sessio
 
 When the builder cannot run, paste the text into the form where it takes text; otherwise hold the application for the person to attach the letter, and note that in the record.
 
+State what fits; never list or apologize for gaps against the posting's requirements.
+
 The letter stays in the application directory, where the person can read what was sent.

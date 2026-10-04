@@ -50,7 +50,7 @@ Later sessions read it as a record of what the site said.
 
 ### Duplicates
 
-`./resumes app new` compares the posting with the person's records. The same link (employer or job board) or the same requisition at that employer is the same job: it is already covered, so move on. The same employer with a similar title is only possibly the same job: the tool shows the earlier record (its status, date, requisition, and links) for you to compare with the posting in hand. A different team, level, location, or requisition makes it a different job: proceed with `--distinct-from <dir> --because "<what differs>"`. A skipped posting never blocks another, and a skipped or held application comes back with `./resumes app reopen <dir> --reason "…"` when what ruled it out has changed.
+`./resumes app new` compares the posting with the person's records. The same link (employer or job board) or the same requisition at that employer is the same job: it is already covered, so move on. The same employer with a similar title is only possibly the same job: the tool shows the earlier record (its status, date, requisition, and links) for you to compare with the posting in hand. A different team, level, location, or requisition makes it a different job: proceed with `--distinct-from <dir> --because "<what differs>"`. Nearly the same posting text under another firm's name (one client's role posted by several staffing firms) is shown the same way, by posting text: apply through one firm, and skip the other as the same opening, naming the first. A skipped posting never blocks another, and a skipped or held application comes back with `./resumes app reopen <dir> --reason "…"` when what ruled it out has changed.
 
 ## Submit or hold
 
