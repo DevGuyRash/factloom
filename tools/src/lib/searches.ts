@@ -16,11 +16,11 @@ export type SearchItem = {
 };
 /** A site left alone until a time (a rate limit, a bot check, a warning), so later activations know too. */
 export type ClosedSite = { site: string; until: string; reason?: string };
-/** A pass is one turn through every open search; `pass_new` counts the new postings it found so far. */
+/** A pass is one turn through every open search; `pass_ran` lists the searches run in it, `pass_new` the new postings so far. */
 export type LastPass = { started: string; ended: string; searches: number; new: number };
 export type SearchesDoc = {
   type: "searches"; person: string; items: SearchItem[];
-  pass_started?: string; pass_new?: number; last_pass?: LastPass; closed_sites?: ClosedSite[];
+  pass_started?: string; pass_ran?: string[]; pass_new?: number; last_pass?: LastPass; closed_sites?: ClosedSite[];
 };
 
 const BODY = "\n# Saved searches\n\nOne for each target title on each job site. `resumes searches next` suggests the next ones, the ones run longest ago first; `searches mark` records each run and counts the pass; `every_days` says when one is due again between sessions. Managed by `resumes searches`.\n";
@@ -121,11 +121,15 @@ export function nextSearch(person: string, root = repoRoot()): SearchItem | null
   return rotation(person, root)[0] ?? null;
 }
 
-/** Where the current pass stands: open searches run since it began, of all open ones, and new postings so far. */
+/**
+ * Where the current pass stands: open searches run in it, of all open ones, and new postings so far. The pass
+ * counts searches by id, so runs marked within the same second never blur two passes together.
+ */
 export function passStatus(doc: SearchesDoc, now = Date.now()): { started?: string; ran: number; open: number; new: number; complete: boolean } {
   const open = openSearches(doc, now);
   const started = doc.pass_started;
-  const ran = started ? open.filter((s) => timeOf(s.last_run) >= timeOf(started)).length : 0;
+  const inPass = (s: SearchItem) => (doc.pass_ran ? doc.pass_ran.includes(s.id) : timeOf(s.last_run) >= timeOf(started));
+  const ran = started ? open.filter(inPass).length : 0;
   return { started, ran, open: open.length, new: doc.pass_new ?? 0, complete: !!started && open.length > 0 && ran === open.length };
 }
 
@@ -175,13 +179,14 @@ export function markSearch(person: string, id: string, root = repoRoot(), result
     ...(result.found !== undefined ? { last_found: result.found } : {}),
     ...(result.new !== undefined ? { last_new: result.new, runs: (prev.runs ?? 0) + 1, new_total: (prev.new_total ?? 0) + result.new } : {}),
   };
-  if (!data.pass_started) Object.assign(data, { pass_started: now, pass_new: 0 });
+  if (!data.pass_started) Object.assign(data, { pass_started: now, pass_ran: [], pass_new: 0 });
+  data.pass_ran = [...new Set([...(data.pass_ran ?? []), id])];
   data.pass_new = (data.pass_new ?? 0) + (result.new ?? 0);
   const status = passStatus(data);
   let completed: LastPass | undefined;
   if (status.complete) {
     completed = { started: data.pass_started!, ended: now, searches: status.open, new: data.pass_new };
-    Object.assign(data, { last_pass: completed, pass_started: undefined, pass_new: undefined });
+    Object.assign(data, { last_pass: completed, pass_started: undefined, pass_ran: undefined, pass_new: undefined });
   }
   saveDoc(person, data, root);
   return { item: data.items[i], completed, doc: data };
