@@ -87,7 +87,7 @@ Once a day (log each summary as a note, so the run logs show when the last one w
 
 Some hosts end a turn after a while or start you again on a schedule (a heartbeat, an automation, a loop). Each activation continues the same run:
 
-- Start it with `./resumes run start`. When it reports another run at work (its run log was written within the last 15 minutes), end this activation without changes: two runs in one browser and queue collide. Otherwise read the state above. While you work, log a line when you start each posting and before each wait (`./resumes run log --kind note`), so the run log shows the run is alive.
+- Start it with `./resumes run start`. When it reports a run log still open (written within the last 15 minutes), decide whose it is. Your own, from an earlier turn of this same conversation, has stopped, since that turn ended: take over (`./resumes run start --takeover`). Another agent's or process's may still be working in this browser and queue: end this activation without changes, since two runs collide. Otherwise read the state above. While you work, log a line when you start each posting and before each wait (`./resumes run log --kind note`), so the run log shows the run is alive.
 - Work exactly as above. An activation ends when the leads are exhausted ("When leads run out") or the host stops it, never after one pass, one batch, or a set number of applications.
 - Before it ends, bring the queue and records up to date, `./resumes run end`, commit, and push, so the next activation picks up where this one stopped.
 - Choose the shortest interval the host allows for the schedule: `run start` refuses while another activation is at work, so an extra start costs nothing, and the interval is only a safety net, not the pace.

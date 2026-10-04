@@ -55,7 +55,7 @@ test(
     try {
       assert.equal(await command.run(["start", "--person", "pat-lee"]), 0);
       assert.equal(await command.run(["start", "--person", "pat-lee"]), 1);
-      assert.match(errors.join("\n"), /another run is at work/);
+      assert.match(errors.join("\n"), /a run log is still open[\s\S]*--takeover/);
       assert.equal(await command.run(["start", "--takeover", "--person", "pat-lee"]), 0);
       // A run quiet for an hour has stopped: the next start closes it without --takeover.
       const files = readdirSync(runsDir).sort();

@@ -31,9 +31,10 @@ own answers, and the checks on truthfulness and privacy, are the lines that bind
    pending, unreadable records, queue and stale counts, follow-ups due, inbox size, guides awaiting
    review or research, and the searches (due, the current pass, closed sites, paused searches).
 4. `resumes run start --person <p>` — opens a run log at `people/<p>/runs/<timestamp>.md` for this
-   session's counts. It refuses while another run's log was written within `run_active_minutes`
-   (another activation at work; `--takeover` starts anyway), and closes logs left running by an
-   activation that stopped without `run end`.
+   session's counts. It refuses while an open run log was written within `run_active_minutes`:
+   another agent may be at work. When that log is your own, from an earlier turn of the same
+   conversation, `--takeover` starts anyway. It closes logs left running by an activation that
+   stopped without `run end`.
 
 ## Per posting
 

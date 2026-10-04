@@ -26,8 +26,9 @@ const command: Command = {
       const active = activeRun(person, minutes);
       if (active && !has(a, "takeover")) {
         console.error(
-          `another run is at work: ${rel(active.path)} was written at ${active.lastWrite.toISOString()}, within ${minutes} minutes. ` +
-            "Two runs in one browser and queue collide, so end this activation without changes; `run start --takeover` starts anyway when you know that run has stopped.",
+          `a run log is still open: ${rel(active.path)} was written at ${active.lastWrite.toISOString()}, within ${minutes} minutes. ` +
+            "If it is your own, from an earlier turn of this same conversation (a host that continues one thread), that turn has stopped: `run start --takeover`. " +
+            "If another agent or process may be working in this browser and queue, end this activation without changes, since two runs collide.",
         );
         return 1;
       }
