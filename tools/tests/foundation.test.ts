@@ -29,6 +29,10 @@ test("text helpers normalize for duplicate detection", () => {
   assert.equal(normalizeUrl("https://www.indeed.com/viewjob?jk=abc123&from=serp&tk=1x"), normalizeUrl("https://indeed.com/rc/clk?jk=abc123"));
   assert.equal(normalizeUrl("https://jobs.lever.co/acme/1f2e3d/apply?lever-source=LinkedIn"), "https://jobs.lever.co/acme/1f2e3d");
   assert.notEqual(normalizeUrl("https://www.linkedin.com/jobs/view/4012345678/"), normalizeUrl("https://www.linkedin.com/jobs/view/4012345679/"));
+  assert.equal(normalizeUrl("https://www.ziprecruiter.com/jobs-search?search=ai&location=Remote&lk=Ab12Cd"), normalizeUrl("https://www.ziprecruiter.com/jobs-search?search=ml&lk=Ab12Cd&page=2"));
+  // A key that only starts like a tracking key can identify the posting, so it stays.
+  assert.notEqual(normalizeUrl("https://jobs.example.com/view?refnum=A1"), normalizeUrl("https://jobs.example.com/view?refnum=B2"));
+  assert.equal(normalizeUrl("https://jobs.example.com/view?id=7&ref=feed&source=mail&utm_medium=x"), "https://jobs.example.com/view?id=7");
 });
 
 test("args parse positionals, flags, and --set pairs", () => {

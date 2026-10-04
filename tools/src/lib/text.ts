@@ -38,7 +38,9 @@ export function similarity(a: string, b: string): number {
 }
 
 /** Query keys that only say where a click came from. */
-const TRACKING_KEY = /^(utm_|ref|source|src|gh_src|lever-source|trk|trackingid$|tracking_id$|ebp$|gclid$|fbclid$|msclkid$|mc_|_hs|lipi$|midtoken$|midsig$|alternatechannel$|recommendedflavor$|originalsubdomain$)/i;
+// Whole names, except families that are all tracking (utm_*, mc_*, _hs*, trk*): a key that only starts like one
+// (refnum, sourceId) can identify the posting.
+const TRACKING_KEY = /^(utm_\w*|mc_\w*|_hs\w*|trk\w*|ref|refid|referrer|referer|source|src|gh_src|lever-source|trackingid|tracking_id|ebp|gclid|fbclid|msclkid|lipi|midtoken|midsig|alternatechannel|recommendedflavor|originalsubdomain)$/i;
 
 /**
  * A posting's link reduced to what identifies it, for duplicate detection: no tracking parameters, fragment, "www.",
@@ -54,7 +56,10 @@ export function normalizeUrl(url: string): string {
       if (id) return `https://linkedin.com/jobs/view/${id}`;
     }
     if (/(^|\.)indeed\.com$/.test(host) && u.searchParams.get("jk")) return `https://${host}/viewjob?jk=${u.searchParams.get("jk")}`;
-    if (/(^|\.)ziprecruiter\.com$/.test(host) && u.searchParams.get("jid")) return `https://ziprecruiter.com/jobs?jid=${u.searchParams.get("jid")}`;
+    if (/(^|\.)ziprecruiter\.com$/.test(host)) {
+      // A posting's own id, or the listing key a search page carries for the job it shows.
+      for (const key of ["jid", "lk"]) if (u.searchParams.get(key)) return `https://ziprecruiter.com/jobs?${key}=${u.searchParams.get(key)}`;
+    }
     for (const k of [...u.searchParams.keys()]) if (TRACKING_KEY.test(k)) u.searchParams.delete(k);
     u.hash = "";
     const path = u.pathname.replace(/\/(apply|application)\/?$/i, "").replace(/\/$/, "");
