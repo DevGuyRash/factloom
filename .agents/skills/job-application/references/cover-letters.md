@@ -33,6 +33,6 @@ Write a letter when the form requires one, or when it accepts one and the sessio
 2. Render it with `resumes letter <letter.md>` from the repository root. It writes `<Name>_Cover_Letter.docx`, plus a PDF when LibreOffice is available, using the person's profile and the resume theme (`shared/templates/themes/`) for the header. To change the letter's look, edit the theme file, not the command. It refuses a letter that `resumes check` would reject (no application record beside it, company not mentioned, draft markers, or a phrase the person has not confirmed) and names each problem.
 3. Upload the PDF unless the site asks for Word; for a text box, paste the body paragraphs without the header.
 
-When the builder cannot run, paste the text into the form, or ask the person to save it as a document, and note that in the record.
+When the builder cannot run, paste the text into the form where it takes text; otherwise hold the application for the person to attach the letter, and note that in the record.
 
 The letter stays in the application directory, where the person can read what was sent.

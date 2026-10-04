@@ -39,7 +39,7 @@ export function enqueue(person: string, item: Omit<QueueItem, "found" | "status"
   const url = normalizeUrl(item.url);
   const existing = items.find((i) => normalizeUrl(i.url) === url);
   if (existing) return { added: false, reason: "queued", item: existing };
-  if (item.company && item.role && findDuplicate(person, { company: item.company, role: item.role, url: item.url }, root)) return { added: false, reason: "applied" };
+  if (findDuplicate(person, { company: item.company, role: item.role, url: item.url }, root)) return { added: false, reason: "applied" };
   const next: QueueItem = { found: today(), status: "queued", ...item, url: item.url };
   saveQueue(person, [...items, next], root);
   return { added: true, item: next };

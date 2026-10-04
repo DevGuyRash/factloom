@@ -62,6 +62,11 @@ test("applications are created from templates and duplicates are found", async (
     assert.equal(findDuplicate("pat-lee", { company: "Acme", role: "Accountant" }, fx.root), null);
     assert.equal(listApplications("pat-lee", fx.root).length, 1);
     assert.throws(() => createApplication("pat-lee", { company: "Acme, Inc.", role: "AI Engineer", date: "2026-10-01" }, fx.root), /already exists/);
+    // The job-board link an application was found through also identifies it, with or without company and role.
+    createApplication("pat-lee", { company: "Beta", role: "Analyst", url: "https://beta.example/careers/7", source: "https://board.example/view/42", date: "2026-10-02" }, fx.root);
+    assert.ok(findDuplicate("pat-lee", { url: "https://board.example/view/42?utm_source=feed" }, fx.root));
+    const { enqueue } = await import("../src/lib/queue.ts");
+    assert.equal(enqueue("pat-lee", { url: "https://board.example/view/42" }, fx.root).reason, "applied");
   } finally { fx.cleanup(); }
 });
 

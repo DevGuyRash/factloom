@@ -59,6 +59,20 @@ test("onboarding start keeps the last session's answers, unless a saved answer i
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
 });
 
+test("one skill's years take the policy of the catalog's experience.years.<skill> entry", async () => {
+  const catalog = `${CATALOG}\n## Experience\n\n### experience.years.<skill>\n- Ask: Derived from dated evidence.\n- Shape: number with basis\n- Policy: auto\n`;
+  const fx = makeFixture({ "shared/onboarding.md": catalog });
+  process.env.RESUMES_ROOT = fx.root;
+  try {
+    const { loadAnswers } = await import("../src/lib/catalog.ts");
+    const cmd = (await import("../src/commands/onboarding.ts")).default;
+    assert.equal(await cmd.run(["answer", "experience.years.python", "3 (derived: two dated jobs)", "--person", "pat-lee"]), 0);
+    const session = loadAnswers(join(fx.root, "people/pat-lee/session.local.md"));
+    assert.equal(session.get("experience.years.python")?.policy, "auto");
+    assert.equal(session.get("experience.years.python")?.answer, "3 (derived: two dated jobs)");
+  } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
+});
+
 test("inbox add writes the documented entry format", async () => {
   const fx = makeFixture();
   process.env.RESUMES_ROOT = fx.root;

@@ -18,7 +18,7 @@ Observations from application sessions and research, grouped by job site or appl
 - 2026-09-30: Single-page forms with yes/no fields; uploads up to 50 MB. Spam protection and per-candidate application limits can block repeated submissions to one employer.
 
 ## CEIPAL
-- 2026-09-25: The resume Upload control did not expose a usable file picker to the browser tool; hold for the person.
+- 2026-09-25: The resume Upload control did not expose a usable file picker to the browser tool; work down the forms reference's upload routes (the file input itself, script in the page, computer use) before holding for the person.
 
 ## Greenhouse
 - 2026-09-30: Single-page forms; cover letters can be attached or pasted; uploads up to 100 MB. MyGreenhouse can autofill across employers. Some postings link an opt-out from AI screening (see `prefs.ai-screening-opt-out`).

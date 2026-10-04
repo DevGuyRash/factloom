@@ -47,30 +47,36 @@ export function dueSearches(person: string, root = repoRoot()): SearchItem[] {
 }
 
 /**
- * The saved search run longest ago (never-run ones first, then in file order): the next one in a long run's
- * rotation, whatever its `every_days`. Taking searches this way switches sites and titles in turn, and each
- * search picks up what was posted since it last ran.
+ * The next saved search in a long run's rotation, whatever its `every_days`: the one run longest ago (never-run
+ * ones first, then in file order). Among searches that ran equally long ago, one on a different site from the
+ * search run last comes first, so a first pass alternates sites and later passes keep that order. Each search
+ * picks up what was posted since it last ran. `skipSites` leaves out sites that stopped the run for the day.
  */
-export function nextSearch(person: string, root = repoRoot()): SearchItem | null {
+export function nextSearch(person: string, root = repoRoot(), skipSites: string[] = []): SearchItem | null {
   const items = loadSearches(person, root).items;
-  let best: SearchItem | null = null;
-  for (const s of items) {
-    const at = s.last_run ? String(s.last_run) : "";
-    if (!best || at < (best.last_run ? String(best.last_run) : "")) best = s;
-  }
-  return best;
+  const site = (s: SearchItem) => String(s.site ?? "").trim().toLowerCase();
+  const at = (s: SearchItem) => (s.last_run ? String(s.last_run) : "");
+  const skip = new Set(skipSites.map((x) => x.trim().toLowerCase()).filter(Boolean));
+  const open = items.filter((s) => !skip.has(site(s)));
+  if (!open.length) return null;
+  const oldest = open.reduce((a, b) => (at(b) < at(a) ? b : a));
+  const latest = items.reduce<SearchItem | null>((a, b) => (at(b) && (!a || at(b) > at(a)) ? b : a), null);
+  const elsewhere = latest ? open.find((s) => at(s) === at(oldest) && site(s) !== site(latest)) : undefined;
+  return elsewhere ?? oldest;
 }
 
 /**
- * Saves a new search. Refuses an id already taken, a URL another search already runs (it would find the same
- * postings twice), and a variant that is not an active resume.
+ * Saves a new search. Refuses an id already taken, a search another one already runs (the same URL, query, and
+ * filters would find the same postings twice; sites that keep the query out of the URL share one URL), and a
+ * variant that is not an active resume.
  */
 export function addSearch(person: string, item: SearchItem, root = repoRoot()): SearchItem {
   const { items } = loadSearches(person, root);
   if (!/^[a-z0-9][a-z0-9._-]*$/.test(item.id)) throw new Error(`search id ${item.id}: use lowercase letters, digits, and - . _`);
   if (items.some((s) => s.id === item.id)) throw new Error(`a search ${item.id} exists already`);
-  const same = items.find((s) => s.url === item.url);
-  if (same) throw new Error(`search ${same.id} already runs ${item.url}`);
+  const key = (s: SearchItem) => [s.url, s.query ?? "", s.filters ?? ""].map((v) => String(v).trim().toLowerCase()).join("\n");
+  const same = items.find((s) => key(s) === key(item));
+  if (same) throw new Error(`search ${same.id} already runs ${item.url}${item.query ? ` for "${item.query}"` : ""}`);
   if (item.variant) {
     const active = join(personDir(person, root), "resumes", "active");
     const variants = existsSync(active) ? readdirSync(active, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : [];

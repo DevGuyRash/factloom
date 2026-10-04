@@ -73,6 +73,34 @@ test(
 );
 
 test(
+  "searches next alternates sites among searches that ran equally long ago, and leaves out skipped sites",
+  withFixture(
+    {
+      "people/pat-lee/searches.md":
+        "---\ntype: searches\nperson: pat-lee\nitems:\n" +
+        ["a1:a.example", "a2:a.example", "a3:a.example", "b1:b.example"]
+          .map((x) => x.split(":"))
+          .map(([id, site]) => `  - id: ${id}\n    site: ${site}\n    url: https://${site}/${id}\n    every_days: 1\n    last_run: null\n`)
+          .join("") +
+        "---\n",
+    },
+    async () => {
+      const next = async (...extra: string[]) => (await captureLog(() => command.run(["next", ...extra, "--person", "pat-lee"])))[0].split(" ")[0];
+      const order: string[] = [];
+      for (let i = 0; i < 4; i++) {
+        const id = await next();
+        order.push(id);
+        await command.run(["mark", id, "--person", "pat-lee"]);
+      }
+      // b1 comes between a.example's searches, and runs once in the pass.
+      assert.deepEqual(order, ["a1", "b1", "a2", "a3"]);
+      assert.equal(await next("--skip-sites", "a.example"), "b1");
+      assert.equal(await next("--skip-sites", "A.example,b.example"), "every");
+    },
+  ),
+);
+
+test(
   "searches next without saved searches says how to add them",
   withFixture({ "people/pat-lee/profile.md": "---\ntype: profile\nperson: pat-lee\n---\n" }, async () => {
     const lines = await captureLog(() => command.run(["next", "--person", "pat-lee"]));
@@ -81,7 +109,7 @@ test(
 );
 
 test(
-  "searches add saves a search for an active resume, refusing a taken id, a URL already saved, and an unknown resume",
+  "searches add saves a search for an active resume, refusing a taken id, a search already saved, and an unknown resume",
   withFixture(
     { "people/pat-lee/searches.md": SEARCHES, "people/pat-lee/resumes/active/a/guide.md": "---\ntype: resume-guide\n---\n" },
     async (fx) => {
@@ -95,11 +123,13 @@ test(
 
       const add = (...extra: string[]) => command.run(["add", ...extra, "--person", "pat-lee"]);
       assert.throws(() => add("a", "--url", "https://example.com/other"), /exists already/);
-      assert.throws(() => add("dup", "--url", "https://example.com/jobs?q=analyst&sort=date"), /already runs/);
+      assert.throws(() => add("dup", "--url", "https://example.com/jobs?q=analyst&sort=date", "--query", "Analyst"), /already runs/);
+      // Sites that keep the query out of the URL share one URL across searches.
+      assert.equal(add("same-url-other-query", "--url", "https://hiringcafe.com/", "--query", "operations analyst"), 0);
       assert.throws(() => add("c", "--url", "https://example.com/c", "--variant", "missing"), /no active resume missing \(active: a\)/);
       assert.throws(() => add("d", "--url", "https://example.com/d", "--every-days", "0"), /whole number/);
       assert.throws(() => add("Bad Id", "--url", "https://example.com/e"), /lowercase/);
-      assert.equal((readDoc(`${fx.root}/people/pat-lee/searches.md`).data.items as unknown[]).length, 3);
+      assert.equal((readDoc(`${fx.root}/people/pat-lee/searches.md`).data.items as unknown[]).length, 4);
     },
   ),
 );

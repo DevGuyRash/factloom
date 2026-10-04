@@ -35,16 +35,19 @@ export function listApplications(person: string, root = repoRoot()): Application
 export const applicationDirName = (date: string, company: string, role: string) => `${date}_${slugify(company)}_${slugify(role)}`;
 export const isApplicationDirName = (name: string) => APPLICATION_DIR.test(name);
 
-/** An existing application for the same job: same link or requisition, or same company with a near-identical role. */
-export function findDuplicate(person: string, job: { company: string; role: string; url?: string; requisition?: string }, root = repoRoot()): Application | null {
+/**
+ * An existing application for the same job: the same link (the record's employer link or the job-board link it was
+ * found through), the same requisition, or the same company with a near-identical role.
+ */
+export function findDuplicate(person: string, job: { company?: string; role?: string; url?: string; requisition?: string }, root = repoRoot()): Application | null {
   const url = job.url ? normalizeUrl(job.url) : null;
-  const company = normalizeCompany(job.company);
+  const company = job.company ? normalizeCompany(job.company) : null;
   for (const app of listApplications(person, root)) {
     const r = app.record;
     if (!r) continue;
-    if (url && r.url && normalizeUrl(String(r.url)) === url) return app;
+    if (url && [r.url, r.source].some((u) => u && normalizeUrl(String(u)) === url)) return app;
     if (job.requisition && r.requisition && String(r.requisition) === job.requisition) return app;
-    if (normalizeCompany(String(r.company)) === company && similarity(String(r.role), job.role) >= 0.6) return app;
+    if (company && job.role && normalizeCompany(String(r.company)) === company && similarity(String(r.role), job.role) >= 0.6) return app;
   }
   return null;
 }

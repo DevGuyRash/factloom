@@ -95,12 +95,18 @@ function daysSince(dateStr: string): number {
   return Math.floor((Date.now() - Date.parse(`${dateStr}T00:00:00`)) / 86400000);
 }
 
-/** The first non-heading line of a record's body: the usual place a held reason lives (see references/records.md). */
-function heldReason(recordPath: string | null): string {
+const HELD_LINE = /^- (\d{4}-\d{2}-\d{2}): held — (.*)$/;
+
+/**
+ * Why a held application waits: the last `- <date>: held — <reason>` line that `app hold` appends to the record,
+ * else the first line of prose in a record held by hand (headings and template comments skipped).
+ */
+export function heldReason(recordPath: string | null): string {
   if (!recordPath) return "";
-  const { body } = readDoc(recordPath);
-  const line = body.split("\n").map((l) => l.trim()).find((l) => l && !l.startsWith("#"));
-  return line ?? "";
+  const lines = readDoc(recordPath).body.split("\n").map((l) => l.trim());
+  const held = lines.map((l) => l.match(HELD_LINE)).filter((m) => m !== null).pop();
+  if (held) return `${held[2]} (since ${held[1]})`;
+  return lines.find((l) => l && !l.startsWith("#") && !l.startsWith("<!--")) ?? "";
 }
 
 /**

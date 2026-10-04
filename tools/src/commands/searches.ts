@@ -15,7 +15,8 @@ const command: Command = {
   name: "searches",
   summary: "List saved searches, show which are due or which to run next, add one, or mark one run",
   usage:
-    "resumes searches list|due|next [--person p]\n" +
+    "resumes searches list|due [--person p]\n" +
+    "       resumes searches next [--skip-sites a,b] [--person p]\n" +
     "       resumes searches add <id> --url <url> [--variant v] [--site s] [--query q] [--filters f] [--every-days N] [--person p]\n" +
     "       resumes searches mark <search-id> [--person p]",
   run(argv) {
@@ -37,9 +38,14 @@ const command: Command = {
       return 0;
     }
     if (sub === "next") {
-      const s = nextSearch(person);
+      const skip = (flag(a, "skip-sites") ?? "").split(",").filter(Boolean);
+      const s = nextSearch(person, undefined, skip);
       if (!s) {
-        console.log("no saved searches: add one for each target title on each job site (resumes searches add)");
+        console.log(
+          loadSearches(person).items.length
+            ? `every saved search is on a skipped site (${skip.join(", ")})`
+            : "no saved searches: add one for each target title on each job site (resumes searches add)",
+        );
         return 0;
       }
       console.log(fmt(s));

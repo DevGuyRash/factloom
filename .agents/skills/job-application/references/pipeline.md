@@ -12,9 +12,9 @@ hours-per-year) live in `shared/pipeline.yaml` (the engine's defaults); change a
    target title of an active resume on each job site) that have never run or are due again by their
    own `every_days`; tell the person at the start. `every_days` only spaces searches out between
    sessions and never limits a run: during the run, `resumes searches next` hands out every search
-   in turn, the one run longest ago first, and `resumes searches mark <id>` records each run
-   (SKILL.md, "Searching"). `resumes searches add <id> --url <url> --variant <v> --site <s>` saves a
-   new one; it refuses an id or URL already saved and a resume that is not active.
+   in turn, the one run longest ago first and alternating sites (`--skip-sites a,b` leaves out sites
+   closed for the day), and `resumes searches mark <id>` records each run (SKILL.md, "Searching"). `resumes searches add <id> --url <url> --variant <v> --site <s>` saves a
+   new one; it refuses a taken id, a search already saved, and a resume that is not active.
 2. `resumes queue list --person <p>` — see what is already queued, including anything stale.
 3. `resumes status --person <p>` — one screen: held applications and why, queue and stale counts,
    follow-ups due, inbox size, guides awaiting review, searches due.

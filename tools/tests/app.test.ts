@@ -76,5 +76,11 @@ test(
     const { data, body } = readDoc(`${appDir}/record.md`);
     assert.equal(data.status, "blocked");
     assert.match(body, /needs a CAPTCHA/);
+    // status and the dashboard show the latest hold's reason, not the record's template comment.
+    const { pendingSnapshot } = await import("../src/lib/stats.ts");
+    await command.run(["hold", appDir, "--reason", "needs the person's sign-in", "--person", "pat-lee"]);
+    const held = pendingSnapshot("pat-lee", fx.root).held;
+    assert.equal(held.length, 1);
+    assert.match(held[0].reason, /^needs the person's sign-in \(since \d{4}-\d{2}-\d{2}\)$/);
   }),
 );

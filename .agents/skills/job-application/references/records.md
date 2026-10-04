@@ -56,12 +56,12 @@ Before creating a directory, compare the posting's employer link or requisition 
 
 Submit when the person's standing instruction or their word in this session allows it and every field is settled. That instruction is the approval for every application in the run, so do not ask about individual ones:
 
-- each answer comes from the session or saved answers, the profile, the evidence file, or the chosen resume;
+- each answer comes from the session or saved answers, the profile, the evidence file, or the chosen resume, directly or derived as the [forms](forms.md) reference describes;
 - the attached resume and cover letter are the ones chosen for this application;
 - terms the form requires (privacy notices, application-system terms, arbitration agreements) fall under the person's `consent.required-terms` answer;
 - typed signatures use the person's legal name.
 
-Otherwise hold it: set `status: blocked`, write what it waits on (the question, the person-only step, or the site problem), add it to the session's waiting list, and continue with the next posting.
+Otherwise hold it with `./resumes app hold <dir> --reason "<what it waits on>"` (the question, the person-only step, or the site problem): it sets `status: blocked` and appends the reason, dated, as the record's last line, which `status` and the dashboard show. Add it to the session's waiting list, and continue with the next posting.
 
 After submitting, capture the confirmation (on-page message, confirmation number, or a screenshot when the tools allow), note it in the record with the time, set `status: submitted`, `applied`, and `updated`, and commit.
 

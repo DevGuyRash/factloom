@@ -4,7 +4,7 @@ type: onboarding-catalog
 
 # Onboarding catalog
 
-Questions that job applications ask, written once for everyone. Session onboarding asks the entries marked **essential** first, before the first application: they settle what to apply for and the questions nearly every form asks. It asks the entries marked **core** in batches once applying has started (all of them, when the person prefers to finish onboarding first). The rest are asked the first time a form needs them. The person's saved answers cover any of these. Answers the person chooses to keep are saved in their `answers` file under the same ids.
+Questions that job applications ask, written once for everyone. Session onboarding asks the entries marked **essential** first, before the first application: they settle what to apply for and the questions nearly every form asks. It asks the entries marked **core** in batches once applying has started (all of them, when the person prefers to finish onboarding first). The rest go on the waiting list the first time a form needs them and reach the person in the next batch of questions. The person's saved answers cover any of these. Answers the person chooses to keep are saved in their `answers` file under the same ids.
 
 Each entry lists what to ask the person, phrasings seen on forms, the answer shape, and the default policy (`auto`, `confirm`, `ask`, or `person`, defined in the job-application skill). The person may choose a different policy for their own answer.
 
@@ -39,6 +39,11 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ### mail.verification (core)
 - Ask: When a site emails a verification code or link, who reads it: you, or the agent? The agent needs mailbox access through himalaya and reads only the newest message from that site.
 - Shape: choice: the person or the agent
+- Policy: confirm
+
+### accounts.profile-edits (core)
+- Ask: When a job site's own profile would send something out of date with an application (desired pay, location, the default resume), may the agent update that profile to match this session's answers?
+- Shape: yes / no
 - Policy: confirm
 
 ## Identity and contact
@@ -129,9 +134,10 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: percentage
 - Policy: auto
 
-### prefs.schedule
-- Ask: Can you work the hours, time zone, shifts, weekends, or on-call schedule a posting describes?
-- Shape: yes / no with limits
+### prefs.schedule (core)
+- Ask: Can you work the hours, time zone, shifts, weekends, or on-call schedule a posting describes? How many hours a week can you commit, and how many hours can you overlap with other time zones?
+- Seen as: "How many hours per week can you commit?", "Can you overlap at least 4 hours with Pacific time?", "Are you available on weekends?"
+- Shape: hours per week; time-zone overlap; yes / no with limits
 - Policy: confirm
 
 ### prefs.constraints (essential)
@@ -244,9 +250,10 @@ These appear mostly on Workday, iCIMS, and public-sector forms.
 - Policy: auto
 
 ### company.referral
-- Ask: Did anyone at this company refer you?
-- Shape: name or none
-- Policy: ask
+- Ask: Did anyone at this company refer you? The answer is none unless the person names a referrer for that employer.
+- Seen as: "Were you referred by a current employee?", "Referral name", "Employee referral"
+- Shape: name per employer, or none
+- Policy: auto
 
 ### company.how-heard
 - Ask: Derived: the job board or site where the posting was found.
@@ -359,18 +366,19 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Policy: confirm
 
 ### experience.years.<skill>
-- Ask: Derived from the evidence file the first time a skill comes up (for example Python, Rust, or a named ERP); the person confirms, and the figure and its basis are recorded under this id with the skill name.
+- Ask: Derived from dated evidence the first time a skill comes up (for example Python, Rust, or a named ERP), as the job-application skill's forms reference describes, and recorded under this id with the skill name, the figure, and its basis, so every later form gives the same figure; the person corrects it from the inbox. When nothing dated shows the skill, the person is asked once, in the next batch.
 - Shape: number with basis
-- Policy: confirm
+- Policy: auto
 
 ### experience.people-management
 - Ask: Have you managed people directly? How many, and for how long?
 - Shape: number with basis
 - Policy: confirm
 
-### skills.languages-spoken
-- Ask: Which languages do you speak, and at what level?
-- Shape: list
+### skills.languages-spoken (core)
+- Ask: Which languages do you speak, and at what level? Propose the languages of the person's education and work, at professional fluency.
+- Seen as: "English proficiency", "Are you fluent in English?", "Languages you speak"
+- Shape: list with levels
 - Policy: auto
 
 ## Documents and references

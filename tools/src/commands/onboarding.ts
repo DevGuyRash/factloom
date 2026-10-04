@@ -54,9 +54,11 @@ const command: Command = {
     if (sub === "answer") {
       const [, id, ...words] = a._;
       if (!id || !words.length) { console.error(command.usage); return 2; }
-      const policy = (flag(a, "policy") ?? catalog.get(id)?.policy ?? "confirm") as Policy;
+      // One skill's years (experience.years.python) follow the catalog's experience.years.<skill> entry.
+      const entry = catalog.get(id) ?? (/^experience\.years\./.test(id) ? catalog.get("experience.years.<skill>") : undefined);
+      const policy = (flag(a, "policy") ?? entry?.policy ?? "confirm") as Policy;
       if (!POLICIES.includes(policy)) { console.error(`policy must be one of ${POLICIES.join(", ")}`); return 2; }
-      if (!catalog.has(id) && !/^experience\.years\./.test(id)) console.error(`note: ${id} is not in the shared catalog; add it during inbox review`);
+      if (!entry) console.error(`note: ${id} is not in the shared catalog; add it during inbox review`);
       const answer = words.join(" ");
       upsert(sessionPath, sessionHeader(person), formatAnswer({ id, answer, policy }), id);
       if (has(a, "save")) upsert(savedPath, `---\ntype: answers\nperson: ${person}\n---\n\n# Answers\n`, formatAnswer({ id, answer, policy, confirmed: today() }), id);
@@ -69,7 +71,7 @@ const command: Command = {
     const open = openCoreQuestions(person);
     const groups: [string, CatalogEntry[]][] = [
       [`open essential questions (${open.filter((q) => q.essential).length}): ask these before the first application`, open.filter((q) => q.essential)],
-      [`other open core questions (${open.filter((q) => !q.essential).length}): ask in batches once applying has started, or all now if the person prefers`, open.filter((q) => !q.essential)],
+      [`other open core questions (${open.filter((q) => !q.essential).length}): ask in batches once applying has started, or all now if the person prefers or will be away`, open.filter((q) => !q.essential)],
     ];
     for (const [title, questions] of groups) {
       console.log(`\n${title}`);

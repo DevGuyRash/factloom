@@ -5,11 +5,11 @@
 Onboarding gets the session the answers it needs to start applying. They are kept for the session in a git-ignored file and reach the committed repository only when the person asks to save them.
 
 1. Gather the answers: `./resumes onboarding start` writes the session-answers file from the last session's answers and the saved ones. In one message, list them and say they apply unless the person changes any. Saved answers without a `Confirmed` date came from earlier notes or were derived from the profile: ask about those explicitly.
-2. Ask the open **essential** questions (`./resumes onboarding` lists them first) a few at a time (about five per message), grouped by catalog section and offering the usual choices so the person can answer briefly. Ask the four `eeo.*` questions as one. When `accounts.handling` hands sign-ins or new accounts to the agent, ask `accounts.email` and `mail.verification` with it. Propose `experience.years-total` from the profile and evidence, with its basis. When the person's facts have no jobs yet, or `./resumes status --person <slug>` shows resume intake pending, finish [intake](intake.md) before the first application. Salary answers come from the person: a figure or range per kind of role and wording for free-text fields.
-3. When `accounts.handling` calls for a session password and `./resumes credentials status` shows none, have the person run `./resumes credentials set` in a terminal; open one for them when the host can. It asks for the password without showing it, so never ask for a password in the chat.
-4. Write the answers to the session-answers file, then begin applying. When the person prefers to finish onboarding first, or the run will be unattended (they will be away, or a schedule or automation runs it), ask the other open core questions (step 5) before starting: nobody will be there to answer them later.
+2. Ask the open **essential** questions (`./resumes onboarding` lists them first) a few at a time (about five per message), grouped by catalog section and offering the usual choices so the person can answer briefly. Ask the four `eeo.*` questions as one. When `accounts.handling` hands sign-ins or new accounts to the agent, ask `accounts.email` and `mail.verification` with it; when `employment.type` includes corp-to-corp, ask `employment.business-entity` with it. Propose `experience.years-total` from the profile and evidence, with its basis. When the person's facts have no jobs yet, or `./resumes status --person <slug>` shows resume intake pending, finish [intake](intake.md) before the first application. Salary answers come from the person: a figure or range per kind of role and wording for free-text fields.
+3. When you ask `accounts.handling`, say that passwords never go in the chat. When it calls for a session password and `./resumes credentials status` shows none, have the person run `./resumes credentials set` in a terminal; open one for them when the host can. It asks for the password without showing it. If the person types a password into the chat anyway, do not use, repeat, or store it: tell them it now sits in the chat history and should be changed, and offer the hidden prompt.
+4. Write the answers to the session-answers file, then begin applying. When the person prefers to finish onboarding first, or the run will be unattended (they will be away, or a schedule or automation runs it), ask the other open core questions and the confirmations in step 5 before starting: nobody will be there to answer them later.
 5. Once applying has started, put the other open core questions to the person in batches while they are present: between applications, or together with held questions. In the same batches, have them confirm what the repository already shows (employment history, education, links, government employment, how-heard) and experience-years figures for the skills the target roles name most (languages, platforms, domains), each proposed from the profile and evidence with its basis.
-6. Questions met later go to the person as they arise, or onto the waiting list when the person is away; add each answer they give to the file. Constraints the person states later go into `prefs.constraints` the same way, and employers to avoid onto the block list (`./resumes employers block`).
+6. Questions met later go on the waiting list and reach the person in the next batch; add each answer they give to the file, so later forms reuse it. Constraints the person states later go into `prefs.constraints` the same way, and employers to avoid onto the block list (`./resumes employers block`).
 
 ### Session-answers file
 
@@ -39,7 +39,7 @@ When the person asks to save answers (at any point, or when offered at the end o
 |---|---|
 | `auto` | Use the answer. |
 | `confirm` | Confirm it once during onboarding, then use it for every application in the run. |
-| `ask` | Ask the person for each application that needs it; hold the application when they are away. |
+| `ask` | Settled for each application that needs it, in the next batch with the person's other questions; hold the application until then. |
 | `person` | The person enters it themselves; hold the application for them. |
 
 ### What goes where
@@ -66,7 +66,7 @@ The inbox collects what a session met but its answers did not cover. Append an e
 
 When the person asks to review the inbox, or accepts the end-of-session offer, take each entry in turn:
 
-- **Add to catalog**: when the question is generic, add an entry to the shared onboarding catalog (id, what to ask, phrasings seen, shape, default policy, and whether it is core), so future onboarding covers it.
+- **Add to catalog**: when the question is generic, add an entry to `custom/onboarding.md`, this repository's additions to the catalog (id, what to ask, phrasings seen, shape, default policy, and whether it is core), so future onboarding covers it; a question every job seeker meets is also worth an engine suggestion in the inbox.
 - **Save as an answer**: write it to the person's `answers` file with the policy they choose.
 - **Change**: update an existing answer, catalog entry, resume guide, or site note as the person directs.
 - **Discard**.
