@@ -99,7 +99,7 @@ drop/                        resumes you put in for import, in any format (git i
 examples/demo/               a complete fictional person to try every command on
 ```
 
-[AGENTS.md](AGENTS.md) is the agents' guide to the repository; [tools/README.md](tools/README.md) covers the tools, tests, and CI. Email for agents uses [himalaya](https://github.com/pimalaya/himalaya), a command-line email client.
+[AGENTS.md](AGENTS.md) is the agents' guide to the repository; [tools/README.md](tools/README.md) covers the tools, tests, and CI. Agents reach email through what their host provides (a mail connector or plugin, a webmail tab signed in to their browser, a mail MCP server) or through [himalaya](https://github.com/pimalaya/himalaya), a command-line email client.
 
 ## Contributing and license
 

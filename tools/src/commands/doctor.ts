@@ -77,7 +77,10 @@ const command: Command = {
     checks.push({ name: "gh auth status", ok: gh.ok, detail: gh.ok ? "logged in" : "not logged in (or gh not installed)", fix: "run `gh auth login`, or install the GitHub CLI" });
 
     const himalayaOk = which("himalaya");
-    checks.push({ name: "himalaya (optional, email)", ok: himalayaOk, detail: himalayaOk ? "found" : "not found", fix: "install the himalaya email CLI for mailbox access: https://github.com/pimalaya/himalaya" });
+    checks.push({
+      name: "himalaya (optional, email)", ok: himalayaOk, detail: himalayaOk ? "found" : "not found",
+      fix: "mail can also come through the host's mail connector or plugin, a webmail tab signed in to the agent's browser, or a mail MCP server; for a command-line route, install himalaya: https://github.com/pimalaya/himalaya",
+    });
 
     // Privacy: real people's data belongs only in a private repository.
     const people = realPeople(root);

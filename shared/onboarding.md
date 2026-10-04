@@ -37,7 +37,7 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: confirm
 
 ### mail.verification (core)
-- Ask: When a site emails a verification code or link, who reads it: you, or the agent? The agent needs mailbox access through himalaya and reads only the newest message from that site.
+- Ask: When a site emails a verification code or link, who reads it: you, or the agent? The agent needs a route to your mailbox (the host's mail connector or plugin, a webmail tab signed in to its browser, a mail MCP server, or a mail client such as himalaya) and reads only the newest message from that site.
 - Shape: choice: the person or the agent
 - Policy: confirm
 
