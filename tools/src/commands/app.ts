@@ -24,6 +24,22 @@ function note(app: Application, line: string, patch: Record<string, unknown> = {
   writeDoc(app.recordPath!, next, `${body.trimEnd()}\n\n- ${today()}: ${line}\n`);
 }
 
+/**
+ * Adds the answers given on the form (one line each: the question, the answer, its source) under the record's
+ * "Answers given" heading, so they are written once, by the command, not edited into the record by hand.
+ */
+function addAnswers(app: Application, file: string | undefined) {
+  if (file === undefined) return;
+  const lines = readFileSync(file === "-" ? 0 : file, "utf8").split("\n").map((l) => l.trim()).filter(Boolean).map((l) => (l.startsWith("- ") ? l : `- ${l}`));
+  if (!lines.length) return;
+  const { data, body } = loadRecord(app);
+  const heading = /^## Answers given\s*$/m;
+  const next = heading.test(body)
+    ? body.replace(/(^## Answers given\s*\n(?:(?!^## ).*\n?)*)/m, (section) => `${section.trimEnd()}\n${lines.join("\n")}\n\n`)
+    : `${body.trimEnd()}\n\n## Answers given\n\n${lines.join("\n")}\n`;
+  writeDoc(app.recordPath!, data, next);
+}
+
 /** Kinds of hold, so the waiting list groups what the person must do and retries know what to look for. */
 const HOLD_KINDS = ["answer", "person-step", "account", "captcha", "upload", "site", "confirmation", "other"] as const;
 
@@ -40,8 +56,8 @@ const command: Command = {
   usage: [
     "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--posted YYYY-MM-DD] [--posting-file <file|->] [--location L] [--arrangement A] [--pay-min N] [--pay-max N] [--pay-period hour|year] [--distinct-from <dir> --because TEXT] [--person p]",
     "resumes app submitting <dir> [--person p]",
-    "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--follow-up <days|YYYY-MM-DD>] [--no-log] [--person p]",
-    "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--no-log] [--person p]",
+    "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--answers <file|->] [--follow-up <days|YYYY-MM-DD>] [--no-log] [--person p]",
+    "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--answers <file|->] [--no-log] [--person p]",
     "resumes app skip <dir> --reason TEXT [--no-log] [--person p]",
     "resumes app reopen <dir> --reason TEXT [--person p]",
   ].join("\n       "),
@@ -69,10 +85,13 @@ const command: Command = {
         console.error(`${company} is blocked (employers list entry "${employer.company}"${employer.reason ? `: ${employer.reason}` : ""})`);
         return 1;
       }
+      // The posting text goes from the page to a file to here, without passing through a conversation.
+      const postingFile = flag(a, "posting-file");
+      const description = postingFile === undefined ? undefined : readFileSync(postingFile === "-" ? 0 : postingFile, "utf8").trim();
       const job = { company, role, url: flag(a, "url"), source: flag(a, "source"), requisition: flag(a, "requisition") };
-      const dup = findDuplicate(person, job);
+      const dup = findDuplicate(person, { ...job, description });
       const distinctFrom = flag(a, "distinct-from"), because = flag(a, "because");
-      if (dup && dup.by !== "title") {
+      if (dup && (dup.by === "link" || dup.by === "requisition")) {
         console.error(`already applied for: ${rel(dup.app.dir)} has the same ${dup.by} (${describeApplication(dup.app)})`);
         return 1;
       }
@@ -80,17 +99,15 @@ const command: Command = {
         const named = distinctFrom && [dup.app.dir, dup.app.name, rel(dup.app.dir)].includes(distinctFrom);
         if (!named || !because) {
           console.error(
-            `possible duplicate of ${rel(dup.app.dir)}: ${describeApplication(dup.app)}; title similarity ${dup.similarity}.\n` +
-              `Compare the postings. If this is a different job, run again with --distinct-from ${dup.app.name} --because "<what differs: team, level, location, requisition>".`,
+            `possible duplicate of ${rel(dup.app.dir)}: ${describeApplication(dup.app)}; ${dup.by === "text" ? "posting text" : "title"} similarity ${dup.similarity}.\n` +
+              (dup.by === "text" ? "Nearly the same posting text usually means one client's role posted by several staffing firms: apply through one route, and skip the other as a repost. " : "") +
+              `Compare the postings. If this is a different job, run again with --distinct-from ${dup.app.name} --because "<what differs: team, level, location, requisition, client>".`,
           );
           return 1;
         }
       }
       const posted = flag(a, "posted");
       if (posted && !DATE.test(posted)) throw new Error("--posted takes YYYY-MM-DD");
-      // The posting text goes from the page to a file to here, without passing through a conversation.
-      const postingFile = flag(a, "posting-file");
-      const description = postingFile === undefined ? undefined : readFileSync(postingFile === "-" ? 0 : postingFile, "utf8").trim();
       const app = createApplication(person, {
         ...job, site: flag(a, "site"), posted, description, location: flag(a, "location"), arrangement: flag(a, "arrangement"),
         pay_min: number("pay-min"), pay_max: number("pay-max"), pay_period: flag(a, "pay-period"),
@@ -143,6 +160,7 @@ const command: Command = {
         if (!data.confirmation) data.confirmation = destName;
       }
       writeDoc(app.recordPath!, data, body);
+      addAnswers(app, flag(a, "answers"));
       updateFor(person, data, { status: "done", outcome: "submitted", application: app.name });
       log("applied", `${label(app)}${confirmation ? ` (${confirmation})` : ""}`);
       console.log(`submitted ${rel(app.dir)} (follow up ${data.follow_up})${proof ? `; proof saved as ${data.proof}` : ""}`);
@@ -157,10 +175,12 @@ const command: Command = {
       if (kind && !(HOLD_KINDS as readonly string[]).includes(kind)) throw new Error(`--kind is one of ${HOLD_KINDS.join(", ")}`);
       const waits = flag(a, "waits");
       const app = findApplication(person, dirArg);
+      addAnswers(app, flag(a, "answers"));
       const status = loadRecord(app).data.status;
       if (status === "submitted") {
-        // Sent, with a step still to come (an assessment, an account at the employer): it stays submitted.
-        note(app, `pending — ${reason}`, { pending: reason });
+        // Sent, with a step still to come (an assessment, an account at the employer): it stays submitted, and keeps
+        // what the step waits on, so an answer that settles it points back here.
+        note(app, `pending — ${reason}`, { pending: reason, pending_kind: kind, pending_waits_on: waits });
         log("note", `${label(app)}: sent, pending ${reason}`);
         console.log(`${rel(app.dir)} stays submitted; pending: ${reason}`);
         return 0;

@@ -64,8 +64,38 @@ const capped = (slug: string, max: number) => (slug.length <= max ? slug : slug.
 export const applicationDirName = (date: string, company: string, role: string) => `${date}_${capped(slugify(company), 40)}_${capped(slugify(role), 50)}`;
 export const isApplicationDirName = (name: string) => APPLICATION_DIR.test(name);
 
-/** How an earlier application matched: the same link or requisition is the same job; a similar title is only possibly one. */
-export type DuplicateMatch = { app: Application; by: "link" | "requisition" | "title"; similarity?: number };
+/**
+ * How an earlier application matched: the same link or requisition is the same job; nearly the same posting text
+ * (one client's role reposted by several staffing firms) or a similar title is only possibly one.
+ */
+export type DuplicateMatch = { app: Application; by: "link" | "requisition" | "text" | "title"; similarity?: number };
+
+/** Five-word runs of a text, for comparing two postings' wording. */
+function shingles(text: string): Set<string> {
+  const words = text.toLowerCase().replace(/[^a-z0-9+#]+/g, " ").split(" ").filter(Boolean);
+  const out = new Set<string>();
+  for (let i = 0; i + 5 <= words.length; i++) out.add(words.slice(i, i + 5).join(" "));
+  return out;
+}
+
+/** How much of two postings' wording is the same (Jaccard over five-word runs), 0..1. */
+export function textSimilarity(a: string, b: string): number {
+  const A = shingles(a), B = shingles(b);
+  if (!A.size || !B.size) return 0;
+  let inter = 0;
+  for (const s of A) if (B.has(s)) inter++;
+  return inter / (A.size + B.size - inter);
+}
+
+/** The posting snapshot's text, without its frontmatter and headings. */
+const postingText = (app: Application) => {
+  if (!app.postingPath) return "";
+  try {
+    return readDoc(app.postingPath).body.replace(/^#.*$/gm, "").replace(/<!--[\s\S]*?-->/g, "");
+  } catch {
+    return "";
+  }
+};
 
 const hostOf = (u: string) => {
   try {
@@ -82,10 +112,11 @@ const hostOf = (u: string) => {
  * something already tells them apart: different requisitions, different employer links on the same site, or a
  * record that was skipped, since screening one posting out says nothing about another.
  */
-export function findDuplicate(person: string, job: { company?: string; role?: string; url?: string; source?: string; requisition?: string }, root = repoRoot()): DuplicateMatch | null {
+export function findDuplicate(person: string, job: { company?: string; role?: string; url?: string; source?: string; requisition?: string; description?: string }, root = repoRoot()): DuplicateMatch | null {
   const links = [job.url, job.source].filter((u): u is string => !!u).map(normalizeUrl);
   const company = job.company ? normalizeCompany(job.company) : null;
   let possible: DuplicateMatch | null = null;
+  let reposted: DuplicateMatch | null = null;
   for (const app of listApplications(person, root)) {
     const r = app.record;
     if (!r) continue;
@@ -93,6 +124,11 @@ export function findDuplicate(person: string, job: { company?: string; role?: st
     if (links.some((l) => recordLinks.includes(l))) return { app, by: "link" };
     const sameCompany = company !== null && normalizeCompany(String(r.company)) === company;
     if (job.requisition && r.requisition && String(r.requisition) === job.requisition && (sameCompany || company === null)) return { app, by: "requisition" };
+    // The same posting text under another firm's name: one end client's role, reposted by several staffing firms.
+    if (!reposted && job.description && job.description.length > 200) {
+      const s = textSimilarity(job.description, postingText(app));
+      if (s >= 0.7) reposted = { app, by: "text", similarity: Math.round(s * 100) / 100 };
+    }
     if (possible || !sameCompany || !job.role || r.status === "skipped") continue;
     if (job.requisition && r.requisition) continue;
     const otherEmployerLink = job.url && r.url && hostOf(job.url) !== "" && hostOf(job.url) === hostOf(String(r.url)) && normalizeUrl(job.url) !== normalizeUrl(String(r.url));
@@ -100,7 +136,7 @@ export function findDuplicate(person: string, job: { company?: string; role?: st
     const s = similarity(String(r.role), job.role);
     if (s >= 0.6) possible = { app, by: "title", similarity: Math.round(s * 100) / 100 };
   }
-  return possible;
+  return reposted ?? possible;
 }
 
 /** One line on an earlier application, for the agent to compare against the posting in hand. */

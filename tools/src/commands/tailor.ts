@@ -49,7 +49,7 @@ function tailorSection(facts: Facts, lexicon: Lexicon, postingTerms: Set<string>
   return vs;
 }
 
-export async function tailorApplication(dir: string, opts: { variant?: string; allowUnconfirmed?: boolean; theme?: string } = {}, root = repoRoot()): Promise<{ specPath: string; files: string[]; pages?: number; limit?: number; fits?: boolean }> {
+export async function tailorApplication(dir: string, opts: { variant?: string; allowUnconfirmed?: boolean; theme?: string; neutral?: boolean } = {}, root = repoRoot()): Promise<{ specPath: string; files: string[]; pages?: number; limit?: number; fits?: boolean }> {
   const { person } = personOf(dir);
   const posting = findDocInDir(dir, "posting");
   if (!posting) throw new Error(`${dir}: no posting snapshot (type: posting)`);
@@ -72,9 +72,10 @@ export async function tailorApplication(dir: string, opts: { variant?: string; a
   const postingTerms = termsIn(lexicon, String(postingText));
 
   const sections = variant.sections.map((vs) => tailorSection(facts, lexicon, postingTerms, vs));
-  // The employer's name in the file name tells uploads apart on boards that list them by name; a build with
+  // The employer's name in the file name tells uploads apart on boards that list them by name. A file that will
+  // stay saved in a site's profile, and go out to later employers too, is built --neutral, without it. A build with
   // unconfirmed claims is a preview, and its name says so, so it is never uploaded by mistake.
-  const company = slugify(String(posting.data.company ?? record?.data.company ?? "")).split("-").slice(0, 3).join("-");
+  const company = opts.neutral ? "" : slugify(String(posting.data.company ?? record?.data.company ?? "")).split("-").slice(0, 3).join("-");
   const output = `${variant.output}${company ? `_${company}` : ""}${confirms.length ? "_PREVIEW_unconfirmed" : ""}`;
   const tailored: Variant = { variant: variant.variant, theme: opts.theme ?? variant.theme, headline: variant.headline, output, sections, ...(variant.style ? { style: variant.style } : {}), ...(variant.pages ? { pages: variant.pages } : {}) };
 
@@ -95,15 +96,15 @@ export async function tailorApplication(dir: string, opts: { variant?: string; a
 const command: Command = {
   name: "tailor",
   summary: "Build a posting-tailored resume (reordered, never invented) into an application directory",
-  usage: "resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--allow-unconfirmed]",
+  usage: "resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--neutral] [--allow-unconfirmed]",
   async run(argv) {
-    const a = parseArgs(argv, ["allow-unconfirmed"]);
+    const a = parseArgs(argv, ["allow-unconfirmed", "neutral"]);
     const dirArg = a._[0];
     if (!dirArg) { console.error("usage: resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--allow-unconfirmed]"); return 2; }
     const dir = resolve(dirArg);
     if (!existsSync(dir)) { console.error(`${dir}: not found`); return 1; }
     try {
-      const { specPath, files, pages, limit, fits } = await tailorApplication(dir, { variant: flag(a, "variant"), theme: flag(a, "theme"), allowUnconfirmed: has(a, "allow-unconfirmed") });
+      const { specPath, files, pages, limit, fits } = await tailorApplication(dir, { variant: flag(a, "variant"), theme: flag(a, "theme"), allowUnconfirmed: has(a, "allow-unconfirmed"), neutral: has(a, "neutral") });
       console.log(`wrote ${specPath}`);
       for (const f of files) console.log(`wrote ${f}`);
       if (pages !== undefined) {

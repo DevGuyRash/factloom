@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import { describeApplication, findDuplicate } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
@@ -37,6 +38,7 @@ const command: Command = {
     "resumes queue list [--person p]",
     "resumes queue next [--count N] [--person p]",
     "resumes queue skip --url U [--company C] [--role R] [--source S] --reason TEXT [--no-log] [--person p]",
+    "resumes queue skip --from <file|-> [--no-log] [--person p]",
     "resumes queue start <url|#> [--person p]",
     "resumes queue done <url|#> --outcome submitted|skipped|held [--note TEXT] [--person p]",
     "resumes queue drop <url|#> [--note TEXT] [--person p]",
@@ -75,19 +77,34 @@ const command: Command = {
 
     if (sub === "skip") {
       // A posting ruled out from its listing or first lines needs no application directory: the queue keeps the
-      // link and the reason, and `queue add` will not take it again.
-      const url = flag(a, "url");
-      const reason = flag(a, "reason");
-      if (!url || !reason) throw new Error("queue skip needs --url and --reason");
-      const company = flag(a, "company"), role = flag(a, "role");
-      const added = enqueue(person, { url, company, role, source: flag(a, "source") });
-      if (!added.added && added.reason === "applied") {
-        console.log(`not skipped: already applied for, same ${added.match!.by}: ${rel(added.match!.app.dir)}`);
+      // link and the reason, and `queue add` will not take it again. Each posting is its own line in the run log,
+      // so the counts are postings, never batches.
+      const skipOne = (s: { url: string; company?: string; role?: string; source?: string; reason: string }) => {
+        const added = enqueue(person, { url: s.url, company: s.company, role: s.role, source: s.source });
+        if (!added.added && added.reason === "applied") {
+          console.log(`not skipped: already applied for, same ${added.match!.by}: ${rel(added.match!.app.dir)}`);
+          return;
+        }
+        updateItem(person, added.item!.url, { status: "done", outcome: "skipped", note: s.reason });
+        if (!has(a, "no-log")) logEvent(person, "skipped", `${s.company ?? "?"} — ${s.role ?? "?"}: ${s.reason} (${s.url})`);
+        console.log(`skipped ${s.url}: ${s.reason}`);
+      };
+      const from = flag(a, "from");
+      if (from !== undefined) {
+        // One posting per line: url, company, role, reason, separated by tabs (company and role may be empty).
+        const lines = readFileSync(from === "-" ? 0 : from, "utf8").split("\n").map((l) => l.trim()).filter(Boolean);
+        for (const line of lines) {
+          const [url, company, role, ...why] = line.split("\t");
+          const reason = why.join(" ").trim();
+          if (!url || !reason) throw new Error(`queue skip --from: each line is url<TAB>company<TAB>role<TAB>reason, not: ${line}`);
+          skipOne({ url, company: company || undefined, role: role || undefined, reason });
+        }
         return 0;
       }
-      updateItem(person, added.item!.url, { status: "done", outcome: "skipped", note: reason });
-      if (!has(a, "no-log")) logEvent(person, "skipped", `${company ?? "?"} — ${role ?? "?"}: ${reason} (${url})`);
-      console.log(`skipped ${url}: ${reason}`);
+      const url = flag(a, "url");
+      const reason = flag(a, "reason");
+      if (!url || !reason) throw new Error("queue skip needs --url and --reason, or --from <file|->");
+      skipOne({ url, company: flag(a, "company"), role: flag(a, "role"), source: flag(a, "source"), reason });
       return 0;
     }
 

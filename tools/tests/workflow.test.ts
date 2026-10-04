@@ -132,3 +132,46 @@ test(
     assert.match(read, /shared\/site-notes\.md:\n## ExampleBoard\n- 2026-09-01: Cards show pay\.[\s\S]*custom\/site-notes\.md:\n## ExampleBoard/);
   }),
 );
+
+test(
+  "the same posting text under another firm's name is shown as a possible repost of an earlier application",
+  withFixture({}, async (fx) => {
+    const text = Array.from({ length: 40 }, (_, i) => `Requirement ${i}: build and run data pipelines for the client's analytics platform with Python and SQL.`).join("\n");
+    writeFileSync(`${fx.root}/a.txt`, `Staffing Firm A is hiring for our client.\n${text}`);
+    writeFileSync(`${fx.root}/b.txt`, `Staffing Firm B seeks a contractor for a leading client.\n${text}`);
+    assert.equal(await app.run(["new", "--company", "Firm A", "--role", "Data Engineer", "--posting-file", `${fx.root}/a.txt`, "--person", "pat-lee"]), 0);
+    const out = await output(() => app.run(["new", "--company", "Firm B", "--role", "Pipeline Developer", "--posting-file", `${fx.root}/b.txt`, "--person", "pat-lee"]));
+    assert.match(out, /possible duplicate of .*firm-a.*posting text similarity 0\.\d+[\s\S]*several staffing firms/);
+    assert.equal(readdirSync(`${fx.root}/people/pat-lee/applications`).length, 1);
+    // A genuinely different posting at another firm goes through.
+    writeFileSync(`${fx.root}/c.txt`, "A different role entirely: design marketing campaigns and manage a content calendar across social channels for a retail brand.".repeat(3));
+    assert.equal(await app.run(["new", "--company", "Firm C", "--role", "Marketing Lead", "--posting-file", `${fx.root}/c.txt`, "--person", "pat-lee"]), 0);
+  }),
+);
+
+test(
+  "batch skips log one line per posting; submit writes the answers block; a pending step names the answer it waits on",
+  withFixture({ "shared/onboarding.md": "---\ntype: onboarding-catalog\n---\n\n# Onboarding catalog\n\n## Experience\n\n### experience.years.<skill>\n- Ask: Derived.\n- Shape: number with basis\n- Policy: auto\n" }, async (fx) => {
+    writeFileSync(`${fx.root}/skips.tsv`, "https://board.example/view/1\tAlpha\tAnalyst\ton-site only\nhttps://board.example/view/2\t\t\tW-2 only\n");
+    assert.equal(await queue.run(["skip", "--from", `${fx.root}/skips.tsv`, "--person", "pat-lee"]), 0);
+    assert.equal(runLog(fx.root)!.data.counts.skipped, 2);
+
+    await app.run(["new", "--company", "Omega", "--role", "Engineer", "--url", "https://omega.example/jobs/3", "--person", "pat-lee"]);
+    writeFileSync(`${fx.root}/answers.txt`, "Authorized to work in the US? — Yes (work-auth.us-authorized)\nYears of Python? — 3 (experience.years.python, derived: two dated jobs)\n");
+    assert.equal(await app.run(["submit", "omega_engineer", "--answers", `${fx.root}/answers.txt`, "--person", "pat-lee"]), 0);
+    const dir = readdirSync(`${fx.root}/people/pat-lee/applications`).find((n) => n.includes("omega"))!;
+    const body = readDoc(`${fx.root}/people/pat-lee/applications/${dir}/record.md`).body;
+    assert.match(body, /## Answers given\n[\s\S]*- Authorized to work in the US\? — Yes \(work-auth\.us-authorized\)\n- Years of Python\? — 3/);
+
+    // A step after sending keeps what it waits on, and the answer that settles it names the application.
+    await app.run(["hold", "omega_engineer", "--reason", "follow-up questionnaire asks years with Rust", "--kind", "answer", "--waits", "experience.years.rust", "--person", "pat-lee"]);
+    const answered = await output(() => onboarding.run(["answer", "experience.years.rust", "0 (no Rust in the records)", "--person", "pat-lee"]));
+    assert.match(answered, /sent applications with a step waiting on experience\.years\.rust: .*omega_engineer/);
+    assert.match(await output(() => status.run(["--person", "pat-lee"])), /follow-up questionnaire asks years with Rust \[waits on experience\.years\.rust\]/);
+
+    // Mail search terms come from the applications, so a webmail search never lists the rest of the inbox.
+    const email = (await import("../src/commands/email.ts")).default;
+    const terms = await output(() => email.run(["terms", "--person", "pat-lee"]));
+    assert.match(terms, /employers: omega\nsites: omega\.example/);
+  }),
+);

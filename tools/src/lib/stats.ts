@@ -51,7 +51,7 @@ export function computeStats(person: string, root = repoRoot()): StatsReport {
     if (!r || !wasSent(r)) continue;
     bump(out.byVariant, String(r.resume ?? "(none)"), r.status);
     bump(out.byCoverLetter, r.cover_letter === "yes" ? "yes" : "no", r.status);
-    bump(out.bySource, sourceKey(r.source), r.status);
+    bump(out.bySource, sourceKey(r.source || r.url), r.status);
     bump(out.bySite, String(r.site ?? "(unknown)"), r.status);
   }
   return out;
@@ -156,7 +156,7 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
     const who = { dir: app.dir, company: String(r.company), role: String(r.role) };
     if (r.submit_clicked && r.status !== "submitted") submitClicked.push({ ...who, at: String(r.submit_clicked) });
-    if (r.status === "submitted" && r.pending) pendingSteps.push({ ...who, pending: String(r.pending) });
+    if (r.status === "submitted" && r.pending) pendingSteps.push({ ...who, pending: `${r.pending}${r.pending_waits_on ? ` [waits on ${r.pending_waits_on}]` : ""}` });
     if (r.status === "blocked") {
       held.push({ ...who, reason: heldReason(app.recordPath), ...(r.hold_kind ? { kind: String(r.hold_kind) } : {}), ...(r.waits_on ? { waitsOn: String(r.waits_on) } : {}) });
     }

@@ -13,7 +13,7 @@ const command: Command = {
   summary: "Track a work session in a run log: start, log an event, end",
   usage: [
     "resumes run start [--takeover] [--person p]",
-    'resumes run log --kind applied|held|skipped|error|note "message" [--person p]',
+    'resumes run log --kind note|error|applied|held|skipped "message" [--person p]',
     "resumes run end [--person p]",
   ].join("\n       "),
   run(argv) {
@@ -40,6 +40,8 @@ const command: Command = {
       const message = a._[0];
       if (!kind || !(KINDS as readonly string[]).includes(kind) || !message) throw new Error(`run log needs --kind ${KINDS.join("|")} and a message`);
       console.log(rel(logEvent(person, kind as Kind, message)));
+      // app submit/hold/skip and queue skip log their own outcomes, one line per posting, so counts stay true.
+      if (kind !== "note" && kind !== "error") console.error("note: app submit, hold, and skip and queue skip log outcomes themselves; log one posting per line, or the counts drift");
       return 0;
     }
     if (sub === "end") {
