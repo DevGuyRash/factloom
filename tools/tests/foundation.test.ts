@@ -21,6 +21,14 @@ test("text helpers normalize for duplicate detection", () => {
   assert.equal(normalizeCompany("Acme, Inc."), normalizeCompany("ACME"));
   assert.ok(similarity("Senior AI Engineer", "AI Engineer, Senior") > 0.9);
   assert.equal(normalizeUrl("https://jobs.example.com/x/123/?utm_source=li&gh_jid=9#apply"), "https://jobs.example.com/x/123?gh_jid=9");
+  // A board's job id identifies the posting, from a tracked click, a search pane, or a slugged link alike.
+  const plain = normalizeUrl("https://www.linkedin.com/jobs/view/4012345678/");
+  assert.equal(normalizeUrl("https://www.linkedin.com/jobs/view/4012345678/?refId=abc&trackingId=xyz%3D%3D&trk=public_jobs"), plain);
+  assert.equal(normalizeUrl("https://www.linkedin.com/jobs/search/?currentJobId=4012345678&keywords=ai&f_WT=2"), plain);
+  assert.equal(normalizeUrl("https://www.linkedin.com/jobs/view/senior-ai-engineer-at-acme-4012345678?eBP=x"), plain);
+  assert.equal(normalizeUrl("https://www.indeed.com/viewjob?jk=abc123&from=serp&tk=1x"), normalizeUrl("https://indeed.com/rc/clk?jk=abc123"));
+  assert.equal(normalizeUrl("https://jobs.lever.co/acme/1f2e3d/apply?lever-source=LinkedIn"), "https://jobs.lever.co/acme/1f2e3d");
+  assert.notEqual(normalizeUrl("https://www.linkedin.com/jobs/view/4012345678/"), normalizeUrl("https://www.linkedin.com/jobs/view/4012345679/"));
 });
 
 test("args parse positionals, flags, and --set pairs", () => {

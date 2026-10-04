@@ -37,6 +37,14 @@ const command: Command = {
 
     for (const find of findings) console.log(`${find.file}:${find.line}: ${find.kind} ${find.snippet}`);
     console.log(`${findings.length} finding(s)`);
+    if (findings.length) {
+      // The remedy, so a finding is resolved rather than worked around: the check itself is never skipped.
+      console.log(
+        "Resolve each finding before committing: a detail of the person's own (their address, an ID number) moves into a *.local.* file, which git ignores; " +
+          "text that only looks like one, or is public (an employer's office address, a court named in a posting), goes into custom/pii-allow.yaml under `strings`, exactly as it appears. " +
+          "Never skip the check with --no-verify.",
+      );
+    }
     return findings.length ? 1 : 0;
   },
 };

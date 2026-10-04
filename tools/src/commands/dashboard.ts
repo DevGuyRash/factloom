@@ -6,7 +6,7 @@ import type { Command } from "../lib/command.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { personDir, rel, repoRoot, resolvePerson, today } from "../lib/repo.ts";
 import { FILE_NAMES } from "../lib/schema.ts";
-import { computeStats, pendingSnapshot, type GroupCounts } from "../lib/stats.ts";
+import { computeStats, pendingSnapshot, wasSent, type GroupCounts } from "../lib/stats.ts";
 import { renderTemplate } from "../lib/templates.ts";
 
 function weekOf(dateStr: string): string {
@@ -34,8 +34,10 @@ const command: Command = {
     const cfg = loadPipelineConfig(root);
 
     const perWeekMap = new Map<string, number>();
+    // Applications sent per week: drafted, held, and skipped records went nowhere.
     for (const app of listApplications(person, root)) {
-      const d = typeof app.record?.applied === "string" ? app.record.applied : app.name.slice(0, 10);
+      if (!app.record || !wasSent(app.record)) continue;
+      const d = typeof app.record.applied === "string" ? app.record.applied : app.name.slice(0, 10);
       perWeekMap.set(weekOf(d), (perWeekMap.get(weekOf(d)) ?? 0) + 1);
     }
     const perWeek = [...perWeekMap.entries()].sort(([x], [y]) => x.localeCompare(y)).map(([week, count]) => ({ week, count }));

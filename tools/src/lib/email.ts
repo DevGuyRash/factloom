@@ -61,7 +61,9 @@ export type Codes = { codes: string[]; links: string[] };
 const CODE_NEAR_KEYWORD = /\b(?:code|pin|otp|passcode)\b[^\n\d]{0,16}?\b((?=[a-z]*\d)[a-z0-9]{4,8})\b/gi;
 const STANDALONE_DIGITS = /\b(\d{6})\b/g;
 const LINK = /https?:\/\/[^\s<>()"'\]]+/gi;
-const LINK_HINT = /verify|confirm|activate|unsubscribe|token=|code=|auth/i;
+const LINK_HINT = /verify|confirm|activate|token=|code=|auth/i;
+// Links that change mail settings are never verification links, whatever else they contain.
+const NOT_VERIFICATION = /unsubscribe|opt-?out|email-?preferences|manage-?preferences|notification-?settings/i;
 
 /** Verification codes and links found in free text (no mailbox access; pure parsing). */
 export function extractCodes(text: string): Codes {
@@ -73,7 +75,7 @@ export function extractCodes(text: string): Codes {
   const links = new Set<string>();
   for (const m of text.matchAll(LINK)) {
     const url = m[0].replace(/[.,);\]]+$/, "");
-    if (LINK_HINT.test(url)) links.add(url);
+    if (LINK_HINT.test(url) && !NOT_VERIFICATION.test(url)) links.add(url);
   }
   return { codes: [...codes], links: [...links] };
 }

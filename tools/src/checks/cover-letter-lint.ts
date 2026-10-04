@@ -5,7 +5,7 @@
 import { existsSync } from "node:fs";
 import { dirname } from "node:path";
 import { DRAFT_MARKERS } from "../lib/schema.ts";
-import { normalizeCompany } from "../lib/text.ts";
+import { normalizeCompany, sameEmployer } from "../lib/text.ts";
 import { allConfirms, factsPath, loadFacts } from "../render/spec.ts";
 import type { CheckContext, Rule } from "./types.ts";
 
@@ -40,15 +40,16 @@ export function letterProblems({ rel, body, data, record, person, root }: Letter
     const recRole = record.role != null ? String(record.role) : undefined;
     const letterCompany = data?.company != null ? String(data.company) : undefined;
     const letterRole = data?.role != null ? String(data.role) : undefined;
-    if (letterCompany && recCompany && normalizeCompany(letterCompany) !== normalizeCompany(recCompany)) {
+    // A letter may use the employer's everyday name ("Amazon" for "Amazon.com Services LLC") when it is a shorter form of the record's.
+    if (letterCompany && recCompany && !sameEmployer(letterCompany, recCompany)) {
       errors.push(`${rel}: company '${letterCompany}' does not match the application record's '${recCompany}'`);
     }
     if (letterRole && recRole && letterRole.trim().toLowerCase() !== recRole.trim().toLowerCase()) {
       errors.push(`${rel}: role '${letterRole}' does not match the application record's '${recRole}'`);
     }
-    const company = recCompany ?? letterCompany;
+    const company = letterCompany ?? recCompany;
     if (company && !normalizeCompany(body).includes(normalizeCompany(company))) {
-      errors.push(`${rel}: letter body does not mention ${company}`);
+      errors.push(`${rel}: letter body does not mention ${company}${letterCompany ? "" : " (a letter that uses a shorter name sets `company:` in its frontmatter to that name)"}`);
     }
   }
 

@@ -10,7 +10,7 @@ Tab completes `./resumes` in bash, zsh, fish, and PowerShell: commands, subcomma
 | `--person ` | the people in `people/` |
 | `--variant `, `--theme `, `--themes a,` | that person's resume variants; the themes visible to them (the engine's, yours, theirs); a comma list keeps the items before it |
 | `onboarding answer `, `inbox add --id ` | onboarding question ids, from the shared catalog and yours |
-| `searches mark `, `template `, `guard allow ` | saved-search ids, document templates, git remotes |
+| `searches mark `, `searches pause `, `template `, `guard allow ` | saved-search ids, document templates, git remotes |
 | `--format `, `outcome <dir> `, `run log --kind ` | the fixed choices the command accepts |
 | `tailor `, `letter `, `import ` | directories or files, from the shell's own completion |
 

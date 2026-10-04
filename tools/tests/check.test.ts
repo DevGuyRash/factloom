@@ -205,6 +205,19 @@ test("cover letter mismatched company fails", async () => {
   }
 });
 
+test("a cover letter may use the employer's everyday name, set in its frontmatter", async () => {
+  const fx = await validFixture();
+  try {
+    const dir = "people/pat-lee/applications/2026-09-02_amazon-com-services_analyst";
+    fx.write(`${dir}/record.md`, RECORD.replace(/company: .*/, 'company: "Amazon.com Services LLC"').replace(/role: .*/, "role: Analyst"));
+    fx.write(`${dir}/cover-letter.md`, "---\ntype: cover-letter\nperson: pat-lee\ncompany: Amazon\n---\n\nDear hiring team, I would love to bring my analysis work to Amazon.\n");
+    const { errors } = await run(fx.root);
+    assert.deepEqual(errors.filter((e) => e.includes(dir)), []);
+  } finally {
+    fx.cleanup();
+  }
+});
+
 test("cover letter not mentioning the company fails", async () => {
   const fx = await validFixture();
   try {

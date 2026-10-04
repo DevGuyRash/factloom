@@ -1,9 +1,12 @@
-import { flag, parseArgs } from "../lib/args.ts";
+import { flag, has, parseArgs } from "../lib/args.ts";
+import { describeApplication, findDuplicate } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
-import { isBlocked } from "../lib/employers.ts";
+import { findEmployer } from "../lib/employers.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
-import { enqueue, loadQueue, nextItem, updateItem, type QueueItem } from "../lib/queue.ts";
-import { resolvePerson } from "../lib/repo.ts";
+import { enqueue, loadQueue, rankQueue, syncQueue, updateItem, type QueueItem } from "../lib/queue.ts";
+import { rel, resolvePerson } from "../lib/repo.ts";
+import { logEvent } from "../lib/runlog.ts";
+import { DATE } from "../lib/schema.ts";
 import { normalizeUrl } from "../lib/text.ts";
 
 function daysSince(dateStr: string): number {
@@ -11,7 +14,7 @@ function daysSince(dateStr: string): number {
 }
 
 function fmt(i: QueueItem): string {
-  return `[${i.status}]${i.score !== undefined ? ` score=${i.score}` : ""} ${i.company ?? "?"} — ${i.role ?? "?"} (${i.found}) ${i.url}`;
+  return `[${i.status}]${i.score !== undefined ? ` score=${i.score}` : ""} ${i.company ?? "?"} — ${i.role ?? "?"} (${i.posted ? `posted ${i.posted}, ` : ""}found ${i.found}) ${i.url}`;
 }
 
 function resolveUrl(items: QueueItem[], ref: string): string {
@@ -22,39 +25,75 @@ function resolveUrl(items: QueueItem[], ref: string): string {
   throw new Error(`no queue item matches ${ref}`);
 }
 
-/** Manages the posting queue: enqueue refuses duplicates and blocked employers; `list` separates stale items. */
+/**
+ * Manages the posting queue: `add` refuses what is already queued or applied for and blocked employers; `next`
+ * suggests an order with its reasons; `list` separates stale items. Both close items whose application moved on.
+ */
 const command: Command = {
   name: "queue",
   summary: "Manage the posting queue: add, list, next, start, done, drop",
   usage: [
-    "resumes queue add --url U [--company C] [--role R] [--source S] [--score N] [--person p]",
+    "resumes queue add --url U [--company C] [--role R] [--source S] [--posted YYYY-MM-DD] [--score N] [--pick] [--person p]",
     "resumes queue list [--person p]",
-    "resumes queue next [--person p]",
+    "resumes queue next [--count N] [--person p]",
+    "resumes queue skip --url U [--company C] [--role R] [--source S] --reason TEXT [--no-log] [--person p]",
     "resumes queue start <url|#> [--person p]",
     "resumes queue done <url|#> --outcome submitted|skipped|held [--note TEXT] [--person p]",
     "resumes queue drop <url|#> [--note TEXT] [--person p]",
   ].join("\n       "),
   run(argv) {
     const [sub, ...rest] = argv;
-    const a = parseArgs(rest);
+    const a = parseArgs(rest, ["pick", "no-log"]);
     const person = resolvePerson(flag(a, "person"));
 
     if (sub === "add") {
       const url = flag(a, "url");
       if (!url) throw new Error("queue add needs --url");
       const company = flag(a, "company");
-      if (company && isBlocked(person, company)) {
-        console.error(`${company} is blocked; see employers.md`);
+      const employer = company ? findEmployer(person, company) : null;
+      if (employer?.blocked) {
+        console.error(`${company} is blocked (employers list entry "${employer.company}"${employer.reason ? `: ${employer.reason}` : ""})`);
         return 1;
       }
+      const posted = flag(a, "posted");
+      if (posted && !DATE.test(posted)) throw new Error("--posted takes YYYY-MM-DD");
       const scoreStr = flag(a, "score");
-      const result = enqueue(person, { url, company, role: flag(a, "role"), source: flag(a, "source"), score: scoreStr ? Number(scoreStr) : undefined });
+      const result = enqueue(person, {
+        url, company, role: flag(a, "role"), source: flag(a, "source"), score: scoreStr ? Number(scoreStr) : undefined,
+        ...(posted ? { posted } : {}), ...(has(a, "pick") ? { pick: true } : {}),
+      });
       if (!result.added) {
-        console.log(`not added: ${result.reason}`);
+        console.log(result.reason === "queued"
+          ? `not added: already queued (${result.item!.status}${result.item!.outcome ? `, ${result.item!.outcome}` : ""}) ${result.item!.url}`
+          : `not added: already applied for, same ${result.match!.by}: ${rel(result.match!.app.dir)} (${describeApplication(result.match!.app)})`);
         return 0;
       }
       console.log(`queued ${result.item!.url}`);
+      if (result.match) console.log(`  possible duplicate of ${rel(result.match.app.dir)} (${describeApplication(result.match.app)}): compare the postings before applying`);
       return 0;
+    }
+
+    if (sub === "skip") {
+      // A posting ruled out from its listing or first lines needs no application directory: the queue keeps the
+      // link and the reason, and `queue add` will not take it again.
+      const url = flag(a, "url");
+      const reason = flag(a, "reason");
+      if (!url || !reason) throw new Error("queue skip needs --url and --reason");
+      const company = flag(a, "company"), role = flag(a, "role");
+      const added = enqueue(person, { url, company, role, source: flag(a, "source") });
+      if (!added.added && added.reason === "applied") {
+        console.log(`not skipped: already applied for, same ${added.match!.by}: ${rel(added.match!.app.dir)}`);
+        return 0;
+      }
+      updateItem(person, added.item!.url, { status: "done", outcome: "skipped", note: reason });
+      if (!has(a, "no-log")) logEvent(person, "skipped", `${company ?? "?"} — ${role ?? "?"}: ${reason} (${url})`);
+      console.log(`skipped ${url}: ${reason}`);
+      return 0;
+    }
+
+    if (sub === "list" || sub === "next") {
+      const closed = syncQueue(person);
+      if (closed) console.log(`closed ${closed} queue item(s) whose application was already submitted, held, or skipped`);
     }
 
     if (sub === "list") {
@@ -73,12 +112,18 @@ const command: Command = {
     }
 
     if (sub === "next") {
-      const item = nextItem(person);
-      if (!item) {
+      // A suggested order with its reasons; any item may be taken first when there is a reason to.
+      const count = Math.max(1, Number(flag(a, "count") ?? 1) || 1);
+      const ranked = rankQueue(person).slice(0, count);
+      if (!ranked.length) {
         console.log("queue is empty");
         return 0;
       }
-      console.log(fmt(item));
+      for (const { item, why } of ranked) {
+        console.log(`${fmt(item)}\n  why: ${why.join(", ")}`);
+        const app = findDuplicate(person, { url: item.url, source: item.source });
+        if (app) console.log(`  application: ${rel(app.app.dir)} (${app.app.record?.status ?? "no record"}): continue it rather than starting another`);
+      }
       return 0;
     }
 

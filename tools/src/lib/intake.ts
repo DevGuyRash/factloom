@@ -404,13 +404,17 @@ export function intakePerson(explicit: string | undefined, root = repoRoot()): s
   throw new Error(people.length ? `several people here (${people.join(", ")}); pass --person` : 'nobody is set up yet: run ./resumes person new "<Full Name>" first');
 }
 
-/** Whether the person's facts.yaml lists no job yet: a new person whose resumes still need to come in. */
-export function factsWithoutJobs(person: string, root = repoRoot()): boolean {
+/**
+ * Whether the person's facts.yaml holds no experience yet, neither jobs nor projects: a new person whose resumes
+ * still need to come in. Someone whose experience is all projects, volunteer work, or study is not pending.
+ */
+export function factsWithoutExperience(person: string, root = repoRoot()): boolean {
   const path = join(personDir(person, root), "resumes", "source", "facts.yaml");
   if (!existsSync(path)) return true;
   try {
-    const facts = YAML.parse(readFileSync(path, "utf8")) as { jobs?: Record<string, unknown> } | null;
-    return !facts?.jobs || Object.keys(facts.jobs).length === 0;
+    const facts = YAML.parse(readFileSync(path, "utf8")) as { jobs?: Record<string, unknown>; projects?: Record<string, unknown> } | null;
+    const count = (x: unknown) => (x && typeof x === "object" ? Object.keys(x).length : 0);
+    return count(facts?.jobs) + count(facts?.projects) === 0;
   } catch {
     return false;
   }

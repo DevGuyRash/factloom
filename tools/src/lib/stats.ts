@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { listApplications } from "./applications.ts";
 import { peek, readDoc } from "./frontmatter.ts";
-import { dropWaiting, factsWithoutJobs, importedNotes } from "./intake.ts";
+import { dropWaiting, factsWithoutExperience, importedNotes } from "./intake.ts";
 import { loadPipelineConfig } from "./pipeline-config.ts";
 import { loadQueue } from "./queue.ts";
 import { findByType, personDir, repoRoot, today } from "./repo.ts";
@@ -24,15 +24,34 @@ function bump(map: Record<string, GroupCounts>, key: string, status: string) {
   if ((INTERVIEW_STATUS as readonly string[]).includes(status)) c.interview++;
 }
 
-/** Response and interview counts grouped by resume variant, cover-letter use, source, and site. Small samples stay visible via `total`. */
+/** Statuses of an application that went to the employer. */
+const SENT = new Set(["submitted", "rejected", "interviewing", "offer", "closed"]);
+
+/** Whether an application went to the employer: drafted, held, and skipped ones never did. */
+export const wasSent = (r: { status: string; applied?: unknown }) => SENT.has(r.status) || (r.status === "withdrawn" && !!r.applied);
+
+/** Where a posting was found, as a site: the host of a link, or the text as given. */
+const sourceKey = (source: unknown) => {
+  const s = String(source ?? "").trim();
+  try {
+    return new URL(s).host.replace(/^www\./, "");
+  } catch {
+    return s || "(unknown)";
+  }
+};
+
+/**
+ * Response and interview counts over the applications actually sent, grouped by resume variant, cover-letter use,
+ * source (the site a posting was found on), and site. Small samples stay visible via `total`.
+ */
 export function computeStats(person: string, root = repoRoot()): StatsReport {
   const out: StatsReport = { byVariant: {}, byCoverLetter: {}, bySource: {}, bySite: {} };
   for (const app of listApplications(person, root)) {
     const r = app.record;
-    if (!r) continue;
+    if (!r || !wasSent(r)) continue;
     bump(out.byVariant, String(r.resume ?? "(none)"), r.status);
     bump(out.byCoverLetter, r.cover_letter === "yes" ? "yes" : "no", r.status);
-    bump(out.bySource, String(r.source ?? "(unknown)"), r.status);
+    bump(out.bySource, sourceKey(r.source), r.status);
     bump(out.bySite, String(r.site ?? "(unknown)"), r.status);
   }
   return out;
@@ -78,7 +97,14 @@ export function aggregatePay(person: string, by: "variant" | "role" | "site" = "
 
 export type PendingSnapshot = {
   statusCounts: Record<string, number>;
-  held: { dir: string; company: string; role: string; reason: string }[];
+  /** Held applications, with the kind of hold and the catalog id one waits on when `app hold` recorded them. */
+  held: { dir: string; company: string; role: string; reason: string; kind?: string; waitsOn?: string }[];
+  /** Applications whose final submit was clicked (`app submitting`) but never recorded as sent: check the site, never resend. */
+  submitClicked: { dir: string; company: string; role: string; at: string }[];
+  /** Sent applications with a step still to come (an assessment, an account at the employer). */
+  pendingSteps: { dir: string; company: string; role: string; pending: string }[];
+  /** Application records whose frontmatter does not parse, so no command can see them. */
+  unreadable: { dir: string; error: string }[];
   queueOpen: number;
   queueStale: number;
   followupsDue: { dir: string; company: string; role: string; followUp: string }[];
@@ -88,7 +114,7 @@ export type PendingSnapshot = {
   guidesNeedingResearch: { path: string; researched: string | null }[];
   searchesDue: number;
   /** Resume intake: files waiting in drop/, and imported resumes not yet written into facts.yaml. */
-  intake: { dropWaiting: number; pending: { path: string; status: string }[]; noJobsYet: boolean };
+  intake: { dropWaiting: number; pending: { path: string; status: string }[]; noExperienceYet: boolean };
 };
 
 function daysSince(dateStr: string): number {
@@ -119,12 +145,21 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
   const statusCounts: Record<string, number> = {};
   const held: PendingSnapshot["held"] = [];
   const followupsDue: PendingSnapshot["followupsDue"] = [];
+  const submitClicked: PendingSnapshot["submitClicked"] = [];
+  const pendingSteps: PendingSnapshot["pendingSteps"] = [];
+  const unreadable: PendingSnapshot["unreadable"] = [];
   const todayStr = today();
   for (const app of listApplications(person, root)) {
     const r = app.record;
+    if (app.recordError) unreadable.push({ dir: app.dir, error: app.recordError });
     if (!r) continue;
     statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
-    if (r.status === "blocked") held.push({ dir: app.dir, company: String(r.company), role: String(r.role), reason: heldReason(app.recordPath) });
+    const who = { dir: app.dir, company: String(r.company), role: String(r.role) };
+    if (r.submit_clicked && r.status !== "submitted") submitClicked.push({ ...who, at: String(r.submit_clicked) });
+    if (r.status === "submitted" && r.pending) pendingSteps.push({ ...who, pending: String(r.pending) });
+    if (r.status === "blocked") {
+      held.push({ ...who, reason: heldReason(app.recordPath), ...(r.hold_kind ? { kind: String(r.hold_kind) } : {}), ...(r.waits_on ? { waitsOn: String(r.waits_on) } : {}) });
+    }
     if (r.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= todayStr) {
       followupsDue.push({ dir: app.dir, company: String(r.company), role: String(r.role), followUp: r.follow_up });
     }
@@ -145,7 +180,7 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
   const intake = {
     dropWaiting: dropWaiting(person, root).length,
     pending: importedNotes(person, root).filter((n) => n.status !== "merged").map((n) => ({ path: n.path, status: n.status })),
-    noJobsYet: factsWithoutJobs(person, root),
+    noExperienceYet: factsWithoutExperience(person, root),
   };
-  return { statusCounts, held, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
+  return { statusCounts, held, submitClicked, pendingSteps, unreadable, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
 }

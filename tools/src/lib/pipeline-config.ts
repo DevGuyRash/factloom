@@ -10,6 +10,8 @@ export type PipelineConfig = {
   stale_queue_days: number;
   hours_per_year: number;
   guide_research_days: number;
+  /** `run start` treats a run log written to within this many minutes as another activation still at work. */
+  run_active_minutes: number;
   score: {
     weights: { must_haves: number; pay_ok: number; arrangement_ok: number; location_ok: number; seniority: number; preferred: number };
     seniority_credit: { match: number; stretch: number; over: number };
@@ -25,6 +27,7 @@ const DEFAULTS: PipelineConfig = {
   stale_queue_days: 10,
   hours_per_year: 2080,
   guide_research_days: 90,
+  run_active_minutes: 15,
   score: {
     weights: { must_haves: 35, pay_ok: 10, arrangement_ok: 10, location_ok: 10, seniority: 20, preferred: 15 },
     seniority_credit: { match: 1, stretch: 0.6, over: 0.5 },

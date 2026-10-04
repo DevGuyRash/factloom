@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync } from "node:fs";
-import { extname, join } from "node:path";
+import { extname, join, resolve } from "node:path";
 import { flag, parseArgs } from "../lib/args.ts";
-import { listApplications, loadRecord } from "../lib/applications.ts";
+import { findApplication, loadRecord } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
 import { writeDoc } from "../lib/frontmatter.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
@@ -17,11 +17,11 @@ const command: Command = {
     const [dirArg, file] = a._;
     if (!dirArg || !file) throw new Error("proof needs <dir> <file>");
     if (!existsSync(file)) throw new Error(`${file} does not exist`);
-    const app = listApplications(person).find((x) => x.dir === dirArg || x.name === dirArg || rel(x.dir) === dirArg);
-    if (!app) throw new Error(`no application matches ${dirArg}`);
+    const app = findApplication(person, dirArg);
     const ext = extname(file) || ".txt";
     const destName = `confirmation${ext}`;
-    copyFileSync(file, join(app.dir, destName));
+    // A file already saved in the application directory under that name is recorded where it is.
+    if (resolve(file) !== join(app.dir, destName)) copyFileSync(file, join(app.dir, destName));
     const { data, body } = loadRecord(app);
     // A confirmation number or message recorded by `app submit` stays; the file is recorded beside it.
     if (!data.confirmation) data.confirmation = destName;

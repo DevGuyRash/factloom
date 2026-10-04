@@ -58,7 +58,7 @@ export const SENSITIVE_ANSWER_PREFIXES = ["eeo.", "background.criminal-history",
 
 export const RESUME_EXTENSIONS = [".pdf", ".docx"] as const;
 /** Text that marks a draft or sample; it never belongs in a sendable resume or letter. */
-export const DRAFT_MARKERS = /fictional|placeholder|lorem ipsum|class presentation|\bTODO\b|\bTBD\b|xx\/xx/i;
+export const DRAFT_MARKERS = /\b(?:is|are|entirely|purely|all) fictional\b|\bfictional (?:person|candidate|resume|sample|data|results)\b|placeholder|lorem ipsum|class presentation|\bTODO\b|\bTBD\b|xx\/xx/i;
 /** `YYYY-MM-DD_company-slug_role-slug` */
 export const APPLICATION_DIR = /^\d{4}-\d{2}-\d{2}_[a-z0-9]+(?:-[a-z0-9]+)*_[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const DATE = /^\d{4}-\d{2}-\d{2}$/;

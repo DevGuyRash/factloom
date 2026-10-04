@@ -16,9 +16,9 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: auto
 
 ### prefs.min-fit (essential)
-- Ask: How good a match should a posting be before you apply? Each posting gets a fit score from 0 to 100 from the must-haves you meet, seniority, preferred skills, pay, arrangement, and location. Whatever the score, a posting where you meet fewer than half the requirements is skipped. Offer: 50 (anything you could plausibly do, stretch roles included), 65 (solid matches, the default), or 80 (strong matches only).
+- Ask: How good a match should a posting be before you apply? Each posting gets a fit score from 0 to 100 from the must-haves you meet, seniority, preferred skills, pay, arrangement, and location. Whatever the score, a posting where you meet fewer than half the requirements is skipped, unless you name another share (for example "65, must-haves 40%"). Offer: 50 (anything you could plausibly do, stretch roles included), 65 (solid matches, the default), or 80 (strong matches only).
 - Use: `./resumes score` reports whether a posting clears it; a posting below it is skipped with its score as the reason
-- Shape: number from 0 to 100
+- Shape: number from 0 to 100; optionally the share of must-haves to meet
 - Policy: auto
 
 ### documents.cover-letter (essential)
@@ -39,6 +39,11 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ### mail.verification (core)
 - Ask: When a site emails a verification code or link, who reads it: you, or the agent? The agent needs mailbox access through himalaya and reads only the newest message from that site.
 - Shape: choice: the person or the agent
+- Policy: confirm
+
+### browser.tabs (core)
+- Ask: The agent closes the browser tabs it opens once it is done with them. May it also close tabs you opened yourself, once their posting is worked (applied, held, or skipped, with its link saved in the record)?
+- Shape: yes / no
 - Policy: confirm
 
 ### accounts.profile-edits (core)
@@ -141,7 +146,7 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: confirm
 
 ### prefs.constraints (essential)
-- Ask: What rules a job out for you that the questions above do not cover? For example: hours, shifts, weekends, or on-call work; how long a commute you accept, or driving for work; physical demands; industries or kinds of work you avoid; commission-only pay; benefits you need; how many applications a day, or how soon to apply to the same employer again. Record schedule, driving, and pace limits under `prefs.schedule`, `background.drivers-license`, and `prefs.pace` as well, so forms reuse them.
+- Ask: What rules a job out for you that the questions above do not cover? For example: hours, shifts, weekends, or on-call work; how long a commute you accept, or driving for work; physical demands; industries or kinds of work you avoid (for example data-annotation or AI-training gigs paid per task, or sales roles); commission-only pay; benefits you need; how many applications a day, or how soon to apply to the same employer again. Record schedule, driving, and pace limits under `prefs.schedule`, `background.drivers-license`, and `prefs.pace` as well, so forms reuse them.
 - Use: screens every posting before applying, alongside the other answers; a constraint the person states mid-session is added here at once
 - Shape: list, one constraint per line
 - Policy: confirm
@@ -162,20 +167,28 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 ## Compensation and employment type
 
-### comp.strategy (essential)
-- Ask: How should salary questions be answered: a target base figure or range for each kind of role, wording for free-text fields, and an hourly figure for contract roles?
-- Seen as: "What is your expected compensation range?", "What is your desired salary range?", "Do you accept the listed salary range for this position?"; some forms state that "negotiable" or "market" answers are not reviewed
-- Shape: number or range per role family; free-text wording
-- Policy: confirm
-
 ### comp.minimum (essential)
-- Ask: What is the lowest base salary or hourly rate you would consider? Postings below it are flagged before applying.
-- Shape: number
+- Ask: What is the least you would accept: a base salary, and an hourly rate for hourly or contract work (with a separate rate for 1099 or corp-to-corp contracts when it differs)? Postings whose pay cannot reach it are skipped, and no form is ever given a lower figure.
+- Seen as: "Minimum salary requirement", "Lowest acceptable rate"
+- Shape: salary; hourly rate; contract rate when it differs
 - Policy: auto
 
+### comp.strategy (essential)
+- Ask: What pay should forms ask for: your target, the figure you want rather than the least you would take, as a base salary and as an hourly rate, for each kind of role? And how should it meet a range the posting states? Offer the default: the target when the range includes it, the range's midpoint when the range starts above the target, and the range's top when it ends below the target but still reaches the minimum. Add wording for free-text fields.
+- Seen as: "What is your expected compensation range?", "What is your desired salary range?", "Desired hourly rate", "Salary expectations", "Do you accept the listed salary range for this position?"; some forms state that "negotiable" or "market" answers are not reviewed
+- Shape: target salary and hourly rate per role family; how to meet a posted range; free-text wording
+- Policy: confirm
+
+### comp.project-rate
+- Ask: When a posting asks for a fixed price or a project bid rather than a rate, how should it be priced: an hourly rate times an estimate, or a figure you give?
+- Seen as: "Proposed project fee", "Your bid for this project", "Flat rate"
+- Shape: rule or figure
+- Policy: ask
+
 ### comp.history (core)
-- Ask: How should questions about current or past pay be handled? Many states bar employers from asking; leave the field empty when it is optional.
-- Shape: wording
+- Ask: What should forms say about your current or most recent pay: a figure you are comfortable sharing (salary or hourly), or decline where the form allows? Many states bar employers from asking. Optional fields stay empty; when a form requires a figure and you have declined, the application waits for you.
+- Seen as: "Current salary", "Current base compensation", "Most recent salary", "Current hourly rate"
+- Shape: salary or hourly figure, or decline, with wording
 - Policy: confirm
 
 ### employment.type (core)
@@ -193,14 +206,16 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 
 These appear mostly on Workday, iCIMS, and public-sector forms.
 
-### background.check-consent (core)
-- Ask: Are you willing to undergo a background check? (A formal authorization form is signed by the person.)
+### background.check-consent (essential)
+- Ask: Are you willing to undergo a pre-employment background check? (A formal authorization form is signed by the person.)
+- Seen as: "Are you willing to submit to a background check?", "Do you consent to a background check?", "This position requires a background check. Are you comfortable with that?"
 - Shape: yes / no
 - Policy: auto
 
-### background.drug-screen (core)
-- Ask: Are you willing to take a pre-employment drug screen?
-- Shape: yes / no
+### background.drug-screen (essential)
+- Ask: Are you willing to take a pre-employment drug test? Some forms ask instead whether you can pass one: what should those say?
+- Seen as: "Are you willing to take a drug test?", "Are you willing to submit to drug testing?", "Can you pass a pre-employment drug screen?", "This position requires a drug screen"
+- Shape: willing: yes / no; can pass: yes / no, or left for the person
 - Policy: auto
 
 ### background.criminal-history (core)
@@ -392,6 +407,12 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Ask: Transcripts, certifications, writing samples, or portfolios requested by a posting: which file, if any?
 - Shape: file path or none
 - Policy: ask
+
+### links.public-work (core)
+- Ask: Which public links may forms get when they ask for examples of your work: a portfolio, GitHub, live sites, demos? Which may not be shared? A posting that requires a link you have not listed waits for you.
+- Seen as: "Portfolio URL", "GitHub profile", "Link to a live site you built", "Demo or work sample"
+- Shape: list of links with what each shows; links not to share
+- Policy: confirm
 
 ## Attestations
 

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { readDoc, writeDoc } from "./frontmatter.ts";
 import { findOne, personDir, repoRoot } from "./repo.ts";
 import { FILE_NAMES } from "./schema.ts";
-import { normalizeCompany } from "./text.ts";
+import { normalizeCompany, sameEmployer } from "./text.ts";
 
 export type EmployerItem = { company: string; blocked?: boolean; reason?: string; priority?: boolean; notes?: string };
 type EmployersDoc = { type: "employers"; person: string; items: EmployerItem[] };
@@ -28,12 +28,6 @@ export function saveEmployers(person: string, items: EmployerItem[], root = repo
   return path;
 }
 
-/** Whether two normalized names are one employer by their leading words ("swca" and "swca environmental consultants"). */
-function leadingWordsMatch(a: string, b: string): boolean {
-  if (!a || !b || a === b) return a === b && a !== "";
-  const [shorter, longer] = a.length < b.length ? [a, b] : [b, a];
-  return longer.startsWith(`${shorter} `);
-}
 
 /**
  * The employer record `name` refers to: the same name (via normalizeCompany), else one whose name
@@ -43,7 +37,7 @@ function leadingWordsMatch(a: string, b: string): boolean {
 export function findEmployer(person: string, name: string, root = repoRoot()): EmployerItem | null {
   const key = normalizeCompany(name);
   const items = loadEmployers(person, root).items;
-  return items.find((e) => normalizeCompany(e.company) === key) ?? items.find((e) => leadingWordsMatch(normalizeCompany(e.company), key)) ?? null;
+  return items.find((e) => normalizeCompany(e.company) === key) ?? items.find((e) => sameEmployer(e.company, name)) ?? null;
 }
 
 export const isBlocked = (person: string, name: string, root = repoRoot()): boolean => findEmployer(person, name, root)?.blocked === true;

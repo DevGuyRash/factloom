@@ -3,7 +3,9 @@ import { flag, has, parseArgs } from "../lib/args.ts";
 import { formatAnswer, loadAnswers, loadCatalog, openCoreQuestions, savedAnswersPath, sessionAnswersPath, sessionHeader, type Answer, type CatalogEntry, type Policy } from "../lib/catalog.ts";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
+import { listApplications } from "../lib/applications.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
+import { similarity } from "../lib/text.ts";
 import { POLICIES } from "../lib/schema.ts";
 
 function upsert(path: string, header: string, entry: string, id: string) {
@@ -22,7 +24,7 @@ function upsert(path: string, header: string, entry: string, id: string) {
 const command: Command = {
   name: "onboarding",
   summary: "Show open core questions, start the session-answers file, record answers",
-  usage: "resumes onboarding [--person p] | onboarding start [--fresh] [--person p] | onboarding answer <catalog-id> <answer> [--policy auto|confirm|ask|person] [--save] [--person p]",
+  usage: 'resumes onboarding [--person p] | onboarding start [--fresh] [--person p] | onboarding find "<question as asked>" [--person p] | onboarding answer <catalog-id> <answer> [--notes <text>] [--policy auto|confirm|ask|person] [--save] [--person p]',
   run(argv) {
     const a = parseArgs(argv, ["save", "fresh"]);
     const person = resolvePerson(flag(a, "person"));
@@ -36,19 +38,39 @@ const command: Command = {
       const previous = has(a, "fresh") || !existsSync(sessionPath) ? new Map<string, Answer>() : loadAnswers(sessionPath);
       const previousDate = existsSync(sessionPath) ? String(peek(sessionPath)?.session ?? "") : "";
       const merged = new Map<string, Answer>();
-      for (const x of saved.values()) if (x.answer) merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy });
+      // Notes (per-employer exceptions, wording for free-text fields) travel with their answers.
+      for (const x of saved.values()) if (x.answer) merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy, notes: x.notes, source: x.source });
       let carried = 0;
       for (const x of previous.values()) {
         if (!x.answer) continue;
-        const newerSaved = saved.get(x.id)?.confirmed && previousDate && saved.get(x.id)!.confirmed! > previousDate;
+        const s = saved.get(x.id);
+        const newerSaved = s?.confirmed && previousDate && s.confirmed > previousDate;
         if (newerSaved) continue;
-        if (saved.get(x.id)?.answer !== x.answer) carried++;
-        merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy, notes: x.notes, source: x.source });
+        if (s?.answer !== x.answer) carried++;
+        merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy, notes: x.notes ?? (s?.answer === x.answer ? s.notes : undefined), source: x.source });
       }
       const entries = [...merged.values()].map(formatAnswer);
       writeFileSync(sessionPath, `${sessionHeader(person)}\n${entries.join("\n\n")}${entries.length ? "\n" : ""}`);
       const unconfirmed = [...saved.values()].filter((x) => x.answer && !x.confirmed).length;
-      console.log(`wrote ${rel(sessionPath)} with ${entries.length} answers (${carried} carried over from the last session)${unconfirmed ? `; confirm the ${unconfirmed} saved answers without a Confirmed date with the person` : ""}`);
+      const noted = [...merged.values()].filter((x) => x.notes).map((x) => x.id);
+      console.log(`wrote ${rel(sessionPath)} with ${entries.length} answers (${carried} carried over from the last session)${unconfirmed ? `; ${unconfirmed} saved answers have no Confirmed date and came from notes or the profile` : ""}`);
+      if (noted.length) console.log(`answers with notes (exceptions or wording that change how they apply): ${noted.join(", ")}`);
+      return 0;
+    }
+    if (sub === "find") {
+      // The catalog entries a form's question most likely is, with this session's answer: no reading 400 lines.
+      const asked = a._.slice(1).join(" ");
+      if (!asked) throw new Error('onboarding find needs "<question as asked>"');
+      const session = loadAnswers(sessionPath), saved = loadAnswers(savedPath);
+      const words = (s: string) => s.replace(/[._<>-]/g, " ");
+      const ranked = [...catalog.values()]
+        .map((e) => ({ e, s: Math.max(similarity(asked, words(e.id)), similarity(asked, e.ask), ...(e.seenAs ?? "").split(/",\s*"/).map((p) => similarity(asked, p))) }))
+        .sort((x, y) => y.s - x.s)
+        .slice(0, 5);
+      for (const { e, s } of ranked) {
+        const answer = session.get(e.id)?.answer ?? saved.get(e.id)?.answer;
+        console.log(`${e.id} (${e.policy}, match ${s.toFixed(2)}): ${answer ? `answer: ${answer}` : "no answer yet"}\n  ask: ${e.ask}`);
+      }
       return 0;
     }
     if (sub === "answer") {
@@ -60,9 +82,18 @@ const command: Command = {
       if (!POLICIES.includes(policy)) { console.error(`policy must be one of ${POLICIES.join(", ")}`); return 2; }
       if (!entry) console.error(`note: ${id} is not in the shared catalog; add it during inbox review`);
       const answer = words.join(" ");
-      upsert(sessionPath, sessionHeader(person), formatAnswer({ id, answer, policy }), id);
-      if (has(a, "save")) upsert(savedPath, `---\ntype: answers\nperson: ${person}\n---\n\n# Answers\n`, formatAnswer({ id, answer, policy, confirmed: today() }), id);
-      console.log(`${id}: ${answer}${has(a, "save") ? " (saved)" : ""}`);
+      // Notes stay with an answer until replaced (--notes "<text>") or cleared (--notes "").
+      const sessionPrev = loadAnswers(sessionPath).get(id), savedPrev = loadAnswers(savedPath).get(id);
+      const notes = flag(a, "notes") ?? sessionPrev?.notes ?? (savedPrev?.answer === answer ? savedPrev.notes : undefined);
+      upsert(sessionPath, sessionHeader(person), formatAnswer({ id, answer, policy, notes, source: sessionPrev?.source }), id);
+      if (has(a, "save")) {
+        const savedNotes = flag(a, "notes") ?? notes ?? savedPrev?.notes;
+        upsert(savedPath, `---\ntype: answers\nperson: ${person}\n---\n\n# Answers\n`, formatAnswer({ id, answer, policy, confirmed: today(), notes: savedNotes, source: savedPrev?.source }), id);
+      }
+      console.log(`${id}: ${answer}${has(a, "save") ? " (saved)" : ""}${notes ? `\n  notes: ${notes}` : ""}`);
+      // Held applications waiting on this answer can go ahead now.
+      const waiting = listApplications(person).filter((x) => x.record?.status === "blocked" && x.record.waits_on === id);
+      if (waiting.length) console.log(`held applications waiting on ${id}: ${waiting.map((x) => x.name).join(", ")} (reopen them: app reopen <dir> --reason "answered")`);
       return 0;
     }
     const saved = loadAnswers(savedPath);
@@ -70,15 +101,16 @@ const command: Command = {
     for (const x of saved.values()) console.log(`  ${x.confirmed ? "✓" : "?"} ${x.id}: ${x.answer || "(blank)"}${x.confirmed ? "" : "  ← confirm with the person"}`);
     const open = openCoreQuestions(person);
     const groups: [string, CatalogEntry[]][] = [
-      [`open essential questions (${open.filter((q) => q.essential).length}): ask these before the first application`, open.filter((q) => q.essential)],
-      [`other open core questions (${open.filter((q) => !q.essential).length}): ask in batches once applying has started, or all now if the person prefers or will be away`, open.filter((q) => !q.essential)],
+      [`open essential questions (${open.filter((q) => q.essential).length}): forms ask these most; settle them before applying while the person is here, otherwise the applications that need one wait on it`, open.filter((q) => q.essential)],
+      [`other open core questions (${open.filter((q) => !q.essential).length}): ask in batches while the person is here, or all before a run they will not attend`, open.filter((q) => !q.essential)],
     ];
     for (const [title, questions] of groups) {
       console.log(`\n${title}`);
       let section = "";
       for (const q of questions) {
         if (q.section !== section) { section = q.section; console.log(`  ${section}`); }
-        console.log(`    ${q.id}: ${q.ask}`);
+        // Entries that say how to derive or propose the answer are for you to work out and the person to confirm.
+        console.log(`    ${q.id}${/^Derived|\bPropose\b/.test(q.ask) ? " [propose from the records]" : ""}: ${q.ask}`);
       }
     }
     console.log(existsSync(sessionPath) ? `\nsession file: ${rel(sessionPath)}` : "\nno session file yet: run `resumes onboarding start`");

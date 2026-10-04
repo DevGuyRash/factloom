@@ -1,7 +1,8 @@
-import { flag, parseArgs } from "../lib/args.ts";
+import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { rel, resolvePerson } from "../lib/repo.ts";
-import { endRun, logEvent, startRun } from "../lib/runlog.ts";
+import { loadPipelineConfig } from "../lib/pipeline-config.ts";
+import { activeRun, endRun, logEvent, startRun } from "../lib/runlog.ts";
 
 const KINDS = ["applied", "held", "skipped", "error", "note"] as const;
 type Kind = (typeof KINDS)[number];
@@ -11,16 +12,25 @@ const command: Command = {
   name: "run",
   summary: "Track a work session in a run log: start, log an event, end",
   usage: [
-    "resumes run start [--person p]",
+    "resumes run start [--takeover] [--person p]",
     'resumes run log --kind applied|held|skipped|error|note "message" [--person p]',
     "resumes run end [--person p]",
   ].join("\n       "),
   run(argv) {
     const [sub, ...rest] = argv;
-    const a = parseArgs(rest);
+    const a = parseArgs(rest, ["takeover"]);
     const person = resolvePerson(flag(a, "person"));
 
     if (sub === "start") {
+      const minutes = loadPipelineConfig().run_active_minutes;
+      const active = activeRun(person, minutes);
+      if (active && !has(a, "takeover")) {
+        console.error(
+          `another run is at work: ${rel(active.path)} was written at ${active.lastWrite.toISOString()}, within ${minutes} minutes. ` +
+            "Two runs in one browser and queue collide, so end this activation without changes; `run start --takeover` starts anyway when you know that run has stopped.",
+        );
+        return 1;
+      }
       console.log(rel(startRun(person)));
       return 0;
     }

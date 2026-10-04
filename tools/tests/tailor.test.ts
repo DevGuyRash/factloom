@@ -49,18 +49,21 @@ test("tailor reorders bullets toward the posting's keywords without adding new t
     const spec = YAML.parse(readFileSync(specPath, "utf8")) as { sections: { entries: { bullets: number[] }[] }[] };
     assert.deepStrictEqual(spec.sections[0].entries[0].bullets, [0, 1], "the Python bullet (index 0) now leads, matching the posting");
     assert.ok(files.some((f) => f.endsWith(".docx")), "a docx was rendered beside the spec");
+    // The employer's name tells this upload apart from other tailored copies on boards that list them by name.
+    assert.ok(files.every((f) => /_acme\.(docx|pdf)$/.test(f)), files.join(", "));
   } finally {
     fx.cleanup();
   }
 });
 
-test("tailor refuses a variant with unconfirmed claims unless --allow-unconfirmed", async () => {
+test("tailor refuses a variant with unconfirmed claims; --allow-unconfirmed builds a preview named as one", async () => {
   const fx = makeFixture();
   try {
     const dir = seed(fx, true);
-    await assert.rejects(tailorApplication(dir, {}, fx.root), /unconfirmed claims/);
+    await assert.rejects(tailorApplication(dir, {}, fx.root), /awaiting the person's confirmation[\s\S]*hold the application[\s\S]*never a file to send/);
     const { files } = await tailorApplication(dir, { allowUnconfirmed: true }, fx.root);
     assert.ok(files.length, "proceeds once --allow-unconfirmed is passed");
+    assert.ok(files.every((f) => /_PREVIEW_unconfirmed\.(docx|pdf)$/.test(f)), files.join(", "));
   } finally {
     fx.cleanup();
   }

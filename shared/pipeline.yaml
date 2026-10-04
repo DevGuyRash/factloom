@@ -17,6 +17,11 @@ hours_per_year: 2080
 # days old, or when it has none, so each guide's targets keep up with the market.
 guide_research_days: 90
 
+# `run start` refuses while the newest run log still running was written to within this many minutes:
+# another activation (a scheduled one that has not finished) is at work in the same browser and queue.
+# `run start --takeover` starts anyway. A run log quiet for longer is closed as abandoned.
+run_active_minutes: 15
+
 score:
   # Weights for each dimension of a record's `fit:` map (see tools/src/lib/scoring.ts). A
   # dimension missing from `fit:` is left out of both the earned and possible totals, so the

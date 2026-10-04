@@ -22,10 +22,15 @@ const command: Command = {
     if (a._[0] !== "add") { console.error(command.usage); return 2; }
     const q = flag(a, "question");
     if (!q) { console.error("--question is required"); return 2; }
+    // A held question is the person's to decide; an answer that went out says where it came from.
+    const answer = flag(a, "answer");
+    const held = !answer || /^held\b/i.test(answer);
+    const decided = flag(a, "decided") ?? (held ? "person" : undefined);
+    if (!decided) { console.error("an answer that was used needs --decided person|derived:<source>, saying where it came from"); return 2; }
     const entry = [
       `### ${today()} ${flag(a, "company") ?? "unknown company"} (${flag(a, "site") ?? "unknown site"}): "${q}"`,
-      `- Answer used: ${flag(a, "answer") ?? "held for the person"}`,
-      `- Decided by: ${flag(a, "decided") ?? "person"}`,
+      `- Answer used: ${answer ?? "held for the person"}`,
+      `- Decided by: ${decided}`,
       `- Suggested id: ${flag(a, "id") ?? "new"}`,
       `- Suggestion: ${flag(a, "suggest") ?? "add to catalog"}`,
     ].join("\n");

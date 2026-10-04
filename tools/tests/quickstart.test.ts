@@ -27,7 +27,7 @@ test("an essential entry is core too, and onboarding lists the open essential qu
     assert.deepEqual(loadCatalog(fx.root).map((e) => [e.id, e.core, e.essential]), [["work-auth.sponsorship", true, true], ["work-auth.clearance", true, false], ["work-auth.visa", false, false]]);
     assert.deepEqual(openCoreQuestions("pat-lee", fx.root).map((e) => e.id), ["work-auth.sponsorship", "work-auth.clearance"]);
     const out = await capture(() => onboardingCommand.run(["--person", "pat-lee"]));
-    assert.match(out, /open essential questions \(1\): ask these before the first application\n {2}Work authorization\n {4}work-auth\.sponsorship: /);
+    assert.match(out, /open essential questions \(1\): forms ask these most[^\n]*\n {2}Work authorization\n {4}work-auth\.sponsorship: /);
     assert.match(out, /other open core questions \(1\)[^\n]*\n {2}Work authorization\n {4}work-auth\.clearance: /);
     assert.doesNotMatch(out, /work-auth\.visa/);
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
@@ -84,11 +84,18 @@ test("score says whether a posting clears the minimum, and notes a fit map witho
     (data as Record<string, unknown>).fit = { must_haves_met: 0, must_haves_total: 5, pay_ok: true, arrangement_ok: true, location_ok: true, seniority: "stretch", preferred_met: 0, preferred_total: 2 };
     writeDoc(`${appDir}/record.md`, data, body);
     const out = await capture(() => scoreCommand.run([appDir, "--person", "pat-lee"]));
-    assert.match(out, /: 42 \(meets 0 of 5 must-haves, under 50%: skip, with that as the reason\)$/);
+    assert.match(out, /: 42 \(meets 0 of 5 must-haves, under 50% from the pipeline default: skip, with that as the reason\)\n {2}points: must-haves 0\/35, pay 10\/10, arrangement 10\/10, location 10\/10, seniority 12\/20, preferred 0\/15$/);
+    // Screening before a record exists writes nothing, and says where the points came from.
+    const spec = await capture(() => scoreCommand.run(["--fit", "must_haves=3/4 pay_ok=yes seniority=match", "--person", "pat-lee"]));
+    assert.match(spec, /^87 \(clears the minimum of 60; minimum from the saved answer\)\n {2}points: must-haves 26\/35, pay 10\/10, seniority 20\/20 \(not stated: arrangement, location, preferred\)$/);
+    assert.equal(readdirSync(dir).length, 1);
+    // The person's own must-have share, stated with their minimum, replaces the pipeline default.
+    writeDoc(`${fx.root}/people/pat-lee/answers.md`, { type: "answers", person: "pat-lee" }, "\n### prefs.min-fit\n- Answer: 60, must-haves 40%\n- Policy: auto\n- Confirmed: 2026-09-01\n");
+    assert.match(await capture(() => scoreCommand.run(["--fit", "must_haves=2/5 pay_ok=yes seniority=match", "--person", "pat-lee"])), /clears the minimum of 60/);
     const min = { value: 60, source: "pipeline default" };
     assert.equal(verdict(93, min, { must_haves_met: 2, must_haves_total: 2 }, 0.5), "93 (clears the minimum of 60; minimum from the pipeline default)");
     assert.equal(verdict(58, min, { must_haves_met: 2, must_haves_total: 4 }, 0.5), "58 (below the minimum of 60: skip, with the score as the reason; minimum from the pipeline default)");
-    assert.match(verdict(65, min, { must_haves_met: 1, must_haves_total: 4 }, 0.5), /meets 1 of 4 must-haves, under 50%: skip/, "a high score does not rescue too few must-haves");
+    assert.match(verdict(65, min, { must_haves_met: 1, must_haves_total: 4 }, 0.5), /meets 1 of 4 must-haves, under 50% from the pipeline default: skip/, "a high score does not rescue too few must-haves");
     assert.equal(verdict(100, min, { pay_ok: true }, 0.5), "100 (no verdict: record fit.must_haves_met and fit.must_haves_total, then score again)");
   } finally {
     if (prev === undefined) delete process.env.RESUMES_ROOT; else process.env.RESUMES_ROOT = prev;

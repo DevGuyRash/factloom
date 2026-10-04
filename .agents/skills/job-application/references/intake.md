@@ -1,6 +1,6 @@
 # Intake: bringing a person's resumes in, or building their first one
 
-Use this when a person is being set up, mentions resumes they have, or when `./resumes status --person <slug>`, `./resumes import status --person <slug>`, or `./resumes doctor` shows files waiting in `drop/`, imported resumes not yet `merged`, or a `facts.yaml` with no jobs yet. `./resumes import` does the mechanical part the same way every time. Reading, reconciling, and writing facts are yours, with whatever the host gives you: reading files and images directly, a browser, connected drives, `gh`.
+Use this when a person is being set up, mentions resumes they have, or when `./resumes status --person <slug>`, `./resumes import status --person <slug>`, or `./resumes doctor` shows files waiting in `drop/`, imported resumes not yet `merged`, or a `facts.yaml` with no jobs or projects yet. `./resumes import` does the mechanical part the same way every time. Reading, reconciling, and writing facts are yours, with whatever the host gives you: reading files and images directly, a browser, connected drives, `gh`.
 
 ## 1. Gather everything at once
 

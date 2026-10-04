@@ -67,6 +67,13 @@ export function personOf(path: string): { person: string; dir: string } {
 export const rel = (path: string, root = repoRoot()) => relative(root, path);
 export const today = () => new Date().toLocaleDateString("en-CA");
 
+/** Local date and time with its offset (2026-10-03T19:56:07-07:00): one time base wherever stamps are compared. */
+export function stamp(d = new Date()): string {
+  const pad = (n: number) => String(Math.trunc(Math.abs(n))).padStart(2, "0");
+  const off = -d.getTimezoneOffset();
+  return `${d.toLocaleDateString("en-CA")}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${off >= 0 ? "+" : "-"}${pad(off / 60)}:${pad(off % 60)}`;
+}
+
 /** The person a command acts for: the explicit slug, else the only profile with `apply: enabled`. */
 export function resolvePerson(explicit: string | undefined, root = repoRoot()): string {
   if (explicit) {

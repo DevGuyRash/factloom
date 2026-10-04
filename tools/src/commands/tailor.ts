@@ -8,7 +8,8 @@ import YAML from "yaml";
 import { writeFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
-import { readDoc } from "../lib/frontmatter.ts";
+import { readDoc, writeDoc } from "../lib/frontmatter.ts";
+import { slugify } from "../lib/text.ts";
 import { personOf, repoRoot } from "../lib/repo.ts";
 import { FILE_NAMES } from "../lib/schema.ts";
 import { loadLexicon, termsIn, type Lexicon } from "../render/lexicon.ts";
@@ -48,7 +49,7 @@ function tailorSection(facts: Facts, lexicon: Lexicon, postingTerms: Set<string>
   return vs;
 }
 
-export async function tailorApplication(dir: string, opts: { variant?: string; allowUnconfirmed?: boolean; theme?: string } = {}, root = repoRoot()): Promise<{ specPath: string; files: string[] }> {
+export async function tailorApplication(dir: string, opts: { variant?: string; allowUnconfirmed?: boolean; theme?: string } = {}, root = repoRoot()): Promise<{ specPath: string; files: string[]; pages?: number; limit?: number; fits?: boolean }> {
   const { person } = personOf(dir);
   const posting = findDocInDir(dir, "posting");
   if (!posting) throw new Error(`${dir}: no posting snapshot (type: posting)`);
@@ -60,7 +61,10 @@ export async function tailorApplication(dir: string, opts: { variant?: string; a
   const variant = loadVariant(person, variantName, root);
   const confirms = confirmsUsed(facts, variant);
   if (confirms.length && !opts.allowUnconfirmed) {
-    throw new Error(`${variantName}: still has unconfirmed claims (${confirms.join("; ")}); pass --allow-unconfirmed to tailor anyway`);
+    throw new Error(
+      `${variantName} uses claims still awaiting the person's confirmation (${confirms.join("; ")}). Choose a variant whose claims are confirmed, ` +
+        "or hold the application and put these phrases on the waiting list. --allow-unconfirmed builds a preview for the person to review, never a file to send.",
+    );
   }
 
   const lexicon = loadLexicon(root);
@@ -68,15 +72,24 @@ export async function tailorApplication(dir: string, opts: { variant?: string; a
   const postingTerms = termsIn(lexicon, String(postingText));
 
   const sections = variant.sections.map((vs) => tailorSection(facts, lexicon, postingTerms, vs));
-  const tailored: Variant = { variant: variant.variant, theme: opts.theme ?? variant.theme, headline: variant.headline, output: variant.output, sections, ...(variant.style ? { style: variant.style } : {}), ...(variant.pages ? { pages: variant.pages } : {}) };
+  // The employer's name in the file name tells uploads apart on boards that list them by name; a build with
+  // unconfirmed claims is a preview, and its name says so, so it is never uploaded by mistake.
+  const company = slugify(String(posting.data.company ?? record?.data.company ?? "")).split("-").slice(0, 3).join("-");
+  const output = `${variant.output}${company ? `_${company}` : ""}${confirms.length ? "_PREVIEW_unconfirmed" : ""}`;
+  const tailored: Variant = { variant: variant.variant, theme: opts.theme ?? variant.theme, headline: variant.headline, output, sections, ...(variant.style ? { style: variant.style } : {}), ...(variant.pages ? { pages: variant.pages } : {}) };
 
   const specPath = join(dir, FILE_NAMES.tailoredResume);
   writeFileSync(specPath, YAML.stringify({ type: "tailored-resume", person, ...tailored }, { lineWidth: 0 }));
 
   const theme = loadTheme(tailored.theme, root, { person, overrides: tailored.style });
   const content = resolveContent(facts, tailored);
-  const { files } = await writeFitted(theme, content, dir, tailored.output, tailored.pages);
-  return { specPath, files };
+  const { files, pages, fits } = await writeFitted(theme, content, dir, tailored.output, tailored.pages);
+  // The variant used is the record's resume, so the record says what went out.
+  if (record && opts.variant && record.data.resume !== opts.variant) {
+    const doc = readDoc(record.path);
+    writeDoc(record.path, { ...doc.data, resume: opts.variant }, doc.body);
+  }
+  return { specPath, files, pages, limit: tailored.pages, fits };
 }
 
 const command: Command = {
@@ -90,9 +103,13 @@ const command: Command = {
     const dir = resolve(dirArg);
     if (!existsSync(dir)) { console.error(`${dir}: not found`); return 1; }
     try {
-      const { specPath, files } = await tailorApplication(dir, { variant: flag(a, "variant"), theme: flag(a, "theme"), allowUnconfirmed: has(a, "allow-unconfirmed") });
+      const { specPath, files, pages, limit, fits } = await tailorApplication(dir, { variant: flag(a, "variant"), theme: flag(a, "theme"), allowUnconfirmed: has(a, "allow-unconfirmed") });
       console.log(`wrote ${specPath}`);
       for (const f of files) console.log(`wrote ${f}`);
+      if (pages !== undefined) {
+        const over = limit ? fits === false : pages > 2;
+        console.log(`pages: ${pages}${limit ? ` (the variant allows ${limit})` : ""}${over ? ": longer than intended; check the guide and the portal's limits before uploading" : ""}`);
+      }
       return 0;
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err));

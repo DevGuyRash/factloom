@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { peek, readDoc, writeDoc } from "./frontmatter.ts";
 import { personDir, repoRoot } from "./repo.ts";
@@ -27,11 +27,29 @@ export function currentRun(person: string, root = repoRoot()): string | null {
   return runs.find((p) => peek(p)?.status === "running") ?? null;
 }
 
-/** Starts a new run log from the run-log template; returns its path. */
+/** A run log still `running` that was written to within `minutes`: another activation at work. */
+export function activeRun(person: string, minutes: number, root = repoRoot(), now = Date.now()): { path: string; lastWrite: Date } | null {
+  const path = currentRun(person, root);
+  if (!path) return null;
+  const lastWrite = statSync(path).mtime;
+  return now - lastWrite.getTime() < minutes * 60000 ? { path, lastWrite } : null;
+}
+
+/**
+ * Starts a new run log from the run-log template; returns its path. Run logs left `running` by an activation
+ * that stopped without `run end` are closed first, ended at their last write.
+ */
 export function startRun(person: string, root = repoRoot()): string {
+  for (const old of listRuns(person, root).filter((p) => peek(p)?.status === "running")) {
+    const { data, body } = readDoc<RunLogDoc>(old);
+    const ended = statSync(old).mtime.toISOString();
+    writeDoc(old, { ...data, ended, status: "finished" }, `${body}- ${ended} [note] closed when the next run started; this run had stopped without run end\n`);
+  }
   const dir = runsDir(person, root);
   mkdirSync(dir, { recursive: true });
-  const path = join(dir, `${stamp()}.md`);
+  let path = join(dir, `${stamp()}.md`);
+  // A second run in the same minute sorts after the first ("_" comes after ".").
+  for (let n = 2; existsSync(path); n++) path = join(dir, `${stamp()}_${n}.md`);
   const started = new Date().toISOString();
   writeFileSync(path, renderTemplate("run-log", { person, started }, person, root));
   return path;

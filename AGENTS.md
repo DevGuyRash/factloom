@@ -67,11 +67,11 @@ A person's profile may carry a standing instruction, in their own words, on how 
 - New questions go to the person's inbox with the answer used, for review at the end.
 - Records name self-identification, criminal-history, accommodation, and address answers by catalog id only; their values stay in the person's local files.
 - Street addresses and anything else the person keeps out of git go in files matching `*.local.*`, which git ignores.
-- People's data goes only to their private repository. The pre-push guard refuses anything else; never bypass it with `--no-verify` for a person's data.
+- People's data goes only to their private repository. The pre-push guard refuses anything else, and the pre-commit hook runs `./resumes check` and the personal-data scan; never bypass either with `--no-verify`. When the scan flags something, resolve it as its message says.
 
 ## Tools
 
-`./resumes help` lists the repository's commands and `./resumes help <command>` shows one command's usage; on Windows, use `resumes.cmd`. `./resumes types` prints the document model from `tools/src/lib/schema.ts`, the single source for types, fields, statuses, and policies. Generate documents with the commands or `./resumes template`, and change a template, theme, facts file, or variant rather than a generated file.
+`./resumes help` lists the repository's commands and `./resumes help <command>` shows one command's usage; on Windows, use `resumes.cmd`. `./resumes types` prints the document model from `tools/src/lib/schema.ts`, the single source for types, fields, statuses, and policies. Generate documents with the commands or `./resumes template`. Resumes and the dashboard are rebuilt from their sources, so change a template, theme, facts file, or variant rather than the generated file; drafts (cover letters, follow-ups, thank-you notes, interview prep) are starting points to rewrite in place.
 
 ## Changing the repository
 
@@ -79,7 +79,7 @@ A person's profile may carry a standing instruction, in their own words, on how 
 - `./resumes setup` prepares a checkout (git hooks including the privacy guard, diff drivers for Word and PDF files, the engine remote); `./resumes doctor` reports what is missing. LibreOffice adds PDF output.
 - `./resumes update` brings in the newest engine, and lists generated resumes that render differently afterwards so they can be rebuilt and reviewed.
 - When a person has `resumes/source/`, change resumes there and rebuild rather than editing the generated files.
-- Commit as records change, with messages describing what changed, and push at the end of a session.
+- Commit as records change (every few outcomes in a long run), with messages describing what changed, and push at the end of a session or activation, and at least daily in a run that lasts days.
 
 ## Working on the engine
 

@@ -40,13 +40,34 @@ function catalogEntries(path: string): CatalogEntry[] {
   return out;
 }
 
+const ANSWER_FIELDS = ["Answer", "Policy", "Confirmed", "Notes", "Source"];
+
+/**
+ * An answer block's fields. A field runs on over the lines after it (a note with several conditions, wording
+ * for a free-text field) until a blank line, a heading, or the next field.
+ */
+function answerFields(block: string): Map<string, string> {
+  const out = new Map<string, string>();
+  let current: string | null = null;
+  for (const line of block.split("\n").slice(1)) {
+    const m = line.match(/^- ([A-Z][a-z]+):[ \t]?(.*)$/);
+    if (m && ANSWER_FIELDS.includes(m[1])) {
+      current = m[1];
+      out.set(current, m[2].trim());
+    } else if (current && line.trim() && !line.startsWith("#")) out.set(current, `${out.get(current)}\n${line.trimEnd()}`);
+    else current = null;
+  }
+  return out;
+}
+
 export function parseAnswers(text: string): Map<string, Answer> {
   const out = new Map<string, Answer>();
   for (const block of text.split(/^### /m).slice(1)) {
     const id = block.split("\n")[0].trim();
+    const f = answerFields(block);
     out.set(id, {
-      id, answer: field(block, "Answer") ?? "", policy: (field(block, "Policy") as Policy) ?? "confirm",
-      confirmed: field(block, "Confirmed") || undefined, notes: field(block, "Notes") || undefined, source: field(block, "Source") || undefined,
+      id, answer: f.get("Answer") ?? "", policy: (f.get("Policy") as Policy) ?? "confirm",
+      confirmed: f.get("Confirmed") || undefined, notes: f.get("Notes") || undefined, source: f.get("Source") || undefined,
     });
   }
   return out;

@@ -6,11 +6,12 @@ role: {{yaml role}}
 {{#if url}}url: {{url}}
 {{/if}}{{#if requisition}}requisition: {{yaml requisition}}
 {{/if}}captured: {{date}}
-location:
-arrangement:
-pay_min:
-pay_max:
-pay_period:
+{{#if posted}}posted: {{posted}}
+{{/if}}location: {{#if location}}{{yaml location}}{{/if}}
+arrangement: {{#if arrangement}}{{yaml arrangement}}{{/if}}
+pay_min: {{#if pay_min}}{{pay_min}}{{/if}}
+pay_max: {{#if pay_max}}{{pay_max}}{{/if}}
+pay_period: {{#if pay_period}}{{pay_period}}{{/if}}
 ---
 
 # {{role}} — {{company}}

@@ -144,7 +144,7 @@ async function prePush(remoteName: string, url: string, root: string): Promise<n
   const updates = input.split("\n").map((l) => l.trim().split(/\s+/)).filter((p) => p.length === 4).map(([, localSha, , remoteSha]) => ({ localSha, remoteSha }));
   const problems = await checkPush(remoteName, url, updates, root);
   if (!problems.length) return 0;
-  console.error(`push refused by the factloom guard:\n  - ${problems.join("\n  - ")}\n(If you are certain, \`git push --no-verify\` skips this check.)`);
+  console.error(`push refused by the factloom guard:\n  - ${problems.join("\n  - ")}\nFix the cause named above; the guard is the last check before personal data leaves this machine.`);
   return 1;
 }
 

@@ -4,7 +4,7 @@
 # public engine. Without the tools it refuses too: a privacy check must not be skipped silently.
 root=$(git rev-parse --show-toplevel)
 if [ ! -d "$root/tools/node_modules" ]; then
-  echo "pre-push: the tools are not installed, so the privacy guard cannot run; run ./resumes setup first (or git push --no-verify if you are sure)." >&2
+  echo "pre-push: the tools are not installed, so the privacy guard cannot run; run ./resumes setup first." >&2
   exit 1
 fi
-exec node "$root/tools/src/cli.ts" guard pre-push "$1" "$2"
+exec node --disable-warning=ExperimentalWarning "$root/tools/src/cli.ts" guard pre-push "$1" "$2"

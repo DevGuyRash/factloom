@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readdirSync } from "node:fs";
+import { readdirSync, utimesSync } from "node:fs";
 import test from "node:test";
 import command from "../src/commands/run.ts";
 import { readDoc } from "../src/lib/frontmatter.ts";
@@ -42,5 +42,32 @@ test(
     const after = readDoc<{ status: string; ended?: string }>(path);
     assert.equal(after.data.status, "finished");
     assert.ok(typeof after.data.ended === "string");
+  }),
+);
+
+test(
+  "run start refuses while another run is at work, takes over on request, and closes a run abandoned without run end",
+  withFixture({}, async (fx) => {
+    const runsDir = `${fx.root}/people/pat-lee/runs`;
+    const err = console.error;
+    const errors: string[] = [];
+    console.error = (...m: unknown[]) => errors.push(m.join(" "));
+    try {
+      assert.equal(await command.run(["start", "--person", "pat-lee"]), 0);
+      assert.equal(await command.run(["start", "--person", "pat-lee"]), 1);
+      assert.match(errors.join("\n"), /another run is at work/);
+      assert.equal(await command.run(["start", "--takeover", "--person", "pat-lee"]), 0);
+      // A run quiet for an hour has stopped: the next start closes it without --takeover.
+      const files = readdirSync(runsDir).sort();
+      const newest = `${runsDir}/${files[files.length - 1]}`;
+      const hourAgo = new Date(Date.now() - 3600000);
+      utimesSync(newest, hourAgo, hourAgo);
+      assert.equal(await command.run(["start", "--person", "pat-lee"]), 0);
+    } finally {
+      console.error = err;
+    }
+    const logs = readdirSync(runsDir).sort().map((f) => readDoc<{ status: string }>(`${runsDir}/${f}`));
+    assert.deepEqual(logs.map((l) => l.data.status), ["finished", "finished", "running"]);
+    assert.match(logs[1].body, /closed when the next run started/);
   }),
 );

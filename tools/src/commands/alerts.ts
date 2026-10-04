@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import { extractPostings } from "../lib/alerts.ts";
 import type { Command } from "../lib/command.ts";
+import { findEmployer } from "../lib/employers.ts";
 import { enqueue } from "../lib/queue.ts";
 import { resolvePerson } from "../lib/repo.ts";
 
@@ -26,6 +27,11 @@ const command: Command = {
     for (const p of postings) {
       const label = [p.role, p.company].filter(Boolean).join(" @ ");
       if (dryRun) { console.log(`[dry run] would enqueue ${p.url}${label ? ` (${label})` : ""} [${p.source}]`); continue; }
+      const employer = p.company ? findEmployer(person, p.company) : null;
+      if (employer?.blocked) {
+        console.log(`skipped (blocked employer "${employer.company}") ${p.url}${label ? ` (${label})` : ""}`);
+        continue;
+      }
       const result = enqueue(person, { url: p.url, company: p.company, role: p.role, source: p.source });
       console.log(`${result.added ? "queued" : `skipped (${result.reason})`} ${p.url}${label ? ` (${label})` : ""}`);
     }

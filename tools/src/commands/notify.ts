@@ -12,7 +12,8 @@ const command: Command = {
     const message = a._.join(" ");
     if (!message) { console.error(`usage: ${command.usage}`); return 2; }
     const result = await notify(message, { title: flag(a, "title"), dryRun: has(a, "dry-run") });
-    if (!result.dryRun) console.error(`(sent via ${result.via})`);
+    // Printing reaches nobody who is away: say so, so the message also goes in the run's summary.
+    if (!result.dryRun) console.error(result.via === "print" ? "(not delivered: set RESUMES_NTFY_URL, or install notify-send, to reach the person; the message was only printed here)" : `(sent via ${result.via})`);
     return 0;
   },
 };

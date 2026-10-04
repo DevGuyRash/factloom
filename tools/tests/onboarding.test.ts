@@ -59,6 +59,27 @@ test("onboarding start keeps the last session's answers, unless a saved answer i
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
 });
 
+test("notes stay with their answers through onboarding start, answer, and --save, until replaced or cleared", async () => {
+  const saved = "---\ntype: answers\nperson: pat-lee\n---\n\n### work-auth.clearance\n- Answer: No\n- Policy: auto\n- Confirmed: 2026-09-01\n- Notes: Yes for Example Corp (held one there)\n  and say so on its forms only\n";
+  const fx = makeFixture({ "shared/onboarding.md": CATALOG, "people/pat-lee/answers.md": saved });
+  process.env.RESUMES_ROOT = fx.root;
+  try {
+    const { loadAnswers } = await import("../src/lib/catalog.ts");
+    const cmd = (await import("../src/commands/onboarding.ts")).default;
+    const session = () => loadAnswers(join(fx.root, "people/pat-lee/session.local.md")).get("work-auth.clearance");
+    const kept = () => loadAnswers(join(fx.root, "people/pat-lee/answers.md")).get("work-auth.clearance");
+    const NOTE = "Yes for Example Corp (held one there)\n  and say so on its forms only";
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(session()?.notes, NOTE);
+    assert.equal(await cmd.run(["answer", "work-auth.clearance", "No", "--save", "--person", "pat-lee"]), 0);
+    assert.equal(session()?.notes, NOTE);
+    assert.equal(kept()?.notes, NOTE);
+    assert.equal(await cmd.run(["answer", "work-auth.clearance", "No", "--notes", "", "--person", "pat-lee"]), 0);
+    assert.equal(session()?.notes, undefined);
+    assert.equal(kept()?.notes, NOTE);
+  } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
+});
+
 test("one skill's years take the policy of the catalog's experience.years.<skill> entry", async () => {
   const catalog = `${CATALOG}\n## Experience\n\n### experience.years.<skill>\n- Ask: Derived from dated evidence.\n- Shape: number with basis\n- Policy: auto\n`;
   const fx = makeFixture({ "shared/onboarding.md": catalog });

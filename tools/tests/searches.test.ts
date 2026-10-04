@@ -38,42 +38,51 @@ async function captureLog(fn: () => unknown): Promise<string[]> {
   return lines;
 }
 
+/** The ids `searches next` suggests, in order. */
+async function suggested(...extra: string[]): Promise<string[]> {
+  const lines = await captureLog(() => command.run(["next", ...extra, "--person", "pat-lee"]));
+  const at = lines.findIndex((l) => l.startsWith("suggested next"));
+  return at < 0 ? [] : lines.slice(at + 1).filter((l) => !l.startsWith("  ")).map((l) => l.split(" ")[0]);
+}
+
 test(
-  "searches due excludes a search run today; mark records the date and time it ran",
+  "searches due excludes a search run today; mark records the date, time, and offset, and what the run found",
   withFixture({ "people/pat-lee/searches.md": SEARCHES }, async (fx) => {
     const due = await captureLog(() => command.run(["due", "--person", "pat-lee"]));
     assert.deepEqual(due.map((l) => l.split(" ")[0]), ["a"]);
 
-    const mark = await command.run(["mark", "a", "--person", "pat-lee"]);
-    assert.equal(mark, 0);
+    const mark = await captureLog(() => command.run(["mark", "a", "--found", "12", "--new", "3", "--person", "pat-lee"]));
+    assert.match(mark[0], /^marked a run at \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
     const { data } = readDoc(`${fx.root}/people/pat-lee/searches.md`);
-    const items = data.items as { id: string; last_run: string }[];
-    const stamp = items.find((i) => i.id === "a")!.last_run;
-    assert.match(stamp, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
-    assert.equal(stamp.slice(0, 10), today());
-    // A search run earlier today, recorded with its time, is no more due than one recorded by date alone.
+    const a = (data.items as Record<string, unknown>[]).find((i) => i.id === "a")!;
+    assert.equal(String(a.last_run).slice(0, 10), today());
+    assert.deepEqual([a.last_found, a.last_new, a.runs, a.new_total], [12, 3, 1, 3]);
+    // A search run earlier today, whatever form its stamp takes, is no more due than one recorded by date alone.
     assert.deepEqual(await captureLog(() => command.run(["due", "--person", "pat-lee"])), ["no searches due"]);
   }),
 );
 
 test(
-  "searches next rotates through every search, run longest ago first, whatever is due",
+  "searches next suggests every search in turn, run longest ago first; the run that completes a pass reports it",
   withFixture({ "people/pat-lee/searches.md": SEARCHES }, async () => {
-    const first = (lines: string[]) => lines[0].split(" ")[0];
     // a has never run; b ran today but still comes up once a has had its turn.
-    assert.equal(first(await captureLog(() => command.run(["next", "--person", "pat-lee"]))), "a");
-    await command.run(["mark", "a", "--person", "pat-lee"]);
-    const next = await captureLog(() => command.run(["next", "--person", "pat-lee"]));
-    assert.equal(first(next), "b");
-    assert.ok(next.includes("  url: https://hiringcafe.com/"), next.join("\n"));
-    await command.run(["mark", "b", "--person", "pat-lee"]);
-    // Both now ran today; a ran first (or in the same minute, and comes first in the file).
-    assert.equal(first(await captureLog(() => command.run(["next", "--person", "pat-lee"]))), "a");
+    assert.deepEqual(await suggested("--count", "5"), ["a", "b"]);
+    const first = await captureLog(() => command.run(["mark", "a", "--new", "2", "--person", "pat-lee"]));
+    assert.match(first.join("\n"), /pass since .*: 1 of 2 open searches run, 2 new posting\(s\) so far/);
+    assert.deepEqual(await suggested(), ["b"]);
+    const done = await captureLog(() => command.run(["mark", "b", "--new", "0", "--person", "pat-lee"]));
+    assert.match(done.join("\n"), /pass complete: 2 open searches run since .*, 2 new posting\(s\)$/);
+    const state = await captureLog(() => command.run(["next", "--person", "pat-lee"]));
+    assert.match(state.join("\n"), /no pass going[\s\S]*last pass: .* 2 searches, 2 new posting\(s\)/);
+    // The next pass starts with the next run, and a pass that finds nothing says so.
+    await command.run(["mark", "a", "--new", "0", "--person", "pat-lee"]);
+    const empty = await captureLog(() => command.run(["mark", "b", "--new", "0", "--person", "pat-lee"]));
+    assert.match(empty.join("\n"), /pass complete: .* 0 new posting\(s\) \(nothing new/);
   }),
 );
 
 test(
-  "searches next alternates sites among searches that ran equally long ago, and leaves out skipped sites",
+  "the rotation alternates sites; paused searches and closed sites stay out of it and out of the pass until they return",
   withFixture(
     {
       "people/pat-lee/searches.md":
@@ -85,17 +94,22 @@ test(
         "---\n",
     },
     async () => {
-      const next = async (...extra: string[]) => (await captureLog(() => command.run(["next", ...extra, "--person", "pat-lee"])))[0].split(" ")[0];
-      const order: string[] = [];
-      for (let i = 0; i < 4; i++) {
-        const id = await next();
-        order.push(id);
-        await command.run(["mark", id, "--person", "pat-lee"]);
-      }
-      // b1 comes between a.example's searches, and runs once in the pass.
-      assert.deepEqual(order, ["a1", "b1", "a2", "a3"]);
-      assert.equal(await next("--skip-sites", "a.example"), "b1");
-      assert.equal(await next("--skip-sites", "A.example,b.example"), "every");
+      // b1 comes between a.example's searches, and comes once.
+      assert.deepEqual(await suggested("--count", "4"), ["a1", "b1", "a2", "a3"]);
+      await command.run(["close-site", "a.example", "--reason", "rate limit", "--person", "pat-lee"]);
+      assert.deepEqual(await suggested("--count", "4"), ["b1"]);
+      const marked = await captureLog(() => command.run(["mark", "b1", "--new", "1", "--person", "pat-lee"]));
+      // With a.example closed, b1 is every open search, so its run completes the pass.
+      assert.match(marked.join("\n"), /pass complete: 1 open searches run/);
+      await command.run(["pause", "b1", "--reason", "nothing new in a week", "--person", "pat-lee"]);
+      const none = await captureLog(() => command.run(["next", "--person", "pat-lee"]));
+      assert.match(none.join("\n"), /closed: a\.example until .* \(rate limit\)[\s\S]*paused: b1 until .*nothing new in a week[\s\S]*every saved search is paused or on a closed site/);
+      await command.run(["close-site", "a.example", "--clear", "--person", "pat-lee"]);
+      await command.run(["pause", "b1", "--clear", "--person", "pat-lee"]);
+      assert.deepEqual(await suggested("--count", "4"), ["a1", "a2", "a3", "b1"]);
+      assert.equal(await command.run(["remove", "a3", "--person", "pat-lee"]), 0);
+      assert.deepEqual(await suggested("--count", "4"), ["a1", "a2", "b1"]);
+      assert.throws(() => command.run(["close-site", "a.example", "--until", "soon", "--person", "pat-lee"]), /--until takes/);
     },
   ),
 );

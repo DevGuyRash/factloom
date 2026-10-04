@@ -102,3 +102,13 @@ Answers kept across sessions, keyed by the ids in the onboarding catalog. Sessio
 - Answer: 5 years overall (data coordinator from 2021, operations analyst from 2023); 5 years for data and operations analyst roles
 - Policy: confirm
 - Confirmed: 2026-09-01
+
+### background.check-consent
+- Answer: Yes
+- Policy: auto
+- Confirmed: 2026-09-01
+
+### background.drug-screen
+- Answer: Willing: yes. Can pass: yes
+- Policy: auto
+- Confirmed: 2026-09-01

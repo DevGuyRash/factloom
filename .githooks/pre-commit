@@ -10,5 +10,5 @@ if [ ! -d tools/node_modules ]; then
   exit 0
 fi
 
-node tools/src/cli.ts check
-node tools/src/cli.ts pii --staged
+node --disable-warning=ExperimentalWarning tools/src/cli.ts check
+node --disable-warning=ExperimentalWarning tools/src/cli.ts pii --staged
