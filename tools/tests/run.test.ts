@@ -46,7 +46,7 @@ test(
 );
 
 test(
-  "run start refuses while another run is at work, takes over on request, and closes a run abandoned without run end",
+  "run start refuses while another run is at work, takes over on request, and continues a run abandoned without run end",
   withFixture({}, async (fx) => {
     const runsDir = `${fx.root}/people/pat-lee/runs`;
     const err = console.error;
@@ -57,7 +57,7 @@ test(
       assert.equal(await command.run(["start", "--person", "pat-lee"]), 1);
       assert.match(errors.join("\n"), /a run log is still open[\s\S]*--takeover/);
       assert.equal(await command.run(["start", "--takeover", "--person", "pat-lee"]), 0);
-      // A run quiet for an hour has stopped: the next start closes it without --takeover.
+      // A run quiet for an hour has stopped: the next start continues it without --takeover.
       const files = readdirSync(runsDir).sort();
       const newest = `${runsDir}/${files[files.length - 1]}`;
       const hourAgo = new Date(Date.now() - 3600000);
@@ -66,8 +66,33 @@ test(
     } finally {
       console.error = err;
     }
+    // One day, one run log: every activation that day continued it.
     const logs = readdirSync(runsDir).sort().map((f) => readDoc<{ status: string }>(`${runsDir}/${f}`));
-    assert.deepEqual(logs.map((l) => l.data.status), ["finished", "finished", "running"]);
-    assert.match(logs[1].body, /closed when the next run started/);
+    assert.deepEqual(logs.map((l) => l.data.status), ["running"]);
+    assert.match(logs[0].body, /stopped without run end; continued here/);
+  }),
+);
+
+test(
+  "a later activation the same day continues the day's run log; a new day starts its own",
+  withFixture({}, async (fx) => {
+    const runsDir = `${fx.root}/people/pat-lee/runs`;
+    // Yesterday's run, left running by an activation that stopped.
+    fx.write("people/pat-lee/runs/2000-01-01_0900.md", "---\ntype: run-log\nperson: pat-lee\nstarted: 2000-01-01T09:00:00.000Z\nstatus: running\ncounts:\n  submitted: 2\n  held: 0\n  skipped: 0\n  errors: 0\n---\n\n# Run\n\n");
+    const longAgo = new Date("2000-01-01T10:00:00Z");
+    utimesSync(`${runsDir}/2000-01-01_0900.md`, longAgo, longAgo);
+    assert.equal(await command.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(await command.run(["log", "--kind", "applied", "Acme", "--person", "pat-lee"]), 0);
+    assert.equal(await command.run(["end", "--person", "pat-lee"]), 0);
+    assert.equal(await command.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(await command.run(["log", "--kind", "applied", "Beta", "--person", "pat-lee"]), 0);
+    const files = readdirSync(runsDir).sort();
+    assert.equal(files.length, 2, files.join(", "));
+    const [old, today] = files.map((f) => readDoc<{ status: string; counts: { submitted: number }; ended?: string }>(`${runsDir}/${f}`));
+    assert.equal(old.data.status, "finished");
+    assert.equal(today.data.status, "running");
+    assert.equal(today.data.counts.submitted, 2, "both activations' submissions count toward the day");
+    assert.equal(today.data.ended, undefined);
+    assert.match(today.body, /continued by a later activation/);
   }),
 );

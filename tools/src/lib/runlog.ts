@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { peek, readDoc, writeDoc } from "./frontmatter.ts";
 import { personDir, repoRoot } from "./repo.ts";
 import { renderTemplate } from "./templates.ts";
@@ -36,14 +36,25 @@ export function activeRun(person: string, minutes: number, root = repoRoot(), no
 }
 
 /**
- * Starts a new run log from the run-log template; returns its path. Run logs left `running` by an activation
- * that stopped without `run end` are closed first, ended at their last write.
+ * Opens the day's run log; returns its path. A day keeps one: a later activation the same day continues the log
+ * that day's first one started, so its counts are the day's and a quiet activation adds no file. Other run logs
+ * left `running` by an activation that stopped without `run end` are closed first, ended at their last write.
  */
 export function startRun(person: string, root = repoRoot()): string {
-  for (const old of listRuns(person, root).filter((p) => peek(p)?.status === "running")) {
+  const runs = listRuns(person, root);
+  const latest = runs[runs.length - 1];
+  const continued = latest && basename(latest).startsWith(stamp().slice(0, 10)) ? latest : undefined;
+  for (const old of runs.filter((p) => p !== continued && peek(p)?.status === "running")) {
     const { data, body } = readDoc<RunLogDoc>(old);
     const ended = statSync(old).mtime.toISOString();
     writeDoc(old, { ...data, ended, status: "finished" }, `${body}- ${ended} [note] closed when the next run started; this run had stopped without run end\n`);
+  }
+  if (continued) {
+    const { data, body } = readDoc<RunLogDoc>(continued);
+    const { ended: _ended, ...rest } = data;
+    const why = data.status === "running" ? "an earlier activation stopped without run end; continued here" : "continued by a later activation";
+    writeDoc(continued, { ...rest, status: "running" }, `${body}- ${new Date().toISOString()} [note] ${why}\n`);
+    return continued;
   }
   const dir = runsDir(person, root);
   mkdirSync(dir, { recursive: true });
