@@ -7,8 +7,10 @@ import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { readDoc, writeDoc } from "../lib/frontmatter.ts";
 import { listGenerated, staleGenerated } from "../lib/generated.ts";
+import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { personDir, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { type FitResult, writeFitted } from "../render/fit.ts";
+import { belowFloor, printFloor } from "../render/floor.ts";
 import { confirmsUsed, listVariants, loadFacts, loadVariant, resolveContent } from "../render/spec.ts";
 import { loadTheme } from "../render/theme.ts";
 
@@ -41,8 +43,8 @@ export async function buildVariant(person: string, variantName: string, dir: str
   return (await buildVariantFitted(person, variantName, dir, root, opts)).files;
 }
 
-/** Builds a variant and reports how it fit its `pages` target, when it has one. */
-export async function buildVariantFitted(person: string, variantName: string, dir: string, root = repoRoot(), opts: { theme?: string } = {}): Promise<FitResult> {
+/** Builds a variant and reports how it fit its `pages` target, when it has one, and what falls below the resume floor. */
+export async function buildVariantFitted(person: string, variantName: string, dir: string, root = repoRoot(), opts: { theme?: string } = {}): Promise<FitResult & { floor: string[] }> {
   const facts = loadFacts(person, root);
   const variant = loadVariant(person, variantName, root);
   const theme = loadTheme(opts.theme ?? variant.theme, root, { person, overrides: variant.style });
@@ -51,7 +53,7 @@ export async function buildVariantFitted(person: string, variantName: string, di
   // Only a build into the active variant directory speaks for the guide; review copies (--out, --theme) leave it alone.
   const active = join(personDir(person, root), "resumes", "active", variantName);
   if (resolve(dir) === resolve(active) && !opts.theme) updateGuide(person, variantName, confirmsUsed(facts, variant), root, variant.pages ? fit.step : undefined);
-  return fit;
+  return { ...fit, floor: belowFloor(content, facts, variant, loadPipelineConfig(root).resume_floor) };
 }
 
 /** A one-line note on page fitting, or "" when the variant sets no page target. */
@@ -94,6 +96,7 @@ const command: Command = {
       for (const f of fit.files) console.log(`wrote ${f}`);
       const note = fitNote(name, loadVariant(person, name, root).pages, fit);
       if (note) console.log(note);
+      printFloor(name, fit.floor);
     }
     return 0;
   },

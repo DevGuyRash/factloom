@@ -12,6 +12,8 @@ export type PipelineConfig = {
   guide_research_days: number;
   /** `run start` treats a run log written to within this many minutes as another activation still at work. */
   run_active_minutes: number;
+  /** What `build-resumes` and `tailor` report a resume as falling below; a floor, not a judgment of the writing. */
+  resume_floor: { bullets_per_entry: number; bullets_total: number; bullet_words_min: number; bullet_words_max: number };
   score: {
     weights: { must_haves: number; pay_ok: number; arrangement_ok: number; location_ok: number; seniority: number; preferred: number };
     seniority_credit: { match: number; stretch: number; over: number };
@@ -28,6 +30,7 @@ const DEFAULTS: PipelineConfig = {
   hours_per_year: 2080,
   guide_research_days: 90,
   run_active_minutes: 15,
+  resume_floor: { bullets_per_entry: 1, bullets_total: 4, bullet_words_min: 4, bullet_words_max: 45 },
   score: {
     weights: { must_haves: 35, pay_ok: 10, arrangement_ok: 10, location_ok: 10, seniority: 20, preferred: 15 },
     seniority_credit: { match: 1, stretch: 0.6, over: 0.5 },
@@ -43,6 +46,7 @@ function merge(base: PipelineConfig, raw: Partial<PipelineConfig>): PipelineConf
   return {
     ...base,
     ...raw,
+    resume_floor: { ...base.resume_floor, ...(raw.resume_floor ?? {}) },
     score: {
       weights: { ...base.score.weights, ...(raw.score?.weights ?? {}) },
       seniority_credit: { ...base.score.seniority_credit, ...(raw.score?.seniority_credit ?? {}) },

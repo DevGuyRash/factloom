@@ -1,11 +1,11 @@
 // tailor: reorders an existing variant's bullets/entries/skills by posting-keyword overlap, and
 // refuses when the variant still carries unconfirmed claims.
 import assert from "node:assert";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import test from "node:test";
 import { join } from "node:path";
 import YAML from "yaml";
-import { tailorApplication } from "../src/commands/tailor.ts";
+import { rebuildTailored, tailorApplication } from "../src/commands/tailor.ts";
 import { makeFixture, REAL_ROOT } from "./helpers/fixture.ts";
 
 function seed(fx: ReturnType<typeof makeFixture>, confirm = false): string {
@@ -64,6 +64,31 @@ test("tailor refuses a variant with unconfirmed claims; --allow-unconfirmed buil
     const { files } = await tailorApplication(dir, { allowUnconfirmed: true }, fx.root);
     assert.ok(files.length, "proceeds once --allow-unconfirmed is passed");
     assert.ok(files.every((f) => /_PREVIEW_unconfirmed\.(docx|pdf)$/.test(f)), files.join(", "));
+  } finally {
+    fx.cleanup();
+  }
+});
+
+test("tailor --spec renders the agent's own choice of the person's facts, and refuses wording they have not reviewed", async () => {
+  const fx = makeFixture();
+  try {
+    const dir = seed(fx);
+    // A second job the variant leaves out: the agent may bring it in for this posting.
+    const factsPath = join(fx.root, "people/pat-lee/resumes/source/facts.yaml");
+    writeFileSync(factsPath, readFileSync(factsPath, "utf8").replace("lines: {}", "jobs:\n  acme:\n    title: \"Data Analyst\"\n    bullets:\n      - text: \"Automated weekly reports in Python.\"\nlines: {}"));
+    const { specPath } = await tailorApplication(dir, {}, fx.root);
+    const spec = YAML.parse(readFileSync(specPath, "utf8"));
+    spec.sections.unshift({ title: "Experience", entries: [{ job: "acme" }] });
+    writeFileSync(specPath, YAML.stringify(spec));
+    const { files } = await rebuildTailored(dir, {}, fx.root);
+    assert.ok(files.some((f) => f.endsWith(".docx")), "rendered from the edited spec");
+
+    writeFileSync(specPath, YAML.stringify({ ...spec, headline: "Senior Python Architect" }));
+    await assert.rejects(rebuildTailored(dir, {}, fx.root), /not reviewed: "Senior Python Architect"/);
+
+    spec.sections[0].entries = [{ job: "nowhere" }];
+    writeFileSync(specPath, YAML.stringify(spec));
+    await assert.rejects(rebuildTailored(dir, {}, fx.root), /no job named nowhere/);
   } finally {
     fx.cleanup();
   }

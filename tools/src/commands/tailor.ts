@@ -1,8 +1,10 @@
 // Builds a truth-locked, posting-tailored resume into an application directory: starts from an
 // existing variant and reorders its entries, bullets, and labeled skill groups by overlap with
-// the posting's keywords (via the shared lexicon). Never adds text absent from facts.yaml — only
-// reordering is allowed. Writes the derived spec (resume-tailored.yaml) plus the rendered docx/pdf.
-import { existsSync } from "node:fs";
+// the posting's keywords (via the shared lexicon). Writes the derived spec (resume-tailored.yaml)
+// plus the rendered docx/pdf. The agent may then edit that spec, choosing any of the person's facts,
+// and `--spec` renders it again; either way, no text reaches the resume that the person has not
+// reviewed in facts.yaml or one of their variants.
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import YAML from "yaml";
 import { writeFileSync } from "node:fs";
@@ -14,10 +16,12 @@ import { personOf, repoRoot } from "../lib/repo.ts";
 import { FILE_NAMES } from "../lib/schema.ts";
 import { loadLexicon, termsIn, type Lexicon } from "../render/lexicon.ts";
 import {
-  confirmsUsed, entryFactOf, findDocInDir, loadFacts, loadVariant, pickBullets, resolveContent,
+  confirmsUsed, entryFactOf, findDocInDir, listVariants, loadFacts, loadVariant, resolveContent,
   type Facts, type Variant, type VariantEntryRef, type VariantSection,
 } from "../render/spec.ts";
 import { writeFitted } from "../render/fit.ts";
+import { belowFloor, printFloor } from "../render/floor.ts";
+import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { loadTheme } from "../render/theme.ts";
 
 function scoreText(lexicon: Lexicon, postingTerms: Set<string>, text: string): number {
@@ -49,7 +53,9 @@ function tailorSection(facts: Facts, lexicon: Lexicon, postingTerms: Set<string>
   return vs;
 }
 
-export async function tailorApplication(dir: string, opts: { variant?: string; allowUnconfirmed?: boolean; theme?: string; neutral?: boolean } = {}, root = repoRoot()): Promise<{ specPath: string; files: string[]; pages?: number; limit?: number; fits?: boolean }> {
+type Tailored = { specPath: string; files: string[]; pages?: number; limit?: number; fits?: boolean; floor: string[] };
+
+export async function tailorApplication(dir: string, opts: { variant?: string; allowUnconfirmed?: boolean; theme?: string; neutral?: boolean } = {}, root = repoRoot()): Promise<Tailored> {
   const { person } = personOf(dir);
   const posting = findDocInDir(dir, "posting");
   if (!posting) throw new Error(`${dir}: no posting snapshot (type: posting)`);
@@ -90,27 +96,92 @@ export async function tailorApplication(dir: string, opts: { variant?: string; a
     const doc = readDoc(record.path);
     writeDoc(record.path, { ...doc.data, resume: opts.variant }, doc.body);
   }
-  return { specPath, files, pages, limit: tailored.pages, fits };
+  return { specPath, files, pages, limit: tailored.pages, fits, floor: belowFloor(content, facts, tailored, loadPipelineConfig(root).resume_floor) };
+}
+
+/**
+ * Text in a spec that is not a reference to a fact (the headline, paragraphs, and entry titles shown in place of a
+ * fact's own) must already appear in one of the person's variants, which they have reviewed. Returns what does not.
+ */
+function unreviewedText(facts: Facts, spec: Variant, person: string, root: string): string[] {
+  const known = new Set<string>();
+  for (const name of listVariants(person, root)) {
+    const v = loadVariant(person, name, root);
+    known.add(v.headline);
+    for (const s of v.sections) {
+      if ("paragraph" in s) known.add(s.paragraph);
+      if ("entries" in s) for (const ref of s.entries) if (ref.title) known.add(ref.title);
+    }
+  }
+  const out: string[] = [];
+  if (spec.headline && !known.has(spec.headline)) out.push(spec.headline);
+  for (const s of spec.sections) {
+    if ("paragraph" in s && !known.has(s.paragraph)) out.push(s.paragraph);
+    if ("entries" in s) {
+      for (const ref of s.entries) {
+        if (ref.title && !known.has(ref.title) && ref.title !== entryFactOf(facts, ref).fact.title) out.push(ref.title);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Renders the application's resume-tailored.yaml again after the agent edited it: any entries, bullets, skills, and
+ * lines from facts.yaml, in any order, under the headline and paragraphs of one of the person's variants.
+ */
+export async function rebuildTailored(dir: string, opts: { allowUnconfirmed?: boolean } = {}, root = repoRoot()): Promise<Tailored> {
+  const { person } = personOf(dir);
+  const specPath = join(dir, FILE_NAMES.tailoredResume);
+  if (!existsSync(specPath)) throw new Error(`${dir}: no ${FILE_NAMES.tailoredResume} yet; run tailor without --spec first, then edit it`);
+  const { type, person: _owner, ...rest } = (YAML.parse(readFileSync(specPath, "utf8")) ?? {}) as Record<string, unknown>;
+  if (type !== "tailored-resume") throw new Error(`${specPath}: not a tailored-resume spec`);
+  const spec = rest as unknown as Variant;
+  if (!spec.theme || !spec.output || !Array.isArray(spec.sections)) throw new Error(`${specPath}: needs theme, output, and sections`);
+  const facts = loadFacts(person, root);
+  const content = resolveContent(facts, spec);
+  const unreviewed = unreviewedText(facts, spec, person, root);
+  if (unreviewed.length) {
+    throw new Error(
+      `text the person has not reviewed: ${unreviewed.map((u) => JSON.stringify(u.length > 70 ? `${u.slice(0, 70)}…` : u)).join("; ")}. ` +
+        "Take the headline, paragraphs, and entry titles from one of the person's variants; new wording goes into a variant or facts.yaml for them to review first.",
+    );
+  }
+  const confirms = confirmsUsed(facts, spec);
+  if (confirms.length && !opts.allowUnconfirmed) {
+    throw new Error(`the spec uses claims still awaiting the person's confirmation (${confirms.join("; ")}). Leave them out, or hold the application and put these phrases on the waiting list.`);
+  }
+  const output = `${spec.output.replace(/_PREVIEW_unconfirmed$/, "")}${confirms.length ? "_PREVIEW_unconfirmed" : ""}`;
+  const theme = loadTheme(spec.theme, root, { person, overrides: spec.style });
+  const { files, pages, fits } = await writeFitted(theme, content, dir, output, spec.pages);
+  if (output !== spec.output) writeFileSync(specPath, YAML.stringify({ type: "tailored-resume", person, ...spec, output }, { lineWidth: 0 }));
+  return { specPath, files, pages, limit: spec.pages, fits, floor: belowFloor(content, facts, spec, loadPipelineConfig(root).resume_floor) };
 }
 
 const command: Command = {
   name: "tailor",
-  summary: "Build a posting-tailored resume (reordered, never invented) into an application directory",
-  usage: "resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--neutral] [--allow-unconfirmed]",
+  summary: "Build a posting-tailored resume from the person's own facts into an application directory",
+  usage: [
+    "resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--neutral] [--allow-unconfirmed]",
+    "resumes tailor <application-dir> --spec [--allow-unconfirmed]   (render resume-tailored.yaml again after editing it)",
+  ].join("\n       "),
   async run(argv) {
-    const a = parseArgs(argv, ["allow-unconfirmed", "neutral"]);
+    const a = parseArgs(argv, ["allow-unconfirmed", "neutral", "spec"]);
     const dirArg = a._[0];
-    if (!dirArg) { console.error("usage: resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--allow-unconfirmed]"); return 2; }
+    if (!dirArg) { console.error("usage: resumes tailor <application-dir> [--variant <name>] [--theme <name>] [--allow-unconfirmed] | --spec"); return 2; }
     const dir = resolve(dirArg);
     if (!existsSync(dir)) { console.error(`${dir}: not found`); return 1; }
     try {
-      const { specPath, files, pages, limit, fits } = await tailorApplication(dir, { variant: flag(a, "variant"), theme: flag(a, "theme"), allowUnconfirmed: has(a, "allow-unconfirmed"), neutral: has(a, "neutral") });
+      const { specPath, files, pages, limit, fits, floor } = has(a, "spec")
+        ? await rebuildTailored(dir, { allowUnconfirmed: has(a, "allow-unconfirmed") })
+        : await tailorApplication(dir, { variant: flag(a, "variant"), theme: flag(a, "theme"), allowUnconfirmed: has(a, "allow-unconfirmed"), neutral: has(a, "neutral") });
       console.log(`wrote ${specPath}`);
       for (const f of files) console.log(`wrote ${f}`);
       if (pages !== undefined) {
         const over = limit ? fits === false : pages > 2;
         console.log(`pages: ${pages}${limit ? ` (the variant allows ${limit})` : ""}${over ? ": longer than intended; check the guide and the portal's limits before uploading" : ""}`);
       }
+      printFloor("tailored resume", floor);
       return 0;
     } catch (err) {
       console.error(err instanceof Error ? err.message : String(err));
