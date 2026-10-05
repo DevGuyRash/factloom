@@ -20,7 +20,7 @@ import {
   type Facts, type Variant, type VariantEntryRef, type VariantSection,
 } from "../render/spec.ts";
 import { writeFitted } from "../render/fit.ts";
-import { belowFloor, printFloor } from "../render/floor.ts";
+import { belowFloor, extractionGaps, printFloor } from "../render/floor.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { loadTheme } from "../render/theme.ts";
 
@@ -96,7 +96,7 @@ export async function tailorApplication(dir: string, opts: { variant?: string; a
     const doc = readDoc(record.path);
     writeDoc(record.path, { ...doc.data, resume: opts.variant }, doc.body);
   }
-  return { specPath, files, pages, limit: tailored.pages, fits, floor: belowFloor(content, facts, tailored, loadPipelineConfig(root).resume_floor) };
+  return { specPath, files, pages, limit: tailored.pages, fits, floor: [...belowFloor(content, facts, tailored, loadPipelineConfig(root).resume_floor), ...(await extractionGaps(content, files))] };
 }
 
 /**
@@ -155,7 +155,7 @@ export async function rebuildTailored(dir: string, opts: { allowUnconfirmed?: bo
   const theme = loadTheme(spec.theme, root, { person, overrides: spec.style });
   const { files, pages, fits } = await writeFitted(theme, content, dir, output, spec.pages);
   if (output !== spec.output) writeFileSync(specPath, YAML.stringify({ type: "tailored-resume", person, ...spec, output }, { lineWidth: 0 }));
-  return { specPath, files, pages, limit: spec.pages, fits, floor: belowFloor(content, facts, spec, loadPipelineConfig(root).resume_floor) };
+  return { specPath, files, pages, limit: spec.pages, fits, floor: [...belowFloor(content, facts, spec, loadPipelineConfig(root).resume_floor), ...(await extractionGaps(content, files))] };
 }
 
 const command: Command = {

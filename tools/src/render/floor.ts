@@ -1,6 +1,7 @@
 // The floor a resume must clear before anyone reads it: what any reader or parser trips on, whatever the
 // person's field or the resume's style. It says nothing about whether the writing is good; that judgment
 // belongs to the agent and the person, so nothing here rewrites or ranks content.
+import { extractDocumentText } from "../lib/pii.ts";
 import type { PipelineConfig } from "../lib/pipeline-config.ts";
 import type { ResumeContent } from "./docx.ts";
 import { contentText, type Facts, type Variant } from "./spec.ts";
@@ -41,6 +42,36 @@ export function belowFloor(content: ResumeContent, facts: Facts, variant: Varian
   }
   const placeholder = contentText(content).match(PLACEHOLDER);
   if (placeholder) out.push(`placeholder text: "${placeholder[0]}"`);
+  return out;
+}
+
+/**
+ * What a parser would miss: the name, the email, and every bullet must come back out of the built file's text (the
+ * PDF when this machine can read one, else the Word file), each entry's bullets in their order. Lost digits, broken
+ * ligatures, and columns read in the wrong order show up here, where no reading of the facts would find them.
+ */
+export async function extractionGaps(content: ResumeContent, files: string[]): Promise<string[]> {
+  let text: string | null = null, which = "";
+  for (const [ext, name] of [[".pdf", "PDF"], [".docx", "Word file"]] as const) {
+    const file = files.find((f) => f.toLowerCase().endsWith(ext));
+    if (text === null && file) { text = await extractDocumentText(file); which = name; }
+  }
+  if (text === null) return [];
+  const norm = (s: string) => s.replace(/\*\*/g, "").replace(/\u00ad/g, "").replace(/\ufb01/g, "fi").replace(/\ufb02/g, "fl").replace(/\s+/g, " ").trim().toLowerCase();
+  const hay = norm(text);
+  const out: string[] = [];
+  const email = content.contact.map((c) => c.text).find((x) => x.includes("@"));
+  for (const want of [content.name, email]) if (want && !hay.includes(norm(want))) out.push(`the ${which}'s text lacks "${clip(want)}"`);
+  for (const s of content.sections) {
+    for (const e of s.entries ?? []) {
+      let from = 0;
+      for (const b of e.bullets ?? []) {
+        const at = hay.indexOf(norm(b), from);
+        if (at >= 0) { from = at; continue; }
+        out.push(hay.includes(norm(b)) ? `the ${which}'s text has "${clip(e.title)}" bullets out of order` : `the ${which}'s text lacks or garbles: "${clip(b)}"`);
+      }
+    }
+  }
   return out;
 }
 

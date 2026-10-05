@@ -23,7 +23,8 @@ guide_research_days: 90
 run_active_minutes: 15
 
 # `build-resumes` and `tailor` report what falls below this floor: a role shown with too few bullets, too few in
-# all, a fragment or a wall of text, a repeated bullet, an empty section, a job without dates, or placeholder text.
+# all, a fragment or a wall of text, a repeated bullet, an empty section, a job without dates, placeholder text,
+# and anything the built file's text does not give back (a name, an email, a bullet, or a role's bullet order).
 # It catches what any reader or parser trips on and says nothing about whether the writing is good.
 resume_floor:
   bullets_per_entry: 1

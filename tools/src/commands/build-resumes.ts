@@ -10,7 +10,7 @@ import { listGenerated, staleGenerated } from "../lib/generated.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { personDir, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { type FitResult, writeFitted } from "../render/fit.ts";
-import { belowFloor, printFloor } from "../render/floor.ts";
+import { belowFloor, extractionGaps, printFloor } from "../render/floor.ts";
 import { confirmsUsed, listVariants, loadFacts, loadVariant, resolveContent } from "../render/spec.ts";
 import { loadTheme } from "../render/theme.ts";
 
@@ -53,7 +53,7 @@ export async function buildVariantFitted(person: string, variantName: string, di
   // Only a build into the active variant directory speaks for the guide; review copies (--out, --theme) leave it alone.
   const active = join(personDir(person, root), "resumes", "active", variantName);
   if (resolve(dir) === resolve(active) && !opts.theme) updateGuide(person, variantName, confirmsUsed(facts, variant), root, variant.pages ? fit.step : undefined);
-  return { ...fit, floor: belowFloor(content, facts, variant, loadPipelineConfig(root).resume_floor) };
+  return { ...fit, floor: [...belowFloor(content, facts, variant, loadPipelineConfig(root).resume_floor), ...(await extractionGaps(content, fit.files))] };
 }
 
 /** A one-line note on page fitting, or "" when the variant sets no page target. */
