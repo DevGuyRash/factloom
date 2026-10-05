@@ -83,8 +83,8 @@ const command: Command = {
       spawnSync("npm", ["ci", "--no-audit", "--no-fund"], { cwd: join(engineRoot(), "tools"), stdio: "inherit", shell: process.platform === "win32" });
     }
     // Fresh processes run the merged engine; this one still has the code from before the merge loaded.
-    spawnSync(process.execPath, [process.argv[1], "check"], { stdio: "inherit" });
-    spawnSync(process.execPath, [process.argv[1], "build-resumes", "--check"], { stdio: "inherit" });
+    spawnSync(process.execPath, [...process.execArgv, process.argv[1], "check"], { stdio: "inherit" });
+    spawnSync(process.execPath, [...process.execArgv, process.argv[1], "build-resumes", "--check"], { stdio: "inherit" });
     return 0;
   },
 };

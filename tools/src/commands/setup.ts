@@ -96,7 +96,7 @@ const command: Command = {
     }
 
     console.log("\nDoctor:");
-    spawnSync(process.execPath, [process.argv[1], "doctor"], { stdio: "inherit" });
+    spawnSync(process.execPath, [...process.execArgv, process.argv[1], "doctor"], { stdio: "inherit" });
     console.log(has(a, "engine")
       ? "\nNext: open Claude Code or Codex in this folder to work on the engine (AGENTS.md, \"Working on the engine\", and CONTRIBUTING.md)."
       : "\nNext: open Claude Code or Codex in this folder and say \"set me up\". The agent creates your person, turns your current resume into its source files, and runs onboarding.");
