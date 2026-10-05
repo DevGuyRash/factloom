@@ -6,7 +6,7 @@ type: onboarding-catalog
 
 Questions that job applications ask, written once for everyone. Session onboarding asks the entries marked **essential** first, before the first application: they settle what to apply for and the questions nearly every form asks. It asks the entries marked **core** in batches once applying has started (all of them, when the person prefers to finish onboarding first). The rest go on the waiting list the first time a form needs them and reach the person in the next batch of questions. The person's saved answers cover any of these. Answers the person chooses to keep are saved in their `answers` file under the same ids.
 
-Each entry lists what to ask the person, phrasings seen on forms, the answer shape, and the default policy (`auto`, `confirm`, `ask`, or `person`, defined in the job-application skill). The person may choose a different policy for their own answer.
+Each entry lists what to ask the person, phrasings seen on forms, the answer shape, and the default policy (`auto`, `confirm`, `ask`, or `person`, defined in the job-application skill). The person may choose a different policy for their own answer. Where an honest answer comes in degrees (travel, office days, commute, hours, on-call, physical demands, contract length, pay), the shape is a limit or a range rather than yes or no, so one answer settles whatever threshold a form names.
 
 ## How sessions run
 
@@ -92,6 +92,12 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Stored: local
 - Policy: confirm
 
+### contact.email-alternate (core)
+- Ask: Some forms reject an email address (uncommon or privacy-focused domains, aliases). Which other address may such a form get, or should the application wait for you?
+- Seen as: "Please enter a valid email address" on an address that is valid
+- Shape: email address, or none
+- Policy: confirm
+
 ### location.residence
 - Ask: Derived from the profile's location; confirm the state and country of residence once.
 - Seen as: "Which U.S. state or Canadian province do you reside in?", "What country are you based in?", "Where do you plan on working from (for payroll tax purposes)?"
@@ -118,6 +124,12 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Shape: choice
 - Policy: confirm
 
+### work-auth.other-citizenship (core)
+- Ask: Do you hold citizenship of any other country, now or by birth? Which?
+- Seen as: "Do you hold dual citizenship?", "List all countries of citizenship", "Are you a citizen of any country other than the U.S.?"
+- Shape: no, or the countries
+- Policy: confirm
+
 ### work-auth.export-control
 - Ask: Derived from the citizenship category: are you a "U.S. person" for export-control purposes, and do you hold citizenship in any sanctioned country?
 - Seen as: export-control (ITAR/EAR) information requests, sanctioned-country citizenship questions
@@ -139,41 +151,41 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ### eligibility.essential-functions (essential)
 - Ask: Forms ask whether you can perform the job's essential functions, with or without reasonable accommodation, and some ask about physical demands (lifting, standing, driving). What should they say, and are there demands you cannot meet?
 - Seen as: "Are you able to perform the essential functions of this position with or without reasonable accommodation?", "Can you lift up to 25 pounds?", "This role requires standing for long periods"
-- Shape: yes / no, with any limits
+- Shape: yes / no, with limits as figures (the most weight to lift, hours standing, driving)
 - Policy: confirm
 
 ## Location, arrangement, travel
 
 ### prefs.work-arrangement (essential)
-- Ask: Which arrangements will you accept (remote, hybrid, on-site), and for hybrid or on-site, which metro areas and how many office days a week?
-- Seen as: "This role requires in-office work three days per week… do you acknowledge and agree?", "Do you currently live in, or plan to relocate to, the specified location?"; some remote roles exclude listed states or require residence in one
+- Ask: Which arrangements will you accept (remote, hybrid, on-site), and for hybrid or on-site, which metro areas, how many office days a week at most, and the longest commute (minutes or miles)?
+- Seen as: "This role requires in-office work three days per week… do you acknowledge and agree?", "Do you currently live in, or plan to relocate to, the specified location?", "Are you able to commute to our office?"; some remote roles exclude listed states or require residence in one
 - Use: answers arrangement questions and screens postings before applying
-- Shape: list with limits
+- Shape: arrangements accepted, each with its limits: metro areas, office days a week at most, longest commute
 - Policy: auto
 
 ### prefs.relocation (essential)
-- Ask: Would you relocate for a role? Where, and only with relocation assistance?
+- Ask: Would you relocate for a role? Where (places in order of preference), how soon, and only with relocation assistance?
 - Seen as: "Are you open to relocation for this role?", "If you would need to relocate, type 'relocating'"
-- Shape: yes / no with conditions
+- Shape: places, or none, each with its conditions (assistance, timeline)
 - Policy: confirm
 
 ### prefs.travel (essential)
-- Ask: What is the most travel you will accept, as a percentage of time?
-- Seen as: "Are you willing to travel up to 25% of the time?", "This role requires occasional travel to client sites"
-- Use: answers travel questions and screens postings that mention travel
-- Shape: percentage
+- Ask: How much travel will you accept: the most, as a share of time or days a month (offer none, an annual team meetup, occasional day trips, up to 10%, 25%, 50%); whether overnight and international trips are fine; and any condition (for example "up to 10%, as long as the role is mostly remote")? When the answer is none, ask once whether an annual meetup or an occasional trip is fine too, since many remote postings mention one.
+- Seen as: "Are you willing to travel up to 25% of the time?", "This role requires occasional travel to client sites", "Travel: 0–25% / 25–50% / 50%+", "Are you able to travel overnight?"
+- Use: answers travel questions and screens postings that mention travel: a stated share above the most is a conflict; "occasional", "as needed", or an annual team meetup is not, unless the person's answer says so
+- Shape: the most (share of time or days a month); overnight and international yes / no; conditions
 - Policy: auto
 
 ### prefs.schedule (core)
-- Ask: Can you work the hours, time zone, shifts, weekends, or on-call schedule a posting describes? How many hours a week can you commit, and how many hours can you overlap with other time zones?
-- Seen as: "How many hours per week can you commit?", "Can you overlap at least 4 hours with Pacific time?", "Are you available on weekends?"
-- Shape: hours per week; time-zone overlap; yes / no with limits
+- Ask: How many hours a week can you commit (fewest and most), which hours and time zones can you work and overlap with, and how often at most will you work shifts, weekends, on-call, or overtime?
+- Seen as: "How many hours per week can you commit?", "Can you overlap at least 4 hours with Pacific time?", "Are you available on weekends?", "This role includes a one-week on-call rotation every six weeks"
+- Shape: hours a week (fewest and most); working hours and time-zone overlap; how often at most for shifts, weekends, on-call, and overtime
 - Policy: confirm
 
 ### prefs.remote-setup (core)
-- Ask: For remote work, what should forms say about your setup: a quiet workspace, reliable high-speed internet, your own computer, a webcam, and whether you accept monitoring software on a company device?
+- Ask: For remote work, what should forms say about your setup: a quiet workspace, your internet speed, your own computer, a webcam, and whether you accept monitoring software on a company device?
 - Seen as: "Do you have a dedicated home office?", "Do you have reliable internet of at least 25 Mbps?", "Are you comfortable with time-tracking or monitoring software?"
-- Shape: yes / no for each, with limits
+- Shape: yes / no for each; internet speed as a figure
 - Policy: confirm
 
 ### prefs.constraints (essential)
@@ -231,6 +243,12 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Ask: For contract work: what is the shortest contract you would take, how many hours a week (fewest and most), and does your hourly minimum hold for part-time or short contracts too?
 - Seen as: "This is a 3-month contract", "10 to 20 hours per week", "Are you available full time for the duration of the project?"
 - Shape: shortest length; hours per week; minimum rule
+- Policy: confirm
+
+### employment.exclusivity (core)
+- Ask: When an employer or client asks you to work only for them while the job or contract lasts (no other job, clients, or full-time engagement), will you agree? Separately for employee roles and for contracts, with any exceptions (a business you keep running, small side work).
+- Seen as: "Can you commit on a fully dedicated, full-time basis?", "You may not hold another job or full-time engagement during this contract", "Will you continue to work for your current employer?", "Are you currently engaged with another client full-time?"
+- Shape: yes / no for employee roles and for contracts; exceptions
 - Policy: confirm
 
 ### prefs.agencies (core)
@@ -315,6 +333,12 @@ These appear mostly on Workday, iCIMS, and public-sector forms. The essential on
 - Shape: yes / no with details
 - Policy: confirm
 
+### obligations.future-agreements (core)
+- Ask: If hired, will you sign a confidentiality agreement (NDA), an invention-assignment agreement, or a non-compete or non-solicitation agreement? Each on its own line.
+- Seen as: "Are you willing to sign a non-disclosure agreement?", "Will you sign our Proprietary Information and Inventions Agreement?", "Would you be willing to sign a non-compete?"
+- Shape: yes / no for each
+- Policy: confirm
+
 ### history.omitted-roles (core)
 - Ask: Is there a job or a gap you leave off your resumes? A form that asks for your complete employment history, or an employment verification, lists it truthfully. What should it say, or should those applications wait for you?
 - Shape: roles to list on full-history forms, or "hold for me"
@@ -393,7 +417,7 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 ### interviews.assessments (core)
 - Ask: Are you willing to complete skills assessments as part of an application: timed online tests, take-home tasks, and how long a take-home you would accept unpaid?
 - Seen as: "Are you willing to complete a skills assessment?", "This role includes a take-home exercise"
-- Shape: yes / no, with limits
+- Shape: yes / no for each; the longest unpaid take-home, in hours
 - Policy: confirm
 
 ### interviews.ai-assessment (core)
@@ -413,18 +437,19 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Policy: auto
 
 ### consent.required-terms (essential)
-- Ask: When a form requires accepting a privacy notice, the application system's terms, or an arbitration agreement before it can be submitted, should the agent accept on your behalf?
-- Seen as: "Do you consent to … processing your personal information…?", "Please review and acknowledge … candidate privacy policy", "Please confirm receipt of the above linked global data privacy notice and US arbitration agreement"
-- Shape: yes / no, optionally excluding arbitration agreements
+- Ask: Applications often require accepting terms before they can be sent: a privacy notice or consent to process your data, the applicant system's or job board's terms (sometimes with an account or talent profile it registers), an accuracy certification signed with your typed name, AI-screening or at-will acknowledgements, and sometimes an arbitration agreement. Should the agent accept these for you when an application requires them? Any kind to exclude (arbitration is the usual one)? Optional extras follow `consent.sms` and `consent.talent-pool`, and anything that costs money or binds you beyond applying waits for you.
+- Seen as: "Do you consent to … processing your personal information…?", "Please review and acknowledge … candidate privacy policy", "Please confirm receipt of the above linked global data privacy notice and US arbitration agreement", "I agree to the Terms of Use and Privacy Policy", "By clicking Apply, you agree to the Terms and Privacy Notice", "Applicant agreement: I certify that the information is true and complete…", "By submitting, you agree to be contacted about this application by phone or text"
+- Shape: yes / no, with the kinds excluded
 - Policy: confirm
 
 ### consent.sms (core)
-- Ask: Do you want recruiting texts or WhatsApp messages when a form offers to opt in?
+- Ask: Do you want recruiting texts, calls, or WhatsApp messages beyond this application when a form offers to opt in?
 - Shape: yes / no
 - Policy: auto
 
-### consent.talent-pool
-- Ask: Should employers keep your application for other openings, add you to a talent community, or share your resume with partners?
+### consent.talent-pool (core)
+- Ask: Should employers keep your application for other openings, add you to a talent community, send job alerts, share your resume with partners, keep or reuse it for other purposes (research, grants, proposals), or name you in proposals to their clients? Each defaults to no.
+- Seen as: "May we keep your information for future opportunities?", "Join our talent community", "We may share your profile with our partners", "May we name you as key personnel in proposals?"
 - Shape: yes / no for each
 - Policy: auto
 
@@ -456,7 +481,7 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Policy: confirm
 
 ### experience.unlisted-skills (core)
-- Ask: When a form requires a figure for a skill, tool, or certification your records do not show at all, should the agent answer none (0 years, no), hold the application for you (once per skill), or skip postings that require it? A figure is never invented.
+- Ask: When a form asks about a skill, tool, or certification your records do not show at all, should the agent answer none (0 years, no), hold the application for you (once per skill), or skip postings that require it? Until you answer, forms get none, and each such skill goes to your inbox for correction. A figure is never invented.
 - Seen as: "How many years of work experience do you have with <tool>?" as a required number field
 - Shape: choice
 - Policy: confirm
@@ -496,9 +521,9 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 ## Documents and references
 
 ### documents.references (essential)
-- Ask: Do you have references to include when a form asks for them? For each: name, relationship, company, phone, email, and whether they have agreed to be contacted. Only people you name, and only those who agreed; their details are kept only on this computer, in a file git ignores.
-- Seen as: "Professional references", "Reference name", "Reference phone", "Please provide three references"
-- Shape: list of references with consent, or none
+- Ask: Do you have references to include when a form asks for them? For each: name, relationship, company, phone, email, and whether they have agreed to be contacted. Only people you name, and only those who agreed; their details are kept only on this computer, in a file git ignores. And when a form asks only whether you could provide references later, or someone who can confirm your employment dates, what should it say?
+- Seen as: "Professional references", "Reference name", "Reference phone", "Please provide three references", "References available upon request?", "If selected, can you provide a reference who can confirm the dates of your most recent engagement?"
+- Shape: list of references with consent, or none; can provide later: yes / no
 - Stored: local
 - Policy: confirm
 
@@ -508,7 +533,7 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Policy: ask
 
 ### links.public-work (core)
-- Ask: Which public links may forms get when they ask for examples of your work: a portfolio, GitHub, live sites, demos? Which may not be shared? A posting that requires a link you have not listed waits for you.
+- Ask: Which public links may forms get when they ask for examples of your work: a portfolio, GitHub, live sites, demos? Which may not be shared? A required field for a kind of link you have not listed gets the listed link that truthfully fits it best, or "None" where the field takes text, so it does not hold the application.
 - Seen as: "Portfolio URL", "GitHub profile", "Link to a live site you built", "Demo or work sample"
 - Shape: list of links with what each shows; links not to share
 - Policy: confirm
