@@ -36,12 +36,9 @@ For notes with `status: extracted`, compare the text with the original once, bef
 - Set each note's `status: merged` once its content is in the facts. A note whose file adds nothing (an archive whose files you imported, the same version in another format, a file that is not about the person's work) is `merged` too, with one line in the note saying why. These four statuses are the only ones read; anything else counts as `extracted`.
 - Then build variants and research their guides ([resumes](resumes.md), "A person's first resume").
 
-## 5. No resume yet: build one together
+## 5. No resume yet, or one that is not working
 
-- Interview in a few batched messages, offering examples so answers come easily: every role, newest first (employer, official title, dates, location, what they did, tools, results with numbers); education and certificates; projects from work, school, volunteering, or their own time; skills; the roles they want next.
-- Fill in detail from what the host can reach: a LinkedIn profile the person pastes or saves as PDF (import it like any resume), their GitHub repositories (READMEs, commit history, tests: real projects and real counts), a portfolio, published work. Cite each source in `evidence.md`.
-- Draft `facts.yaml` in their words, suggest stronger wording, and keep every changed claim's exact phrase in its bullet's `confirm` list until they approve it. Numbers come from the person or a source, never from you.
-- Show the draft built in a few themes (`./resumes themes preview`) and settle every `confirm` before the first application.
+Build it with the resume-builder skill (`.agents/skills/resume-builder/`): it interviews the person, researches their targets, writes the facts, variants, and guides, and has the draft reviewed by a reader who did not write it.
 
 ## Afterwards
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resume builder"
+  short_description: "Build or rebuild a resume with you, from interview and research"
+  default_prompt: "Help me build my resume."

@@ -10,7 +10,7 @@ Change a resume by editing `facts.yaml` or a variant file, then rebuild. Never h
 
 ## A person's first resume
 
-1. Bring in their existing resumes, or build a first one with them: [intake](intake.md) (`./resumes import` reads `drop/` in any format; reading, reconciling versions, and writing `facts.yaml` are yours).
+1. Bring in their existing resumes ([intake](intake.md)), or, when they have none or theirs is not working, build one with the resume-builder skill (`./resumes import` reads `drop/` in any format; reading, reconciling versions, and writing `facts.yaml` are yours).
 2. `facts.yaml` keeps each claim as the person wrote it; any number or claim you reword, merge, or cannot trace goes in that bullet's `confirm` list.
 3. `./resumes variant new <name> --person <slug> [--theme <theme>]` writes a structure listing every fact and builds it; trim and reorder the structure for that kind of role, then `./resumes build-resumes --person <slug> --variant <name>`. Make further variants with `--from <variant>` and change what differs.
 4. Compare the built resume with the original line by line, show it to the person, and settle the guide's `review` items before using it.

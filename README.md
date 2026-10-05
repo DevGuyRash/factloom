@@ -13,7 +13,7 @@ Truthful, agent-driven job applications. You write every fact about your work on
 ## What it does
 
 - **One source of truth.** Each claim lives once in `facts.yaml`. Resume versions (variants) pick and order facts for a kind of role; themes decide the look. Fix a typo once and every resume picks it up.
-- **Starts from what you have.** Drop every resume you have in `drop/`: any format, any number of versions, even a scan, a photo, or a LinkedIn "Save to PDF". `./resumes import` archives each one and extracts its text, and the agent reads what no converter can, asks you about every place your versions disagree, and turns them into one facts file. With no resume at all, the agent builds one with you from your history, LinkedIn, and GitHub.
+- **Starts from what you have.** Drop every resume you have in `drop/`: any format, any number of versions, even a scan, a photo, or a LinkedIn "Save to PDF". `./resumes import` archives each one and extracts its text, and the agent reads what no converter can, asks you about every place your versions disagree, and turns them into one facts file. With no resume at all, or one that is not working, the resume-builder skill interviews you for what you actually did, researches what your target roles look for now, and has a reviewer that did not write the draft read it skeptically before you see it.
 - **Truth-locked.** A claim you have not confirmed carries a `confirm` flag: the resume is marked for review, tailoring refuses it, and cover letters may not repeat it until you confirm.
 - **Applies for you.** Open job postings or job sites in the browser your agent controls and say "apply to the jobs open in my browser." The agent captures each posting, learns what the employer does, picks and tailors a resume, writes a cover letter when wanted, fills the form from your answers, submits or holds it, and records what it sent. It keeps going until you stop it, for weeks if you like: it rotates through searches for each target title on each job site, questions it cannot settle wait in one batch for you, and when the leads run out it widens the search and keeps watching for new postings.
 - **Knows what to apply for.** Each resume version's guide is written from current research: the titles employers use, the seniority the facts support, pay, and saved searches that find those roles. `./resumes status` flags guides due for fresh research (every 90 days by default). Each posting gets a fit score: postings where you meet fewer than half the requirements, or that score below the minimum you choose in onboarding, are skipped.
@@ -94,7 +94,7 @@ people/<person>/             your profile, answers, evidence, stories, inbox, ap
 custom/                      your themes, templates, settings, site notes, company research (yours)
 shared/                      the engine's defaults: themes, templates, onboarding catalog, settings
 tools/                       the command-line tools (./resumes help)
-.agents/skills/              the job-application skill; .claude/skills and .codex/skills link here
+.agents/skills/              the job-application and resume-builder skills; .claude/skills and .codex/skills link here
 drop/                        resumes you put in for import, in any format (git ignores its contents)
 examples/demo/               a complete fictional person to try every command on
 ```
