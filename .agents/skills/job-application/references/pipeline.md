@@ -84,7 +84,7 @@ own answers, and the checks on truthfulness and privacy, are the lines that bind
    employer). A similar title at the same employer is shown with the earlier record for you to
    compare; a different job proceeds with `--distinct-from <dir> --because "<what differs>"`, noted
    in both records. A skipped posting never blocks another.
-6. Submit or hold per `references/records.md`. Each of these writes the run log (`--no-log` skips
+6. Submit or hold per [records](records.md). Each of these writes the run log (`--no-log` skips
    it), so a separate `run log` is only for notes:
    - `resumes app submitting <dir> --person <p>` — just before the final click: until `app submit`
      records the outcome, `status` warns that the submit was clicked, so it is checked on the site

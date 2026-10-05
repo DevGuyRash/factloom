@@ -58,7 +58,7 @@ Submit when the person's standing instruction or their word in this session allo
 
 - each answer comes from the session or saved answers, the profile, the evidence file, or the chosen resume, directly or derived as the [forms](forms.md) reference describes;
 - the attached resume and cover letter are the ones chosen for this application;
-- terms the form requires (privacy notices, application-system terms, arbitration agreements) fall under the person's `consent.required-terms` answer;
+- terms the form requires were settled by the person's `consent.*` answers or the default in [forms](forms.md), "Terms and consents";
 - typed signatures use the person's legal name.
 
 Otherwise hold it with `./resumes app hold <dir> --reason "<what it waits on>" --kind <kind>` (the question, the person-only step, or the site problem; `--waits <catalog-id>` when an answer would settle it): it sets `status: blocked` and appends the reason, dated, as the record's last line, which `status` and the dashboard show by kind. Add it to the session's waiting list, and continue with the next posting.
