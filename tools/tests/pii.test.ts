@@ -35,6 +35,10 @@ test("detects common API-key/token shapes", () => {
   assert.ok(scanLine("token ghp_abcdefghijklmnopqrstuvwx").some((h) => h.kind === "api-key"));
   assert.ok(scanLine("AKIAABCDEFGHIJKLMNOP").some((h) => h.kind === "api-key"));
   assert.ok(scanLine("-----BEGIN RSA PRIVATE KEY-----").some((h) => h.kind === "api-key"));
+  // A pre-signed storage link opens the file for whoever holds it; a job link's tracking keys do not.
+  assert.ok(scanLine("https://bucket.s3.amazonaws.com/cv.pdf?X-Amz-Expires=300&X-Amz-Signature=0123456789abcdef0123").some((h) => h.kind === "signed-url"));
+  assert.ok(scanLine("https://acct.blob.core.windows.net/c/cv.pdf?se=2026-10-05&sig=AbCdEf%2BGhIjKlMnOpQr%3D").some((h) => h.kind === "signed-url"));
+  assert.ok(!scanLine("https://www.ziprecruiter.com/jobs?lk=FtL245kuWlCmr6tE3L0YcQ&utm_source=x").some((h) => h.kind === "signed-url"));
 });
 
 test("detects a street address", () => {
@@ -93,6 +97,23 @@ test("scanFile skips unsupported extensions", async () => {
     writeFileSync(file, "219-09-9999");
     const hits = await scanFile(file, "photo.png", { paths: [], strings: [] });
     assert.deepEqual(hits, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a picture in an application directory is flagged unless it is the submission proof", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "pii-img-"));
+  try {
+    const shot = join(dir, "review.png");
+    writeFileSync(shot, "not really a png");
+    const allow = { paths: [], strings: [] };
+    const app = "people/pat-lee/applications/2026-10-05_acme_analyst";
+    assert.deepEqual((await scanFile(shot, `${app}/review.png`, allow)).map((f) => f.kind), ["screenshot"]);
+    const proof = join(dir, "confirmation.png");
+    writeFileSync(proof, "not really a png");
+    assert.deepEqual(await scanFile(proof, `${app}/confirmation.png`, allow), []);
+    assert.deepEqual(await scanFile(shot, "docs/themes/review.png", allow), [], "pictures outside applications are not the person's forms");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

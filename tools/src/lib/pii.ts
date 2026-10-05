@@ -4,7 +4,7 @@
 // knows how to turn a resume file into text.
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import JSZip from "jszip";
 import YAML from "yaml";
 import { dataLayers } from "./layers.ts";
@@ -96,6 +96,8 @@ const SSN = /\b(?!000|666|9\d{2})\d{3}-(?!00)\d{2}-(?!0000)\d{4}\b/g;
 const BIRTH_DATE = /\b(?:dob|date of birth|birth ?date|born)\b[^0-9\n]{0,20}(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4})/gi;
 const CARD_CANDIDATE = /\b(?:\d[ -]?){13,19}\b/g;
 const API_KEY = /\b(?:sk-[A-Za-z0-9]{10,}|ghp_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16})\b|-----BEGIN [A-Z ]*PRIVATE KEY-----/g;
+// A pre-signed storage link (an uploaded resume's preview, a download) grants access to whoever holds it.
+const SIGNED_URL = /[?&](?:X-Amz-Signature|X-Amz-Security-Token|X-Goog-Signature|sig(?=[^&\s]*%[0-9A-Fa-f]{2}))=[^&\s"')<>]{16,}/g;
 const STREET_SUFFIX = "(?:Street|St|Avenue|Ave|Boulevard|Blvd|Drive|Dr|Lane|Ln|Road|Rd|Court|Ct|Circle|Cir|Place|Pl|Way|Terrace|Ter|Trail|Trl|Parkway|Pkwy|Highway|Hwy|Square|Sq)";
 // Single spacing and a letter in every street-name word: docx layout numbers separated by long runs
 // of spaces ("316470    363040    St.") are not addresses.
@@ -125,6 +127,7 @@ export function scanLine(line: string): { kind: string; match: string }[] {
   for (const m of line.matchAll(BIRTH_DATE)) hits.push({ kind: "birth-date", match: m[0] });
   for (const m of line.matchAll(CARD_CANDIDATE)) if (luhn(m[0])) hits.push({ kind: "card-number", match: m[0] });
   for (const m of line.matchAll(API_KEY)) hits.push({ kind: "api-key", match: m[0] });
+  for (const m of line.matchAll(SIGNED_URL)) hits.push({ kind: "signed-url", match: m[0] });
   for (const m of line.matchAll(ADDRESS)) hits.push({ kind: "street-address", match: m[0] });
   return hits;
 }
@@ -157,8 +160,17 @@ export function listScannableFiles(root: string): string[] {
 }
 
 /** Scans one file (by absolute `path`, reported as `relPath`) for findings not covered by `allow`. */
+const IMAGE = /\.(?:png|jpe?g|webp|gif|heic|bmp|tiff?)$/i;
+
 export async function scanFile(path: string, relPath: string, allow: Allowlist): Promise<Finding[]> {
   const lower = path.toLowerCase();
+  // No text scan reads a picture, and a picture of a filled form shows the address, phone, and answers. In an
+  // application, only the submission proof (`app submit --proof` saves it as confirmation.*) is committed.
+  if (IMAGE.test(lower)) {
+    const inApplication = /^people\/[^/]+\/applications\//.test(relPath.replace(/\\/g, "/"));
+    if (!inApplication || basename(path).startsWith("confirmation.") || isAllowed(relPath, "", allow)) return [];
+    return [{ file: relPath, line: 0, kind: "screenshot", snippet: "a picture can show private details no scan reads: rename it *.local.* (git ignores those) or delete it" }];
+  }
   let text: string | null = null;
   if (lower.endsWith(".docx")) text = await extractDocxText(path);
   else if (SCAN_TEXT_EXTENSIONS.some((e) => lower.endsWith(e))) {
