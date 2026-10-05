@@ -15,6 +15,8 @@ async function main(argv: string[]): Promise<number> {
     for (const c of [...commands.values()].filter((c) => !c.hidden).sort((a, b) => a.name.localeCompare(b.name))) console.log(`  ${c.name.padEnd(16)} ${c.summary}`);
     return name && name !== "help" && name !== "--help" ? 2 : 0;
   }
+  // `resumes <command> --help` is the same as `resumes help <command>`.
+  if (!cmd.hidden && rest.some((a) => a === "--help" || a === "-h")) { console.log(`${cmd.name}: ${cmd.summary}\n\nusage: ${cmd.usage}`); return 0; }
   return await cmd.run(rest);
 }
 

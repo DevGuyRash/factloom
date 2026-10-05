@@ -48,7 +48,8 @@ const label = (app: Application) => `${app.record?.company ?? "?"} — ${app.rec
 /**
  * `app new` creates an application, refusing blocked employers and the same job twice, and showing a possible
  * duplicate for the agent to judge. `submitting` marks the moment before the final click; `submit`, `hold`, `skip`,
- * and `reopen` update the record, its queue entry, and the run log (unless --no-log).
+ * and `reopen` update the record, its queue entry, and the run log (unless --no-log); `note` adds a dated line,
+ * so records are never edited by hand.
  */
 const command: Command = {
   name: "app",
@@ -58,8 +59,9 @@ const command: Command = {
     "resumes app submitting <dir> [--person p]",
     "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--answers <file|->] [--follow-up <days|YYYY-MM-DD>] [--no-log] [--person p]",
     "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--answers <file|->] [--no-log] [--person p]",
-    "resumes app skip <dir> --reason TEXT [--no-log] [--person p]",
+    "resumes app skip <dir> --reason TEXT [--rule <catalog-id>] [--no-log] [--person p]",
     "resumes app reopen <dir> --reason TEXT [--person p]",
+    'resumes app note <dir> "<text>" [--person p]',
   ].join("\n       "),
   run(argv) {
     const [sub, ...rest] = argv;
@@ -87,7 +89,7 @@ const command: Command = {
       }
       // The posting text goes from the page to a file to here, without passing through a conversation.
       const postingFile = flag(a, "posting-file");
-      const description = postingFile === undefined ? undefined : readFileSync(postingFile === "-" ? 0 : postingFile, "utf8").trim();
+      const description = postingFile === undefined ? undefined : readFileSync(postingFile === "-" ? 0 : postingFile, "utf8").replace(/[ \t]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
       const job = { company, role, url: flag(a, "url"), source: flag(a, "source"), requisition: flag(a, "requisition") };
       const dup = findDuplicate(person, { ...job, description });
       const distinctFrom = flag(a, "distinct-from"), because = flag(a, "because");
@@ -198,8 +200,9 @@ const command: Command = {
       const reason = flag(a, "reason");
       if (!dirArg || !reason) throw new Error("app skip needs <dir> --reason TEXT");
       const app = findApplication(person, dirArg);
-      note(app, `skipped — ${reason}`, { status: "skipped" });
-      updateFor(person, loadRecord(app).data, { status: "done", outcome: "skipped", note: reason, application: app.name });
+      const rule = flag(a, "rule");
+      note(app, `skipped — ${reason}`, { status: "skipped", skip_rule: rule });
+      updateFor(person, loadRecord(app).data, { status: "done", outcome: "skipped", note: reason, application: app.name, ...(rule ? { rule } : {}) });
       log("skipped", `${label(app)}: ${reason}`);
       console.log(`skipped ${rel(app.dir)}: ${reason}`);
       return 0;
@@ -213,8 +216,18 @@ const command: Command = {
       const app = findApplication(person, dirArg);
       const status = loadRecord(app).data.status;
       if (status !== "skipped" && status !== "blocked") throw new Error(`${rel(app.dir)} is ${status}; only skipped or held applications reopen`);
-      note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined });
+      note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined, skip_rule: undefined });
       console.log(`reopened ${rel(app.dir)}: ${reason}`);
+      return 0;
+    }
+
+    if (sub === "note") {
+      const [dirArg, ...words] = a._;
+      const text = words.join(" ").trim();
+      if (!dirArg || !text) throw new Error('app note needs <dir> "<text>"');
+      const app = findApplication(person, dirArg);
+      note(app, text.replace(/\s*\n\s*/g, " "));
+      console.log(`noted in ${rel(app.recordPath!)}`);
       return 0;
     }
 

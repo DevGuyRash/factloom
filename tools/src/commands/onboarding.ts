@@ -4,6 +4,7 @@ import { formatAnswer, loadAnswers, loadCatalog, loadKeptAnswers, openCoreQuesti
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
 import { listApplications } from "../lib/applications.ts";
+import { skipsByRule } from "../lib/queue.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
 import { similarity } from "../lib/text.ts";
 import { POLICIES } from "../lib/schema.ts";
@@ -81,7 +82,13 @@ const command: Command = {
       const entry = catalog.get(id) ?? (/^experience\.years\./.test(id) ? catalog.get("experience.years.<skill>") : undefined);
       const policy = (flag(a, "policy") ?? entry?.policy ?? "confirm") as Policy;
       if (!POLICIES.includes(policy)) { console.error(`policy must be one of ${POLICIES.join(", ")}`); return 2; }
-      if (!entry) console.error(`note: ${id} is not in the shared catalog; add it during inbox review`);
+      if (!entry) {
+        // An id made up on the spot is never found again by a later form; name the entries it most resembles.
+        const spaced = (s: string) => s.replace(/[._<>-]/g, " ");
+        const near = [...catalog.values()].map((e) => ({ id: e.id, s: Math.max(similarity(spaced(id), spaced(e.id)), similarity(spaced(id), e.ask)) }))
+          .filter((x) => x.s > 0).sort((x, y) => y.s - x.s).slice(0, 3).map((x) => x.id);
+        console.error(`note: ${id} is not in the catalog${near.length ? `; closest: ${near.join(", ")}` : ""}. Use a catalog id when one fits (onboarding find "<question as asked>"); a new question goes to the inbox for the catalog.`);
+      }
       const answer = words.join(" ");
       // Notes stay with an answer until replaced (--notes "<text>") or cleared (--notes "").
       const sessionPrev = loadAnswers(sessionPath).get(id), savedPrev = loadAnswers(savedPath).get(id);
@@ -102,6 +109,10 @@ const command: Command = {
       if (waiting.length) console.log(`held applications waiting on ${id}: ${waiting.map((x) => x.name).join(", ")} (reopen them: app reopen <dir> --reason "answered")`);
       const pendingOn = apps.filter((x) => x.record?.status === "submitted" && x.record.pending_waits_on === id);
       if (pendingOn.length) console.log(`sent applications with a step waiting on ${id}: ${pendingOn.map((x) => x.name).join(", ")}`);
+      // What the earlier answer ruled out, to screen again when the new one widens it.
+      const ruledOut = skipsByRule(person).get(id);
+      const n = ruledOut ? ruledOut.queue.length + ruledOut.apps.length : 0;
+      if (n) console.log(`${n} posting(s) were skipped under ${id}: if this answer lets any back in, see them with \`queue list --rule ${id}\` (queue reopen, or app reopen)`);
       // An answer is the value a form takes; who said it and when belong in --notes.
       if (/^(\d{4}-\d{2}-\d{2}\b|[A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?,? (?:\d{4}-\d{2}-\d{2}|said|wrote)\b)/.test(answer)) {
         console.log("note: an answer is the value a form takes; put who said it and when, and their own words, in --notes");

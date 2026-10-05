@@ -12,6 +12,8 @@ export type QueueStatus = (typeof QUEUE_STATUS)[number];
 export type QueueItem = {
   url: string; company?: string; role?: string; source?: string; found: string; status: QueueStatus;
   score?: number; outcome?: string; note?: string; application?: string; posted?: string; pick?: boolean;
+  /** The catalog id of the answer or constraint that ruled the posting out, so a changed answer finds it. */
+  rule?: string;
 };
 type QueueDoc = { type: "queue"; person: string; items: QueueItem[] };
 
@@ -131,4 +133,19 @@ export function updateItem(person: string, url: string, patch: Partial<QueueItem
   items[i] = { ...items[i], ...patch };
   saveQueue(person, items, root);
   return items[i];
+}
+
+/** Skipped postings and applications ruled out under one catalog id (or every rule, keyed by id, when none is given). */
+export function skipsByRule(person: string, root = repoRoot()): Map<string, { queue: QueueItem[]; apps: Application[] }> {
+  const out = new Map<string, { queue: QueueItem[]; apps: Application[] }>();
+  const slot = (rule: string) => out.get(rule) ?? out.set(rule, { queue: [], apps: [] }).get(rule)!;
+  const apps = listApplications(person, root);
+  for (const i of loadQueue(person, root).items) {
+    if (i.outcome !== "skipped") continue;
+    // A skipped application has its own record; count it there, once.
+    if (i.application && apps.some((x) => x.name === i.application && x.record?.status === "skipped")) continue;
+    slot(i.rule ?? "").queue.push(i);
+  }
+  for (const app of apps) if (app.record?.status === "skipped") slot(String(app.record.skip_rule ?? "")).apps.push(app);
+  return out;
 }

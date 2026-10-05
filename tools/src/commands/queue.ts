@@ -4,11 +4,14 @@ import { describeApplication, findDuplicate } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
 import { findEmployer } from "../lib/employers.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
-import { enqueue, loadQueue, rankQueue, syncQueue, updateItem, type QueueItem } from "../lib/queue.ts";
+import { enqueue, loadQueue, rankQueue, skipsByRule, syncQueue, updateItem, type QueueItem } from "../lib/queue.ts";
 import { rel, resolvePerson } from "../lib/repo.ts";
 import { logEvent } from "../lib/runlog.ts";
 import { DATE } from "../lib/schema.ts";
 import { normalizeUrl } from "../lib/text.ts";
+
+/** An onboarding-catalog id: lowercase dotted words, such as prefs.travel or experience.years.python. */
+const CATALOG_ID = /^[a-z][a-z0-9-]*(?:\.[a-z0-9<>-]+)+$/;
 
 function daysSince(dateStr: string): number {
   return Math.floor((Date.now() - Date.parse(`${dateStr}T00:00:00`)) / 86400000);
@@ -32,16 +35,17 @@ function resolveUrl(items: QueueItem[], ref: string): string {
  */
 const command: Command = {
   name: "queue",
-  summary: "Manage the posting queue: add, list, next, start, done, drop",
+  summary: "Manage the posting queue: add, list, next, skip, start, done, drop, reopen",
   usage: [
     "resumes queue add --url U [--company C] [--role R] [--source S] [--posted YYYY-MM-DD] [--score N] [--pick] [--person p]",
-    "resumes queue list [--person p]",
+    "resumes queue list [--rule <catalog-id>] [--person p]",
     "resumes queue next [--count N] [--person p]",
-    "resumes queue skip --url U [--company C] [--role R] [--source S] --reason TEXT [--no-log] [--person p]",
+    "resumes queue skip --url U [--company C] [--role R] [--source S] --reason TEXT [--rule <catalog-id>] [--no-log] [--person p]",
     "resumes queue skip --from <file|-> [--no-log] [--person p]",
     "resumes queue start <url|#> [--person p]",
     "resumes queue done <url|#> --outcome submitted|skipped|held [--note TEXT] [--person p]",
     "resumes queue drop <url|#> [--note TEXT] [--person p]",
+    "resumes queue reopen <url|#> [--note TEXT] [--person p]",
   ].join("\n       "),
   run(argv) {
     const [sub, ...rest] = argv;
@@ -79,38 +83,50 @@ const command: Command = {
       // A posting ruled out from its listing or first lines needs no application directory: the queue keeps the
       // link and the reason, and `queue add` will not take it again. Each posting is its own line in the run log,
       // so the counts are postings, never batches.
-      const skipOne = (s: { url: string; company?: string; role?: string; source?: string; reason: string }) => {
+      const skipOne = (s: { url: string; company?: string; role?: string; source?: string; reason: string; rule?: string }) => {
         const added = enqueue(person, { url: s.url, company: s.company, role: s.role, source: s.source });
         if (!added.added && added.reason === "applied") {
           console.log(`not skipped: already applied for, same ${added.match!.by}: ${rel(added.match!.app.dir)}`);
           return;
         }
-        updateItem(person, added.item!.url, { status: "done", outcome: "skipped", note: s.reason });
+        updateItem(person, added.item!.url, { status: "done", outcome: "skipped", note: s.reason, ...(s.rule ? { rule: s.rule } : {}) });
         if (!has(a, "no-log")) logEvent(person, "skipped", `${s.company ?? "?"} — ${s.role ?? "?"}: ${s.reason} (${s.url})`);
         console.log(`skipped ${s.url}: ${s.reason}`);
       };
       const from = flag(a, "from");
       if (from !== undefined) {
-        // One posting per line: url, company, role, reason, separated by tabs (company and role may be empty).
+        // One posting per line: url, company, role, reason, and optionally the catalog id that ruled it out,
+        // separated by tabs (company and role may be empty).
         const lines = readFileSync(from === "-" ? 0 : from, "utf8").split("\n").map((l) => l.trim()).filter(Boolean);
         for (const line of lines) {
           const [url, company, role, ...why] = line.split("\t");
+          const rule = why.length > 1 && CATALOG_ID.test(why[why.length - 1].trim()) ? why.pop()!.trim() : undefined;
           const reason = why.join(" ").trim();
-          if (!url || !reason) throw new Error(`queue skip --from: each line is url<TAB>company<TAB>role<TAB>reason, not: ${line}`);
-          skipOne({ url, company: company || undefined, role: role || undefined, reason });
+          if (!url || !reason) throw new Error(`queue skip --from: each line is url<TAB>company<TAB>role<TAB>reason[<TAB>catalog-id], not: ${line}`);
+          skipOne({ url, company: company || undefined, role: role || undefined, reason, rule });
         }
         return 0;
       }
       const url = flag(a, "url");
       const reason = flag(a, "reason");
       if (!url || !reason) throw new Error("queue skip needs --url and --reason, or --from <file|->");
-      skipOne({ url, company: flag(a, "company"), role: flag(a, "role"), source: flag(a, "source"), reason });
+      skipOne({ url, company: flag(a, "company"), role: flag(a, "role"), source: flag(a, "source"), reason, rule: flag(a, "rule") });
       return 0;
     }
 
     if (sub === "list" || sub === "next") {
       const closed = syncQueue(person);
       if (closed) console.log(`closed ${closed} queue item(s) whose application was already submitted, held, or skipped`);
+    }
+
+    if (sub === "list" && flag(a, "rule")) {
+      // What one answer or constraint ruled out, to look at again when it changes.
+      const rule = flag(a, "rule")!;
+      const hit = skipsByRule(person).get(rule) ?? { queue: [], apps: [] };
+      console.log(`${hit.queue.length + hit.apps.length} skipped under ${rule}`);
+      for (const i of hit.queue) console.log(`${fmt(i)}\n  ${i.note ?? ""}`);
+      for (const x of hit.apps) console.log(`[application] ${rel(x.dir)} (${describeApplication(x)})`);
+      return 0;
     }
 
     if (sub === "list") {
@@ -144,11 +160,17 @@ const command: Command = {
       return 0;
     }
 
-    if (sub === "start" || sub === "done" || sub === "drop") {
+    if (sub === "start" || sub === "done" || sub === "drop" || sub === "reopen") {
       const ref = a._[0];
       if (!ref) throw new Error(`queue ${sub} needs <url|#>`);
       const { items } = loadQueue(person);
       const url = resolveUrl(items, ref);
+      if (sub === "reopen") {
+        // A skipped or dropped posting comes back when what ruled it out has changed.
+        updateItem(person, url, { status: "queued", outcome: undefined, rule: undefined, note: flag(a, "note") });
+        console.log(`reopened ${url}`);
+        return 0;
+      }
       if (sub === "start") {
         updateItem(person, url, { status: "in-progress" });
         console.log(`started ${url}`);

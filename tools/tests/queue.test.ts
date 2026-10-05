@@ -70,3 +70,42 @@ test(
     },
   ),
 );
+
+test(
+  "a skip keeps the answer that ruled it out; queue list, onboarding answer, and stats find it again",
+  withFixture({ "shared/onboarding.md": "---\ntype: onboarding-catalog\n---\n\n# Onboarding catalog\n\n## Location\n\n### prefs.travel (essential)\n- Ask: Travel?\n- Shape: the most\n- Policy: auto\n" }, async (fx) => {
+    const out: string[] = [];
+    const log = console.log;
+    console.log = (...m: unknown[]) => out.push(m.join(" "));
+    try {
+      assert.equal(await command.run(["skip", "--url", "https://x.example/job/7", "--company", "Acme", "--role", "Analyst", "--reason", "travel 25%", "--rule", "prefs.travel", "--person", "pat-lee"]), 0);
+      fx.write("skips.tsv", "https://x.example/job/8\tBeta\tEngineer\tpays below the minimum\tcomp.minimum\nhttps://x.example/job/9\tGamma\tEngineer\tnot the focus\n");
+      assert.equal(await command.run(["skip", "--from", `${fx.root}/skips.tsv`, "--person", "pat-lee"]), 0);
+      const { data } = readDoc(`${fx.root}/people/pat-lee/queue.md`);
+      const rules = (data.items as { url: string; rule?: string; note?: string }[]).map((i) => [i.url.slice(-1), i.rule ?? "-", i.note]);
+      assert.deepEqual(rules, [["7", "prefs.travel", "travel 25%"], ["8", "comp.minimum", "pays below the minimum"], ["9", "-", "not the focus"]]);
+
+      out.length = 0;
+      assert.equal(await command.run(["list", "--rule", "prefs.travel", "--person", "pat-lee"]), 0);
+      assert.match(out.join("\n"), /1 skipped under prefs\.travel[\s\S]*job\/7/);
+
+      out.length = 0;
+      const onboarding = (await import("../src/commands/onboarding.ts")).default;
+      assert.equal(await onboarding.run(["answer", "prefs.travel", "Up to 10%", "--person", "pat-lee"]), 0);
+      assert.match(out.join("\n"), /1 posting\(s\) were skipped under prefs\.travel[\s\S]*queue list --rule prefs\.travel/);
+
+      out.length = 0;
+      const stats = (await import("../src/commands/stats.ts")).default;
+      assert.equal(await stats.run(["--person", "pat-lee"]), 0);
+      assert.match(out.join("\n"), /skipped, by the answer that ruled them out[\s\S]*prefs\.travel\s+1[\s\S]*\(no rule recorded\)\s+1/);
+
+      // The changed answer lets it back in.
+      assert.equal(await command.run(["reopen", "https://x.example/job/7", "--note", "travel now up to 10%", "--person", "pat-lee"]), 0);
+      const reopened = (readDoc(`${fx.root}/people/pat-lee/queue.md`).data.items as Record<string, unknown>[])[0];
+      assert.equal(reopened.status, "queued");
+      assert.ok(!("rule" in reopened) && !("outcome" in reopened), JSON.stringify(reopened));
+    } finally {
+      console.log = log;
+    }
+  }),
+);
