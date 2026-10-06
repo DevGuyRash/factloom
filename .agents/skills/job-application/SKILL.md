@@ -40,7 +40,7 @@ Repeat until the person stops you ([pipeline](references/pipeline.md), [sources]
 6. **Fill** the form ([forms](references/forms.md)), after reading all of it: step through to the review page where the site allows, so a question you must hold surfaces before any upload.
 7. **Submit or hold**: just before the final click, `./resumes app submitting <dir>`; the moment the site confirms, `./resumes app submit <dir> --confirmation "…" --proof <file>`, before screenshots of anything else, mail, or cleanup, so a crash or a context compaction can never lead to sending it twice. Or `./resumes app hold <dir> --reason "…" --kind <kind> [--waits <catalog-id>]`. Both close the posting's queue entry and write the run log, so do not log them again. Record the answers given ([records](references/records.md)), close the tabs this posting opened, commit every few outcomes, and go straight to the next posting.
 
-Keep the browser lean, since a long run opens hundreds of tabs. Nothing lives only in a tab: links and progress are in the records, so any tab can be reopened from them. Close each posting's tabs once its record holds its links, and every so often close what has piled up (saved confirmation pages, finished search pages, duplicates, error pages), keeping one tab on each site you are signed in to. Close tabs the person opened only once their posting is worked, and only when their `browser.tabs` answer allows it. When the browser slows or a tab crashes, close the tabs you opened and carry on from the records.
+Keep the browser lean, since a long run opens hundreds of tabs. Nothing lives only in a tab: links, answers, and progress are in the records, so any tab can be reopened from them. Close each posting's tabs as soon as its record holds what they showed. At the end of every pass and every activation, and whenever more than about fifteen tabs are open, sweep: close finished search pages, confirmation pages already saved, duplicates, error pages, and mail you are done with. Keep one tab on each site you are signed in to, the person's own tabs (closed only once their posting is worked, and only when `browser.tabs` allows), and at most a few applications left ready for a confirmation; the rest are reopened from their records when the person is present. Where the host keeps tabs between activations only when asked, keep only what the next activation needs. When the browser slows or a tab crashes, close the tabs you opened and carry on from the records.
 
 Write down what you learn about a site the moment you learn it, since a run that lasts weeks never reaches its end: when a route fails, a workaround works, or a quirk costs a retry, add a dated line with `./resumes sitenote <site> "…"`. Read a site's notes when you reach it.
 
@@ -85,12 +85,13 @@ A run can last weeks. The repository holds its state, so nothing depends on your
 Once a day (log each summary as a note, so the run logs show when the last one went out):
 
 - Each day has its own run log: `run start` continues the day's log and opens a new one on a new day, so an activation still at work past midnight ends and restarts it (`./resumes run end`, `./resumes run start`).
-- Send one summary notification, unless the person asked for less: totals since the run began and for the day, by site (submitted, held with what each needs, skipped), sites closed and why, and the searches run.
+- Send one summary notification, unless the person asked for less: totals since the run began and for the day, by site (submitted, held with what each needs, skipped), what came back by mail (interviews, rejections, replies sent), sites closed and why, and the searches run.
 - Draft the follow-ups that are due, retry held applications whose blocker may have cleared, refresh any guide `./resumes status` lists as due for research, close the tabs that piled up, and commit and push. When the person has asked for engine updates during runs, bring in the newest engine then (`./resumes update`, with everything committed) and re-read this skill.
 
 Some hosts end a turn after a while or start you again on a schedule (a heartbeat, an automation, a loop). Each activation continues the same run:
 
 - Start it with `./resumes run start`. When it reports a run log still open (written within the last 15 minutes), decide whose it is. Your own, from an earlier turn of this same conversation, has stopped, since that turn ended: take over (`./resumes run start --takeover`). Another agent's or process's may still be working in this browser and queue: end this activation without changes, since two runs collide. Otherwise read the state above. While you work, log a line when you start each posting and before each wait (`./resumes run log --kind note`), so the run log shows the run is alive.
+- Check the mail at the start of each activation (or session) and after each pass of the searches, when the person's answers let you read it ([communications](references/communications.md), "Mail about the applications"): record what came back, do what the messages ask that the person's answers settle, tell the person what only they can handle, and file what is done.
 - Work exactly as above. An activation ends when the leads are exhausted ("When leads run out") or the host stops it, never after one pass, one batch, or a set number of applications.
 - Before it ends, bring the queue and records up to date, `./resumes run end`, commit, and push, so the next activation picks up where this one stopped and the working tree is clean between activations (`./resumes update` needs it clean).
 - Choose the shortest interval the host allows for the schedule: `run start` refuses while another activation is at work, so an extra start costs nothing, and the interval is only a safety net, not the pace.
@@ -101,7 +102,7 @@ Some hosts end a turn after a while or start you again on a schedule (a heartbea
 
 When the person stops you, or the run reaches a bound they set:
 
-- `./resumes run end`, `./resumes dashboard`, and summarize, totals first: submitted (with confirmations), held (with exactly what each needs from the person), and skipped (with reasons), by site, and any site that was closed and why.
+- `./resumes run end`, `./resumes dashboard`, and summarize, totals first: submitted (with confirmations), held (with exactly what each needs from the person), and skipped (with reasons), by site; what came back by mail and what you answered; and any site that was closed and why.
 - Show new inbox entries (`./resumes inbox`) and offer to review them now; offer to save this session's answers (`onboarding answer … --save`).
 - Clear the session password, if there is one: `./resumes credentials clear`.
 - Remove the run's schedule, if one was set up, and say so.
@@ -112,5 +113,5 @@ When the person stops you, or the run reaches a bound they set:
 - Bringing in a person's existing resumes (any format, several versions): [intake](references/intake.md). Building a first resume, or rebuilding one that is not working: the resume-builder skill.
 - Onboarding, saving answers, or reviewing the inbox: [onboarding](references/onboarding.md).
 - "What's pending?", follow-ups (`./resumes followups`, `./resumes draft follow-up`), outcomes (`./resumes outcome`), and what is working (`./resumes stats`, `./resumes dashboard`): [pipeline](references/pipeline.md).
-- Interview prep, thank-you notes, company dossiers, email codes and alerts: [communications](references/communications.md).
+- Interview prep, thank-you notes, company dossiers, mail about the applications, and alerts: [communications](references/communications.md).
 - A trial on mock forms, which checks an agent's screening and form filling before long unattended runs: [trials](references/trials.md).

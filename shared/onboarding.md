@@ -47,13 +47,25 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: auto
 
 ### mail.application-replies (core)
-- Ask: May the agent look in your mailbox (or a signed-in webmail tab) for replies to your applications: confirmations, rejections, interview invitations, recruiter messages? It searches only for the employers and sites you applied to, never replies, and tells you at once about an interview invitation or a recruiter message.
+- Ask: May the agent check your mailbox (or a signed-in webmail tab) for mail about your applications, at the start of each activation and after each pass: confirmations, rejections, follow-up questions, interview invitations, recruiter messages? It searches only for the employers and sites you applied to, records what comes back, completes follow-up forms from your answers, and tells you at once about an interview invitation or a recruiter message.
 - Shape: yes / no
 - Policy: confirm
 
+### mail.replies (core)
+- Ask: When an employer or recruiter writes back, may the agent answer for you where your answers already settle it (your interest, times within your interview availability, pay within your answers, a resume or link you would send anyway), telling you what it sent? Or should it only tell you? It may also book interview slots within your availability, if you say so. Offers, negotiations, contracts, and anything your answers do not settle always come to you.
+- Seen as: "Are you still interested in this role?", "Please share your availability for a 30-minute call", "What are your rate expectations?", "Could you send your updated resume?"
+- Shape: choice: tell me only; answer what my answers settle; answer and book interviews within my availability
+- Policy: confirm
+
+### availability.interviews (core)
+- Ask: When can employers reach you for calls and interviews (days, hours, and time zone), and how much notice do you need?
+- Seen as: "What is your availability for an interview?", "Please list a few times that work for you this week", "Preferred contact hours"
+- Shape: days and hours with time zone; notice needed
+- Policy: confirm
+
 ### mail.receipts (core)
-- Ask: Once a routine receipt ("we received your application") is saved in its application record, may the agent archive it? Replies, interview requests, rejections, and anything asking you to act stay where they are, and nothing is ever deleted.
-- Shape: yes / no
+- Ask: Once the agent has done what an application email needs (a receipt checked, a rejection recorded, a code used, a job alert's postings queued, a requested form completed, a reply sent), may it file the message, into a folder or label you name or the archive, so your inbox keeps only what needs you? Messages that need you stay until you have seen them, and nothing is ever deleted.
+- Shape: yes, into a folder or label (its name); yes, to the archive; no
 - Policy: confirm
 
 ### browser.tabs (core)
