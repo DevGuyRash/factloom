@@ -6,13 +6,14 @@ type: onboarding-catalog
 
 Questions that job applications ask, written once for everyone. Session onboarding asks the entries marked **essential** first, before the first application: they settle what to apply for and the questions nearly every form asks. It asks the entries marked **core** in batches once applying has started (all of them, when the person prefers to finish onboarding first). The rest go on the waiting list the first time a form needs them and reach the person in the next batch of questions. The person's saved answers cover any of these. Answers the person chooses to keep are saved in their `answers` file under the same ids.
 
-Each entry lists what to ask the person, phrasings seen on forms, the answer shape, and the default policy (`auto`, `confirm`, `ask`, or `person`, defined in the job-application skill). The person may choose a different policy for their own answer. Where an honest answer comes in degrees (travel, office days, commute, hours, on-call, physical demands, contract length, pay), the shape is a limit or a range rather than yes or no, so one answer settles whatever threshold a form names.
+Each entry lists what to ask the person, phrasings seen on forms, the answer shape, and the default policy (`auto`, `confirm`, `ask`, or `person`, defined in the job-application skill). The person may choose a different policy for their own answer. An entry with a `Default` is not asked: the default answers forms and steps until the person says otherwise, and onboarding names it once as what the agent will do. Defaults let the agent act on the person's behalf within their own answers, so they hold for a person who lets the agent submit on its own; a person who reviews each application is asked them instead. Where an honest answer comes in degrees (travel, office days, commute, hours, on-call, physical demands, contract length, pay), the shape is a limit or a range rather than yes or no, so one answer settles whatever threshold a form names.
 
 ## How sessions run
 
 ### prefs.pace
-- Ask: Any limit on applications per day, or on how soon to apply to the same employer again? No limit unless the person sets one.
+- Ask: Any limit on applications per day, or on how soon to apply to the same employer again?
 - Shape: number per day; days between applications to one employer
+- Default: No limit
 - Policy: auto
 
 ### prefs.min-fit (essential)
@@ -39,6 +40,7 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ### mail.verification (core)
 - Ask: When a site emails a verification code or link, who reads it: you, or the agent? The agent needs a route to your mailbox (the host's mail connector or plugin, a webmail tab signed in to its browser, a mail MCP server, or a mail client such as himalaya) and reads only the newest message from that site.
 - Shape: choice: the person or the agent
+- Default: the agent
 - Policy: confirm
 
 ### prefs.role-focus (core)
@@ -49,12 +51,14 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ### mail.application-replies (core)
 - Ask: May the agent check your mailbox (or a signed-in webmail tab) for mail about your applications, at the start of each activation and after each pass: confirmations, rejections, follow-up questions, interview invitations, recruiter messages? It searches only for the employers and sites you applied to, records what comes back, completes follow-up forms from your answers, and tells you at once about an interview invitation or a recruiter message.
 - Shape: yes / no
+- Default: Yes
 - Policy: confirm
 
 ### mail.replies (core)
 - Ask: When an employer or recruiter writes back, may the agent answer for you where your answers already settle it (your interest, times within your interview availability, pay within your answers, a resume or link you would send anyway), telling you what it sent? Or should it only tell you? It may also book interview slots within your availability, if you say so. Offers, negotiations, contracts, and anything your answers do not settle always come to you.
 - Seen as: "Are you still interested in this role?", "Please share your availability for a 30-minute call", "What are your rate expectations?", "Could you send your updated resume?"
 - Shape: choice: tell me only; answer what my answers settle; answer and book interviews within my availability
+- Default: answer what my answers settle, and book interviews within my availability
 - Policy: confirm
 
 ### availability.interviews (core)
@@ -66,16 +70,19 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ### mail.receipts (core)
 - Ask: Once the agent has done what an application email needs (a receipt checked, a rejection recorded, a code used, a job alert's postings queued, a requested form completed, a reply sent), may it file the message, into a folder or label you name or the archive, so your inbox keeps only what needs you? Messages that need you stay until you have seen them, and nothing is ever deleted.
 - Shape: yes, into a folder or label (its name); yes, to the archive; no
+- Default: yes, to the archive
 - Policy: confirm
 
 ### browser.tabs (core)
 - Ask: The agent closes the browser tabs it opens once it is done with them. May it also close tabs you opened yourself, once their posting is worked (applied, held, or skipped, with its link saved in the record)?
 - Shape: yes / no
+- Default: Yes
 - Policy: confirm
 
 ### accounts.profile-edits (core)
 - Ask: When a job site's own profile would send something out of date with an application (desired pay, location, the default resume), may the agent update that profile to match this session's answers?
 - Shape: yes / no
+- Default: Yes
 - Policy: confirm
 
 ## Identity and contact
@@ -457,12 +464,14 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 ### consent.sms (core)
 - Ask: Do you want recruiting texts, calls, or WhatsApp messages beyond this application when a form offers to opt in?
 - Shape: yes / no
+- Default: No
 - Policy: auto
 
 ### consent.talent-pool (core)
-- Ask: Should employers keep your application for other openings, add you to a talent community, send job alerts, share your resume with partners, keep or reuse it for other purposes (research, grants, proposals), or name you in proposals to their clients? Each defaults to no.
+- Ask: Should employers keep your application for other openings, add you to a talent community, send job alerts, share your resume with partners, keep or reuse it for other purposes (research, grants, proposals), or name you in proposals to their clients?
 - Seen as: "May we keep your information for future opportunities?", "Join our talent community", "We may share your profile with our partners", "May we name you as key personnel in proposals?"
 - Shape: yes / no for each
+- Default: No for each
 - Policy: auto
 
 ## AI use
@@ -493,9 +502,10 @@ Optional, kept apart from hiring decisions, and always open to declining. Record
 - Policy: confirm
 
 ### experience.unlisted-skills (core)
-- Ask: When a form asks about a skill, tool, or certification your records do not show at all, should the agent answer none (0 years, no), hold the application for you (once per skill), or skip postings that require it? Until you answer, forms get none, and each such skill goes to your inbox for correction. A figure is never invented.
+- Ask: When a form asks about a skill, tool, or certification your records do not show at all, should the agent answer none (0 years, no), hold the application for you (once per skill), or skip postings that require it? A figure is never invented.
 - Seen as: "How many years of work experience do you have with <tool>?" as a required number field
 - Shape: choice
+- Default: none (0 years, no)
 - Policy: confirm
 
 ### credentials.held (core)

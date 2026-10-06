@@ -20,16 +20,18 @@ async function capture(fn: () => Promise<number> | number): Promise<{ code: numb
   }
 }
 
-test("onboarding asks who handles accounts, which email they use, and who reads verification emails", () => {
+test("onboarding asks who handles accounts and which email they use; verification emails default to the agent", () => {
   const core = new Map(loadCatalog(REAL_ROOT).filter((e) => e.core).map((e) => [e.id, e]));
   for (const id of ["accounts.handling", "accounts.email", "mail.verification"]) {
     assert.ok(core.has(id), `${id} is a core question`);
     assert.equal(core.get(id)!.policy, "confirm");
   }
+  assert.equal(core.get("mail.verification")!.default, "the agent");
   const fx = makeFixture();
   try {
     const open = openCoreQuestions("pat-lee", fx.root).map((e) => e.id);
-    for (const id of ["accounts.handling", "accounts.email", "mail.verification"]) assert.ok(open.includes(id), `${id} is asked of a new person`);
+    for (const id of ["accounts.handling", "accounts.email"]) assert.ok(open.includes(id), `${id} is asked of a new person`);
+    assert.ok(!open.includes("mail.verification"), "a default is named once, not asked");
   } finally {
     fx.cleanup();
   }

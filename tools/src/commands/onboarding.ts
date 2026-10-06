@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { flag, has, parseArgs } from "../lib/args.ts";
-import { formatAnswer, loadAnswers, loadCatalog, loadKeptAnswers, openCoreQuestions, privateAnswersPath, savedAnswersPath, sessionAnswersPath, sessionHeader, type Answer, type CatalogEntry, type Policy } from "../lib/catalog.ts";
+import { DEFAULT_SOURCE, defaultsInEffect, formatAnswer, loadAnswers, loadCatalog, loadKeptAnswers, openCoreQuestions, privateAnswersPath, savedAnswersPath, sessionAnswersPath, sessionHeader, type Answer, type CatalogEntry, type Policy } from "../lib/catalog.ts";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
 import { listApplications } from "../lib/applications.ts";
@@ -43,12 +43,19 @@ const command: Command = {
       for (const x of saved.values()) if (x.answer) merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy, notes: x.notes, source: x.source });
       let carried = 0;
       for (const x of previous.values()) {
-        if (!x.answer) continue;
+        // A default is the catalog's, not the person's: it is written fresh below, so a changed default takes effect.
+        if (!x.answer || x.source === DEFAULT_SOURCE) continue;
         const s = saved.get(x.id);
         const newerSaved = s?.confirmed && previousDate && s.confirmed > previousDate;
         if (newerSaved) continue;
         if (s?.answer !== x.answer) carried++;
         merged.set(x.id, { id: x.id, answer: x.answer, policy: x.policy, notes: x.notes ?? (s?.answer === x.answer ? s.notes : undefined), source: x.source });
+      }
+      const defaulted: string[] = [];
+      for (const e of catalog.values()) {
+        if (!e.default || merged.has(e.id)) continue;
+        merged.set(e.id, { id: e.id, answer: e.default, policy: e.policy, source: DEFAULT_SOURCE });
+        defaulted.push(e.id);
       }
       const entries = [...merged.values()].map(formatAnswer);
       writeFileSync(sessionPath, `${sessionHeader(person)}\n${entries.join("\n\n")}${entries.length ? "\n" : ""}`);
@@ -56,6 +63,7 @@ const command: Command = {
       const noted = [...merged.values()].filter((x) => x.notes).map((x) => x.id);
       console.log(`wrote ${rel(sessionPath)} with ${entries.length} answers (${carried} carried over from the last session)${unconfirmed ? `; ${unconfirmed} saved answers have no Confirmed date and came from notes or the profile` : ""}`);
       if (noted.length) console.log(`answers with notes (exceptions or wording that change how they apply): ${noted.join(", ")}`);
+      if (defaulted.length) console.log(`defaults in effect (${defaulted.length}), named to the person once as what you will do, until they say otherwise: ${defaulted.join(", ")}`);
       return 0;
     }
     if (sub === "find") {
@@ -70,7 +78,7 @@ const command: Command = {
         .slice(0, 5);
       for (const { e, s } of ranked) {
         const answer = session.get(e.id)?.answer ?? saved.get(e.id)?.answer ?? loadAnswers(privateAnswersPath(person)).get(e.id)?.answer;
-        const shown = answer && e.local ? "answered (kept privately; read it from the private file)" : answer ? `answer: ${answer}` : "no answer yet";
+        const shown = answer && e.local ? "answered (kept privately; read it from the private file)" : answer ? `answer: ${answer}` : e.default ? `no answer yet; the default applies: ${e.default}` : "no answer yet";
         console.log(`${e.id} (${e.policy}, match ${s.toFixed(2)}): ${shown}\n  ask: ${e.ask}`);
       }
       return 0;
@@ -93,7 +101,9 @@ const command: Command = {
       // Notes stay with an answer until replaced (--notes "<text>") or cleared (--notes "").
       const sessionPrev = loadAnswers(sessionPath).get(id), savedPrev = loadAnswers(savedPath).get(id);
       const notes = flag(a, "notes") ?? sessionPrev?.notes ?? (savedPrev?.answer === answer ? savedPrev.notes : undefined);
-      upsert(sessionPath, sessionHeader(person), formatAnswer({ id, answer, policy, notes, source: sessionPrev?.source }), id);
+      // The person's own answer replaces a default, and with it the default's source.
+      const source = sessionPrev?.source === DEFAULT_SOURCE ? undefined : sessionPrev?.source;
+      upsert(sessionPath, sessionHeader(person), formatAnswer({ id, answer, policy, notes, source }), id);
       if (has(a, "save")) {
         // A private detail is kept, but only in the git-ignored private file, never in the committed answers file.
         const keepPath = entry?.local ? privateAnswersPath(person) : savedPath;
@@ -138,6 +148,11 @@ const command: Command = {
         // Entries that say how to derive or propose the answer are for you to work out and the person to confirm.
         console.log(`    ${q.id}${/^Derived|\bPropose\b/.test(q.ask) ? " [propose from the records]" : ""}: ${q.ask}`);
       }
+    }
+    const defaults = defaultsInEffect(person);
+    if (defaults.length) {
+      console.log(`\ndefaults in effect (${defaults.length}): not asked; name them once as what you will do, and the person can opt out of any. A person who reviews each application is asked these instead.`);
+      for (const d of defaults) console.log(`  ${d.id}: ${d.default}`);
     }
     console.log(existsSync(sessionPath) ? `\nsession file: ${rel(sessionPath)}` : "\nno session file yet: run `resumes onboarding start`");
     return 0;

@@ -8,7 +8,8 @@ import { FILE_NAMES, POLICIES } from "./schema.ts";
 export type Policy = (typeof POLICIES)[number];
 /** `essential` entries are core entries asked before the first application; `core` covers both. */
 /** `local`: the answer is someone's private detail (an address, references' contact details) and is kept only in git-ignored files. */
-export type CatalogEntry = { id: string; core: boolean; essential: boolean; section: string; ask: string; seenAs?: string; shape?: string; policy: Policy; local: boolean };
+/** `default`: the answer used until the person gives another, so the entry is named once rather than asked. */
+export type CatalogEntry = { id: string; core: boolean; essential: boolean; section: string; ask: string; seenAs?: string; shape?: string; policy: Policy; local: boolean; default?: string };
 export type Answer = { id: string; answer: string; policy: Policy; confirmed?: string; notes?: string; source?: string };
 
 const field = (block: string, name: string) => block.match(new RegExp(`^- ${name}:[ \\t]*(.*)$`, "m"))?.[1].trim();
@@ -36,6 +37,7 @@ function catalogEntries(path: string): CatalogEntry[] {
     out.push({
       id: h3[1], core: /\((?:core|essential)\)/.test(h3[2]), essential: /\(essential\)/.test(h3[2]), section, ask: field(chunk, "Ask") ?? "",
       seenAs: field(chunk, "Seen as"), shape: field(chunk, "Shape"), policy: (field(chunk, "Policy") as Policy) ?? "ask", local: field(chunk, "Stored") === "local",
+      ...(field(chunk, "Default") ? { default: field(chunk, "Default") } : {}),
     });
   }
   return out;
@@ -94,11 +96,27 @@ export function loadAnswers(path: string): Map<string, Answer> {
   return existsSync(path) ? parseAnswers(parse(readFileSync(path, "utf8")).body) : new Map();
 }
 
-/** Core catalog questions (essential ones included) that neither the saved answers nor this session's answers settle. */
+/** Whether the person has given an answer of their own: this session's (a default carried there is not one), or a confirmed saved one. */
+function answeredByPerson(id: string, session: Map<string, Answer>, saved: Map<string, Answer>): boolean {
+  const s = session.get(id);
+  return !!(s?.answer && s.source !== DEFAULT_SOURCE) || !!(saved.get(id)?.answer && saved.get(id)?.confirmed);
+}
+
+/** Core catalog questions (essential ones included) that neither the saved answers nor this session's answers settle; an entry with a default is settled by it. */
 export function openCoreQuestions(person: string, root = repoRoot()): CatalogEntry[] {
   const saved = loadKeptAnswers(person, root);
   const session = loadAnswers(sessionAnswersPath(person, root));
-  return loadCatalog(root).filter((e) => e.core && !(session.get(e.id)?.answer) && !(saved.get(e.id)?.answer && saved.get(e.id)?.confirmed));
+  return loadCatalog(root).filter((e) => e.core && !e.default && !answeredByPerson(e.id, session, saved));
+}
+
+/** The `Source` of an answer that came from the catalog's default rather than from the person. */
+export const DEFAULT_SOURCE = "catalog default";
+
+/** Entries whose default is in effect: the person has not answered them, so their default answers forms and steps. */
+export function defaultsInEffect(person: string, root = repoRoot()): CatalogEntry[] {
+  const saved = loadKeptAnswers(person, root);
+  const session = loadAnswers(sessionAnswersPath(person, root));
+  return loadCatalog(root).filter((e) => e.default && !answeredByPerson(e.id, session, saved));
 }
 
 export const sessionHeader = (person: string) => `---\ntype: session-answers\nperson: ${person}\nsession: ${today()}\n---\n`;

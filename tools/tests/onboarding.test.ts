@@ -127,3 +127,34 @@ test("inbox add writes the documented entry format", async () => {
     assert.ok(existsSync(join(fx.root, "people/pat-lee/inbox.md")));
   } finally { delete process.env.RESUMES_ROOT; fx.cleanup(); }
 });
+
+test("an entry with a default is not asked: start writes the default, and the person's own answer replaces it", async () => {
+  const withDefault = (d: string) => `${CATALOG}\n## Mail\n\n### mail.replies (core)\n- Ask: May the agent answer routine replies?\n- Shape: choice\n- Default: ${d}\n- Policy: confirm\n`;
+  const fx = makeFixture({ "shared/onboarding.md": withDefault("answer what my answers settle") });
+  process.env.RESUMES_ROOT = fx.root;
+  const log = console.log;
+  const out: string[] = [];
+  console.log = (...m: unknown[]) => out.push(m.join(" "));
+  try {
+    const { loadAnswers, openCoreQuestions, defaultsInEffect } = await import("../src/lib/catalog.ts");
+    const cmd = (await import("../src/commands/onboarding.ts")).default;
+    const sessionFile = join(fx.root, "people/pat-lee/session.local.md");
+    // Not an open question, but named once as what the agent will do.
+    assert.ok(!openCoreQuestions("pat-lee", fx.root).some((e) => e.id === "mail.replies"));
+    assert.equal(await cmd.run(["--person", "pat-lee"]), 0);
+    assert.match(out.join("\n"), /defaults in effect \(1\): not asked[\s\S]*mail\.replies: answer what my answers settle/);
+    // Every form and activation reads it from the session's answers.
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(loadAnswers(sessionFile).get("mail.replies")?.answer, "answer what my answers settle");
+    assert.equal(loadAnswers(sessionFile).get("mail.replies")?.source, "catalog default");
+    // A changed default takes effect next session; it is never carried over as if the person had said it.
+    writeFileSync(join(fx.root, "shared/onboarding.md"), withDefault("tell me only"));
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(loadAnswers(sessionFile).get("mail.replies")?.answer, "tell me only");
+    // The person's own answer replaces it, and the default is no longer in effect.
+    assert.equal(await cmd.run(["answer", "mail.replies", "answer", "and", "book", "--person", "pat-lee"]), 0);
+    assert.deepEqual(defaultsInEffect("pat-lee", fx.root).map((e) => e.id), []);
+    assert.equal(await cmd.run(["start", "--person", "pat-lee"]), 0);
+    assert.equal(loadAnswers(sessionFile).get("mail.replies")?.answer, "answer and book");
+  } finally { console.log = log; delete process.env.RESUMES_ROOT; fx.cleanup(); }
+});
