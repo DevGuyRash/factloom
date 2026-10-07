@@ -1,6 +1,6 @@
 # Reconciliation ledger
 
-Keep the ledger in the person's private copy. Minimize retained correspondence: a precise source pointer, relevant passage or faithful summary, and dates usually suffice. Public upstream fixtures contain fictional identities, employers, messages, and outcomes.
+Keep the ledger in the person's private copy, as a dated notes document (`people/<person>/notes/<YYYY-MM-DD>_outcome-review.md`, frontmatter `type: notes`), so a later review starts from it. Minimize retained correspondence: a precise source pointer, the relevant passage or a faithful summary, and dates usually suffice.
 
 ## Review scope
 
@@ -26,5 +26,3 @@ Record the cutoff, source account identity, authorized mailboxes, search queries
 “We chose another candidate” says nothing about which skill, keyword, or document feature decided the outcome. “We needed more experience managing production deployments” is attributable feedback about experience, but still does not prove that a particular wording change would have changed the decision. “We cannot hire in your state” is an eligibility explanation that editing a resume cannot fix.
 
 A retained submission record may establish a variant without establishing its exact bytes. A file hash identifies an artifact but does not by itself prove that the employer received it. Correlate artifact identity with a submission receipt or record and preserve the uncertainty that remains.
-
-Use the [synthetic review cases](synthetic-cases.json) when reviewing or evaluating changes to this workflow. They define observable outcomes without any real person's correspondence. Executable behavioral trials, when authorized, should use the installed ADE trial runtime's current documented schema rather than treating this fixture format as an ADE API. Structural validation or a manual walkthrough does not establish improved agent behavior; report untested behavioral claims as untested.

@@ -95,7 +95,7 @@ people/<person>/             your profile, answers, evidence, stories, inbox, ap
 custom/                      your themes, templates, settings, site notes, company research (yours)
 shared/                      the engine's defaults: themes, templates, onboarding catalog, settings
 tools/                       the command-line tools (./resumes help)
-.agents/skills/              the job-application and resume-builder skills; .claude/skills and .codex/skills link here
+.agents/skills/              the job-application, resume-builder, and resume-reconciliation skills; .claude/skills and .codex/skills link here
 drop/                        resumes you put in for import, in any format (git ignores its contents)
 examples/demo/               a complete fictional person to try every command on
 ```

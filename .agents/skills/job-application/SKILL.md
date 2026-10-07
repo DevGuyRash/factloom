@@ -110,7 +110,7 @@ When the person stops you, or the run reaches a bound they set:
 
 ## Other requests
 
-- Bringing in a person's existing resumes (any format, several versions): [intake](references/intake.md). Building a first resume, or rebuilding one that is not working: the resume-builder skill.
+- Bringing in a person's existing resumes (any format, several versions): [intake](references/intake.md). Building a first resume, or rebuilding one that is not working: the resume-builder skill. Learning from outcomes (rejections, silence, interviews) to improve the resumes: the resume-reconciliation skill.
 - Onboarding, saving answers, or reviewing the inbox: [onboarding](references/onboarding.md).
 - "What's pending?", follow-ups (`./resumes followups`, `./resumes draft follow-up`), outcomes (`./resumes outcome`), and what is working (`./resumes stats`, `./resumes dashboard`): [pipeline](references/pipeline.md).
 - Interview prep, thank-you notes, company dossiers, mail about the applications, and alerts: [communications](references/communications.md).
