@@ -135,6 +135,58 @@ test("update merges the engine, refuses after local engine edits, and links an u
   }
 }));
 
+test("update sets uncommitted records aside and puts them back as they were; engine edits and a working activation stop it", () => withTemp((base) => {
+  const engine = repo(join(base, "engine"));
+  engine.write("AGENTS.md", "# engine\n");
+  engine.write("people/.gitkeep", "");
+  engine.write("shared/a.txt", "one\n");
+  engine.commit("engine v1");
+  process.env.FACTLOOM_UPSTREAM = engine.dir;
+  try {
+    const copyDir = join(base, "copy");
+    execFileSync("git", ["clone", "-q", engine.dir, copyDir]);
+    const run = (...args: string[]) => execFileSync("git", args, { cwd: copyDir, encoding: "utf8" }).trim();
+    for (const [k, v] of [["user.email", "t@example.com"], ["user.name", "T"], ["commit.gpgsign", "false"]]) run("config", k, v);
+    mkdirSync(join(copyDir, "people", "pat"), { recursive: true });
+    writeFileSync(join(copyDir, "people", "pat", "note.md"), "one\n");
+    run("add", "-A");
+    run("commit", "-q", "-m", "my data");
+    engine.write("shared/a.txt", "two\n");
+    engine.commit("engine v2");
+
+    // A changed record and a new staged one, as an activation that ended before committing leaves them.
+    writeFileSync(join(copyDir, "people", "pat", "note.md"), "one, edited\n");
+    writeFileSync(join(copyDir, "people", "pat", "handoff.md"), "new\n");
+    writeFileSync(join(copyDir, "people", "pat", "résumé notes.md"), "accents and a space\n");
+    run("add", "people/pat/handoff.md", "people/pat/résumé notes.md");
+    const updated = updateFrom(copyDir);
+    assert.strictEqual(updated.status, "updated", updated.message);
+    assert.deepStrictEqual("setAside" in updated ? [...(updated.setAside ?? [])].sort() : [], ["people/pat/handoff.md", "people/pat/note.md", "people/pat/résumé notes.md"]);
+    assert.strictEqual(readFileSync(join(copyDir, "shared", "a.txt"), "utf8"), "two\n", "the engine change is merged");
+    assert.strictEqual(readFileSync(join(copyDir, "people", "pat", "note.md"), "utf8"), "one, edited\n", "the edit is back");
+    assert.strictEqual(run("-c", "core.quotePath=false", "diff", "--cached", "--name-only"), "people/pat/handoff.md\npeople/pat/résumé notes.md", "the staged records are staged again");
+    assert.strictEqual(run("stash", "list"), "", "nothing is left behind in the stash");
+
+    // An uncommitted change to an engine file stops the update and is named.
+    engine.write("shared/a.txt", "three\n");
+    engine.commit("engine v3");
+    writeFileSync(join(copyDir, "AGENTS.md"), "# my tweak\n");
+    const dirty = updateFrom(copyDir);
+    assert.strictEqual(dirty.status, "dirty");
+    assert.deepStrictEqual("files" in dirty ? dirty.files : [], ["AGENTS.md"]);
+    run("checkout", "--", "AGENTS.md");
+
+    // While an activation is at work, its uncommitted records are not moved under it.
+    mkdirSync(join(copyDir, "people", "pat", "runs"), { recursive: true });
+    writeFileSync(join(copyDir, "people", "pat", "runs", "2026-10-07_0900.md"), "---\ntype: run-log\nperson: pat\nstarted: 2026-10-07T09:00:00.000Z\nstatus: running\ncounts:\n  submitted: 0\n  held: 0\n  skipped: 0\n  errors: 0\n---\n");
+    assert.strictEqual(updateFrom(copyDir).status, "busy");
+    assert.strictEqual(readFileSync(join(copyDir, "shared", "a.txt"), "utf8"), "two\n", "nothing was merged");
+    assert.strictEqual(run("-c", "core.quotePath=false", "diff", "--cached", "--name-only"), "people/pat/handoff.md\npeople/pat/résumé notes.md", "the records were left alone");
+  } finally {
+    delete process.env.FACTLOOM_UPSTREAM;
+  }
+}));
+
 test("the engine remote is added under a free name and never takes over a remote that points elsewhere", () => withTemp((base) => {
   const engine = repo(join(base, "engine"));
   engine.write("AGENTS.md", "# engine\n");
