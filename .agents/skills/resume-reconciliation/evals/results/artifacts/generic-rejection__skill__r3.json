@@ -1,0 +1,42 @@
+{
+  "cause_established": false,
+  "employer_feedback": [],
+  "submitted_resume": {
+    "identity": "unknown",
+    "basis": "The application receipt records no attachment and no filename. Both current variants use Resume.pdf and were modified after submission, so the submitted resume cannot be identified from the record."
+  },
+  "comparisons": [
+    {
+      "requirement": "req-api",
+      "classification": "visibility_gap",
+      "sources": [
+        "req-api",
+        "E1"
+      ]
+    },
+    {
+      "requirement": "req-k8s",
+      "classification": "evidence_gap",
+      "sources": [
+        "req-k8s",
+        "E1"
+      ]
+    }
+  ],
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "AI engineer focused on API reliability, with experience implementing a production API integration and iterating error handling based on client feedback.",
+      "sources": [
+        "E1"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implementation specialist focused on client requirements and delivery, with experience implementing a production API integration and iterating error handling based on client feedback.",
+      "sources": [
+        "E1"
+      ]
+    }
+  ]
+}

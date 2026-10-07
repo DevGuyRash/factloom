@@ -1,0 +1,12 @@
+{
+  "prompt": "Read request.md and complete its task. All source evidence is in this working directory.",
+  "timeout_s": 300,
+  "artifact": "assessment.json",
+  "required": [
+    "artifact_valid",
+    "uncertainty_preserved",
+    "requirements_classified",
+    "both_variants_improved",
+    "no_invented_claim"
+  ]
+}

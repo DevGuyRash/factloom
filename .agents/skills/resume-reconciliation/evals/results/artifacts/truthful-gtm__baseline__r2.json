@@ -1,0 +1,55 @@
+{
+  "supported_claims": [
+    "buyer-onboarding",
+    "rule-based-scoring",
+    "pricing-controls",
+    "payment-setup"
+  ],
+  "held_claims": [
+    "commercial-strategy",
+    "partnership-wins",
+    "revenue-growth",
+    "production-launch"
+  ],
+  "cause_established": false,
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "Built Demo Commerce, a self-directed eight-week prototype, implementing rules-based lead-scoring logic and pricing controls and integrating payment setup.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    },
+    {
+      "variant": "automation",
+      "text": "Implemented GTM-related workflow automation in Demo Commerce, a self-directed eight-week prototype, using rules-based scoring for lead qualification and building buyer-onboarding workflows.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "buyer-onboarding"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implemented buyer onboarding, pricing controls, and a payment setup integration in Demo Commerce, a self-directed eight-week prototype demonstrating commerce workflows relevant to client implementation.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    }
+  ],
+  "remaining_evidence": [
+    "commercial-strategy: A GTM plan and decision or responsibility records showing Jordan owned commercial strategy. E2 demonstrates GTM-related workflow implementation, not strategic ownership.",
+    "partnership-wins: Channel-partnership agreements or documented wins and evidence of Jordan's role in securing them. The supplied evidence documents no channel partnerships.",
+    "revenue-growth: Verified revenue baselines, subsequent results, measurement dates, and evidence linking Jordan's work to the change. E2 had no revenue and cannot substantiate revenue growth; evidence from other work would be needed.",
+    "production-launch: Production release records and paying-customer evidence for a launched product Jordan helped deliver. E2 was not launched and had no customers; evidence from other work would be needed.",
+    "Rejection cause: Employer feedback or assessment notes identifying the actual decision criteria and how Jordan was assessed. The generic rejection does not establish why Jordan was rejected, and the unsupported role requirements do not establish the cause.",
+    "Client-facing delivery and requirements translation: Client discovery notes, requirements-to-configuration records, and client acceptance evidence identifying Jordan's contribution before claiming delivery for actual clients. E2 supports prototype implementation only.",
+    "AI engineering depth and integration reliability: Model implementation or integration artifacts and evaluation results before claiming AI/ML work, plus integration tests or observed reliability results before claiming reliable integrations. E2 explicitly used rules-based scoring and included no ML lead-scoring model."
+  ]
+}

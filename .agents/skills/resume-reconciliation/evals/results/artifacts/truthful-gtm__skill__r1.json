@@ -1,0 +1,60 @@
+{
+  "supported_claims": [
+    "buyer-onboarding",
+    "rule-based-scoring",
+    "pricing-controls",
+    "payment-setup"
+  ],
+  "held_claims": [
+    "commercial-strategy",
+    "partnership-wins",
+    "revenue-growth",
+    "production-launch"
+  ],
+  "cause_established": false,
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "Built Demo Commerce, a self-directed eight-week prototype (2025), integrating payment setup and implementing buyer onboarding, rules-based lead scoring, and pricing controls.",
+      "sources": [
+        "E2",
+        "payment-setup",
+        "buyer-onboarding",
+        "rule-based-scoring",
+        "pricing-controls"
+      ]
+    },
+    {
+      "variant": "automation",
+      "text": "Implemented rules-based lead scoring for go-to-market workflow automation in Demo Commerce, a self-directed eight-week prototype (2025), alongside buyer onboarding, pricing controls, and integrated payment setup.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implemented buyer-onboarding and pricing-control workflows and integrated payment setup for Demo Commerce, a self-directed eight-week prototype (2025).",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    }
+  ],
+  "remaining_evidence": [
+    "commercial-strategy: Dated strategy documents and corroboration identifying Jordan Rivera's ownership of commercial GTM decisions, such as market selection, positioning, or channel strategy. Implementing onboarding, scoring, pricing controls, and payment setup does not establish strategic ownership.",
+    "partnership-wins: Executed channel partnership agreements and corroboration of Jordan Rivera's role in securing them. The supplied project evidence documents no partnership wins.",
+    "revenue-growth: Revenue records with a baseline, comparison period, measurement method, and evidence of Jordan Rivera's contribution. E2 explicitly had no customers or revenue, so it cannot support measured revenue growth.",
+    "production-launch: Dated production deployment or release records plus verified paying-customer records and Jordan Rivera's contribution. E2 was explicitly not launched and had no customers; it cannot be relabeled as a production launch.",
+    "Conversion impact: Defined conversion events, baseline and follow-up measurements, sample sizes, and attribution evidence would be needed before adding a conversion-improvement claim; none is supplied.",
+    "Client-facing implementation: Client engagement records, documented client requirements, and delivery or acceptance evidence would be needed before claiming work with actual clients. The implementation bullet instead emphasizes relevant workflows within the self-directed prototype.",
+    "Rejection cause: Specific employer feedback tying the decision to a qualification or another stated reason. The only supplied message, 'We are moving forward with other candidates.', establishes rejection but no cause.",
+    "Historical role context: The actual dated posting, employer and requisition identity, and required-versus-preferred distinctions are not supplied. The comparison is limited to the four requirements recorded in evidence.json, not an independently verified posting.",
+    "Submitted-material identity: Existing resume source files and an application record or receipt linked to the retained submission would be needed to assess what the employer saw or apply these bullets to full resume documents. Only the three variant identifiers and audience descriptions are supplied."
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "person": "Jordan Rivera",
+  "application": {
+    "employer": "Northstar Example",
+    "role": "AI Integration Engineer",
+    "requisition": "N-17",
+    "message": "M1",
+    "date": "2026-03-05",
+    "text": "Thank you. We chose another candidate. We wish you success in your search."
+  },
+  "submission": {
+    "receipt": "Application received 2026-02-20",
+    "attachment": null,
+    "filename_in_receipt": null
+  },
+  "posting": {
+    "captured": "2026-02-18",
+    "requirements": {
+      "req-api": "Deploy production API integrations and translate client requirements",
+      "req-k8s": "Operate Kubernetes clusters in production"
+    }
+  },
+  "facts": [
+    {
+      "id": "E1",
+      "text": "At Example Studio, 2024-2025, implemented a production API integration and iterated error handling based on client feedback. No quantified outcome recorded."
+    }
+  ],
+  "variants": {
+    "ai-engineer": "AI engineer focused on API reliability. Current filename Resume.pdf, modified after submission.",
+    "implementation": "Implementation specialist focused on client requirements and delivery. Current filename Resume.pdf, modified after submission."
+  }
+}

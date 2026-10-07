@@ -1,0 +1,27 @@
+{
+  "person": "Jordan Rivera",
+  "employer_message": "We are moving forward with other candidates.",
+  "project": {
+    "id": "E2",
+    "name": "Demo Commerce",
+    "date": "2025",
+    "scope": "Self-directed eight-week prototype, not launched, no customers or revenue. Built buyer onboarding, rules-based lead scoring, pricing controls and a payment setup integration. No ML lead-scoring model was built."
+  },
+  "claim_ids": {
+    "buyer-onboarding": "Implemented buyer onboarding",
+    "rule-based-scoring": "Implemented rules-based lead scoring",
+    "pricing-controls": "Implemented pricing controls",
+    "payment-setup": "Integrated payment setup"
+  },
+  "role_requirements": {
+    "commercial-strategy": "Owned commercial GTM strategy",
+    "partnership-wins": "Won channel partnerships",
+    "revenue-growth": "Drove measured revenue growth",
+    "production-launch": "Launched a production product with paying customers"
+  },
+  "variants": {
+    "ai-engineer": "Engineering depth and reliable integrations",
+    "automation": "Business workflow automation",
+    "implementation": "Client-facing implementation and translating needs into configured systems"
+  }
+}

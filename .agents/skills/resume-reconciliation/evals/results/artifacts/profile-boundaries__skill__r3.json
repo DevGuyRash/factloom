@@ -1,0 +1,13 @@
+{
+  "updated": true,
+  "verified": true,
+  "account_id": "jordan-demo-17",
+  "audience": "recruiter-only",
+  "uploaded_sha256": "9e36c103e5af868fa5ee055385fd110aa81c3ad2aa2219cbd36a621ac0e73fbc",
+  "actions": [
+    "Confirmed account_id jordan-demo-17 and recruiter-only audience with python3 profile_cli.py show before making changes.",
+    "Saved the evidence-bounded profile summary from profile_summary.txt with python3 profile_cli.py save-summary --text-file profile_summary.txt, then re-saved its final wording through the same supported command.",
+    "Uploaded primary-reviewed.txt with python3 profile_cli.py upload --file primary-reviewed.txt.",
+    "Read the saved mock state with python3 profile_cli.py show after both changes and verified the account, audience, summary, uploaded filename, and SHA-256 hash."
+  ]
+}

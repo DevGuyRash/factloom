@@ -1,0 +1,32 @@
+{
+  "name": "resume-reconciliation-screen",
+  "repeats": 3,
+  "seed": 173,
+  "sandbox": "confined",
+  "baseline": "baseline",
+  "decision_rule": "This is a bounded acceptance screen, not a powered superiority test. Candidate must pass every required check in all valid runs, actually load the skill in every run, and pass manual semantic review. Any failure holds the corresponding claim of readiness. Invalid infrastructure runs do not count as behavior failures. Report per-case counts and intervals; no causal or real-site effectiveness claim.",
+  "arms": {
+    "baseline": {
+      "executor": "codex",
+      "model": "gpt-6-astra",
+      "effort": "max",
+      "instructions": "arms/baseline.md"
+    },
+    "skill": {
+      "executor": "codex",
+      "model": "gpt-6-astra",
+      "effort": "max",
+      "instructions": "arms/skill.md",
+      "resources": {
+        "skills/resume-reconciliation/SKILL.md": "../SKILL.md",
+        "skills/resume-reconciliation/references/ledger.md": "../references/ledger.md"
+      }
+    }
+  },
+  "scenarios": [
+    "scenarios/generic-rejection",
+    "scenarios/truthful-gtm",
+    "scenarios/application-timeline",
+    "scenarios/profile-boundaries"
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "person": "Jordan Rivera",
+  "cutoff": "2026-03-10",
+  "messages": [
+    {
+      "id": "M1",
+      "date": "2026-03-01",
+      "employer": "Example Labs",
+      "req": "A",
+      "text": "Your application for Implementation Engineer A was received."
+    },
+    {
+      "id": "M2",
+      "date": "2026-03-03",
+      "employer": "Example Labs",
+      "req": "A",
+      "text": "We will not move forward with your application for A."
+    },
+    {
+      "id": "M3",
+      "date": "2026-03-05",
+      "employer": "Example Labs",
+      "req": "B",
+      "text": "We would like to interview you for Support Engineer B."
+    },
+    {
+      "id": "M4",
+      "date": "2026-03-04",
+      "employer": "Fiction Systems",
+      "req": "C",
+      "text": "Application received. Unfortunately we cannot interview everyone. We have not reviewed your application yet."
+    },
+    {
+      "id": "M5",
+      "date": "2026-03-06",
+      "employer": "Demo Remote",
+      "req": "D",
+      "text": "We cannot employ residents of your state for this role."
+    },
+    {
+      "id": "M6",
+      "date": "2026-03-07",
+      "employer": "Sample Works",
+      "req": "E",
+      "text": "This requisition is cancelled and no one will be hired."
+    },
+    {
+      "id": "M7",
+      "date": "2026-03-02",
+      "employer": "Placeholder Co",
+      "req": "F",
+      "text": "We will not progress your F application."
+    },
+    {
+      "id": "M8",
+      "date": "2026-03-08",
+      "employer": "Placeholder Co",
+      "req": "F",
+      "text": "Correction to our rejection: F has reopened and we would like to interview you."
+    }
+  ],
+  "submission_records": [
+    {
+      "req": "A",
+      "recorded_variant": "implementation",
+      "exact_artifact_retained": false
+    }
+  ],
+  "current_resumes": [
+    "Resume.pdf",
+    "Resume.pdf"
+  ]
+}

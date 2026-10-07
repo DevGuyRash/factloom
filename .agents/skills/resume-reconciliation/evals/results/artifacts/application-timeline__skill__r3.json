@@ -1,0 +1,49 @@
+{
+  "person": "Jordan Rivera",
+  "cutoff": "2026-03-10",
+  "applications": [
+    {
+      "requisition": "Example Labs / A",
+      "status": "rejected",
+      "message_ids": ["M1", "M2"],
+      "resume_identity": "recorded_variant",
+      "basis": "M1 records receipt for Implementation Engineer A; M2 later states that the application will not move forward. The submission record identifies the recorded variant as implementation, but no exact artifact was retained."
+    },
+    {
+      "requisition": "Example Labs / B",
+      "status": "progressed",
+      "message_ids": ["M3"],
+      "resume_identity": "unknown",
+      "basis": "M3 invites Jordan to interview for Support Engineer B, which is positive progression evidence. No submitted resume variant or exact artifact is recorded for this requisition."
+    },
+    {
+      "requisition": "Fiction Systems / C",
+      "status": "pending",
+      "message_ids": ["M4"],
+      "resume_identity": "unknown",
+      "basis": "M4 acknowledges receipt, says the company cannot interview everyone, and explicitly says the application has not yet been reviewed. This is an acknowledgment, not a rejection. No submitted resume variant or exact artifact is recorded."
+    },
+    {
+      "requisition": "Demo Remote / D",
+      "status": "eligibility_restriction",
+      "message_ids": ["M5"],
+      "resume_identity": "unknown",
+      "basis": "M5 says residents of Jordan's state cannot be employed for this role. This is an eligibility restriction, not evidence of a resume weakness. No submitted resume variant or exact artifact is recorded."
+    },
+    {
+      "requisition": "Sample Works / E",
+      "status": "role_closed",
+      "message_ids": ["M6"],
+      "resume_identity": "unknown",
+      "basis": "M6 says the requisition was cancelled and no one will be hired. This closes the role rather than rejecting Jordan's resume or candidacy. No submitted resume variant or exact artifact is recorded."
+    },
+    {
+      "requisition": "Placeholder Co / F",
+      "status": "progressed",
+      "message_ids": ["M7", "M8"],
+      "resume_identity": "unknown",
+      "basis": "M7 records an earlier non-progression decision; M8 is a correction stating that F reopened and inviting Jordan to interview. The later reply is the latest supported disposition, while both events are preserved. No submitted resume variant or exact artifact is recorded."
+    }
+  ],
+  "resume_edit_fixes_eligibility": false
+}

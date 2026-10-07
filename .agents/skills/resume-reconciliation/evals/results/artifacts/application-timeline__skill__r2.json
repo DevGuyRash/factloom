@@ -1,0 +1,54 @@
+{
+  "cutoff": "2026-03-10",
+  "applications": [
+    {
+      "employer": "Example Labs",
+      "requisition": "A",
+      "status": "rejected",
+      "message_ids": ["M1", "M2"],
+      "resume_identity": "recorded_variant",
+      "basis": "M1 acknowledges receipt and M2 explicitly says the application will not move forward. The submission record identifies the recorded implementation variant, but no exact artifact is retained; no rejection reason is stated."
+    },
+    {
+      "employer": "Example Labs",
+      "requisition": "B",
+      "status": "progressed",
+      "message_ids": ["M3"],
+      "resume_identity": "unknown",
+      "basis": "M3 invites the candidate to interview for Support Engineer B, which establishes progression. No submission record identifies the resume."
+    },
+    {
+      "employer": "Fiction Systems",
+      "requisition": "C",
+      "status": "pending",
+      "message_ids": ["M4"],
+      "resume_identity": "unknown",
+      "basis": "M4 acknowledges receipt but expressly says the application has not been reviewed yet. The generic statement that not everyone can be interviewed is not a rejection. No submission record identifies the resume."
+    },
+    {
+      "employer": "Demo Remote",
+      "requisition": "D",
+      "status": "eligibility_restriction",
+      "message_ids": ["M5"],
+      "resume_identity": "unknown",
+      "basis": "M5 says the employer cannot employ residents of the candidate's state. This is an eligibility restriction, not evidence of a resume weakness. No submission record identifies the resume."
+    },
+    {
+      "employer": "Sample Works",
+      "requisition": "E",
+      "status": "role_closed",
+      "message_ids": ["M6"],
+      "resume_identity": "unknown",
+      "basis": "M6 says the requisition was cancelled and no one will be hired. This is a closed requisition, not evidence of a resume weakness. No submission record identifies the resume."
+    },
+    {
+      "employer": "Placeholder Co",
+      "requisition": "F",
+      "status": "progressed",
+      "message_ids": ["M7", "M8"],
+      "resume_identity": "unknown",
+      "basis": "M7 records non-progression, but the later M8 correction says F reopened and invites the candidate to interview. The latest supported disposition is progressed, while both chronological events are preserved. No submission record identifies the resume."
+    }
+  ],
+  "resume_edit_fixes_eligibility": false
+}

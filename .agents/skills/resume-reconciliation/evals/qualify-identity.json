@@ -1,0 +1,19 @@
+{
+  "name": "composite-identity-controls",
+  "repeats": 1,
+  "seed": 173,
+  "sandbox": "confined",
+  "arms": {
+    "good_composite_identity": {
+      "executor": "command",
+      "command": "sh \"$TRIAL_SCENARIO_DIR/qualify/good_composite_identity.sh\""
+    },
+    "bad_wrong_employer": {
+      "executor": "command",
+      "command": "sh \"$TRIAL_SCENARIO_DIR/qualify/bad_wrong_employer.sh\""
+    }
+  },
+  "scenarios": [
+    "scenarios/application-timeline"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "supported_claims": [
+    "buyer-onboarding",
+    "rule-based-scoring",
+    "pricing-controls",
+    "payment-setup"
+  ],
+  "held_claims": [
+    "commercial-strategy",
+    "partnership-wins",
+    "revenue-growth",
+    "production-launch"
+  ],
+  "cause_established": false,
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "Built GTM-supporting application logic for buyer onboarding, rules-based lead scoring, and pricing controls, and integrated payment setup in Demo Commerce, a self-directed eight-week prototype (2025).",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "rule-based-scoring",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    },
+    {
+      "variant": "automation",
+      "text": "Implemented rules-based lead scoring for lead qualification and built buyer-onboarding workflows in Demo Commerce, a self-directed eight-week prototype (2025), demonstrating GTM workflow automation.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "buyer-onboarding"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implemented buyer onboarding and pricing controls and integrated payment setup for Demo Commerce, a self-directed eight-week prototype (2025), demonstrating implementation of buyer-facing GTM workflows.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    }
+  ],
+  "remaining_evidence": [
+    "commercial-strategy: The requirement is ownership of commercial GTM strategy; E2 establishes prototype engineering, not strategic ownership. Needed: dated strategy deliverables and corroboration of Jordan's decision authority and specific commercial decisions.",
+    "partnership-wins: The requirement is winning channel partnerships; no partnership activity is documented. Needed: executed channel-partner agreements or equivalent confirmation, dates, and evidence of Jordan's role in securing them.",
+    "revenue-growth: The requirement is measured revenue growth; E2 explicitly had no customers or revenue. Needed from a separate or later verified commercial engagement: revenue baselines and subsequent results, measurement periods, reliable financial records, and evidence of Jordan's contribution. Prototype functionality does not establish revenue or conversion impact.",
+    "production-launch: The requirement is a production product launched with paying customers; E2 was explicitly an unlaunched prototype. Needed from a separate or later verified launch: dated production release records, paying-customer evidence, and Jordan's documented contribution.",
+    "Client implementation scope: The implementation bullet demonstrates buyer-facing prototype work, not actual client delivery or stakeholder requirements gathering. Needed before adding those claims: dated client or stakeholder requirements, configuration deliverables, and confirmation of Jordan's role.",
+    "Historical application comparison: Only the four role requirements and three variant audience descriptions in evidence.json are supplied. Needed for a full application reconciliation: employer and role identity, requisition and submission date, the dated original posting, a durable identifier and date for the rejection and any later correspondence, and retained submitted resumes matched to an application record or receipt. The exact submitted materials and full existing resume text cannot be verified here.",
+    "Rejection cause: The only employer statement is 'We are moving forward with other candidates.' Needed to attribute a reason to the employer: application-specific feedback naming the reason. The unsupported role requirements are evidence gaps, not established causes of this rejection."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "cause_established": false,
+  "employer_feedback": [],
+  "submitted_resume": {
+    "identity": "unknown",
+    "basis": "The submission receipt records no attachment and no filename. The current Resume.pdf filenames were modified after submission, so they cannot establish which variant was sent."
+  },
+  "comparisons": [
+    {
+      "requirement": "req-api",
+      "classification": "visibility_gap",
+      "sources": ["E1"]
+    },
+    {
+      "requirement": "req-k8s",
+      "classification": "evidence_gap",
+      "sources": []
+    }
+  ],
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "AI engineer focused on API reliability; at Example Studio (2024-2025), implemented a production API integration and iterated error handling based on client feedback.",
+      "sources": ["E1"]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implementation specialist focused on client requirements and delivery; at Example Studio (2024-2025), implemented a production API integration and iterated error handling based on client feedback.",
+      "sources": ["E1"]
+    }
+  ]
+}

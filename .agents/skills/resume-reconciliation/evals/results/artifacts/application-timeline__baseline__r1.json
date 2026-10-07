@@ -1,0 +1,53 @@
+{
+  "applications": [
+    {
+      "requisition": "A",
+      "employer": "Example Labs",
+      "status": "rejected",
+      "message_ids": ["M1", "M2"],
+      "resume_identity": "recorded_variant",
+      "basis": "M1 records receipt on 2026-03-01; M2 states on 2026-03-03 that the application will not move forward. The submission record identifies the recorded resume variant as implementation, but the exact artifact was not retained."
+    },
+    {
+      "requisition": "B",
+      "employer": "Example Labs",
+      "status": "progressed",
+      "message_ids": ["M3"],
+      "resume_identity": "unknown",
+      "basis": "M3 says on 2026-03-05 that Example Labs would like to interview for Support Engineer B. No submission record identifies the resume used for B."
+    },
+    {
+      "requisition": "C",
+      "employer": "Fiction Systems",
+      "status": "pending",
+      "message_ids": ["M4"],
+      "resume_identity": "unknown",
+      "basis": "M4 records receipt on 2026-03-04 and says the application has not yet been reviewed. No submission record identifies the resume used for C."
+    },
+    {
+      "requisition": "D",
+      "employer": "Demo Remote",
+      "status": "eligibility_restriction",
+      "message_ids": ["M5"],
+      "resume_identity": "unknown",
+      "basis": "M5 says on 2026-03-06 that Demo Remote cannot employ residents of the applicant's state for this role. This is an eligibility restriction, not evidence of a resume weakness, and no submission record identifies the resume used for D."
+    },
+    {
+      "requisition": "E",
+      "employer": "Sample Works",
+      "status": "role_closed",
+      "message_ids": ["M6"],
+      "resume_identity": "unknown",
+      "basis": "M6 says on 2026-03-07 that the requisition was cancelled and no one would be hired. A closed requisition is not evidence of a resume weakness, and no submission record identifies the resume used for E."
+    },
+    {
+      "requisition": "F",
+      "employer": "Placeholder Co",
+      "status": "progressed",
+      "message_ids": ["M7", "M8"],
+      "resume_identity": "unknown",
+      "basis": "M7 records a non-progression message on 2026-03-02, but the later correction in M8 on 2026-03-08 says F reopened and requests an interview; the later reply controls the status. No submission record identifies the resume used for F."
+    }
+  ],
+  "resume_edit_fixes_eligibility": false
+}

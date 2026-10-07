@@ -1,0 +1,58 @@
+{
+  "supported_claims": [
+    "buyer-onboarding",
+    "rule-based-scoring",
+    "pricing-controls",
+    "payment-setup"
+  ],
+  "held_claims": [
+    "commercial-strategy",
+    "partnership-wins",
+    "revenue-growth",
+    "production-launch"
+  ],
+  "cause_established": false,
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "Engineered Demo Commerce, a self-directed eight-week prototype (2025; not launched), implementing buyer onboarding, rules-based (non-ML) lead scoring, and pricing controls and integrating payment setup.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "rule-based-scoring",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    },
+    {
+      "variant": "automation",
+      "text": "Built GTM workflow automation in Demo Commerce, a self-directed eight-week prototype (2025; not launched), implementing rules-based lead scoring to support lead qualification alongside buyer onboarding and pricing controls.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "buyer-onboarding",
+        "pricing-controls"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implemented buyer-facing onboarding and commerce setup in Demo Commerce, a self-directed eight-week prototype (2025; not launched), including pricing controls and a payment setup integration.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    }
+  ],
+  "remaining_evidence": [
+    "commercial-strategy: An authored commercial GTM strategy and records establishing Jordan's decision authority and ownership. Implementing onboarding, lead scoring, and pricing controls supports GTM-related functionality, not ownership of commercial strategy.",
+    "partnership-wins: Executed channel-partner agreements and records establishing Jordan's role in securing them. The supplied project evidence documents no partnership wins.",
+    "revenue-growth: Verified baseline and subsequent revenue, measurement periods, and evidence tying Jordan's work to the change in a revenue-generating project. Demo Commerce explicitly has no revenue, so its feature implementation cannot substantiate measured revenue growth.",
+    "production-launch: Dated production release records and verified paying-customer transactions for a launched product. Demo Commerce is explicitly an unlaunched prototype with no customers and cannot be presented as meeting this requirement.",
+    "Rejection cause: Specific employer feedback or evaluation records identifying the reason for rejection. The generic message does not establish a cause; gaps against the supplied role requirements are not proof of why the employer rejected the application.",
+    "Client-facing implementation: Client discovery notes, requirements-to-configuration records, and client acceptance evidence identifying Jordan's contribution before claiming actual client delivery or translation of client needs. The implementation bullet positions transferable onboarding and commerce-setup work without asserting client experience.",
+    "Integration reliability: Test results, failure-handling evidence, or measured reliability for the payment setup integration before claiming reliable or production-ready integrations. The evidence supports integration implementation only.",
+    "Conversion impact: Verified funnel counts, baseline and comparison periods, and attribution evidence before claiming conversion improvement. Implemented onboarding and rules-based scoring do not establish conversion results."
+  ]
+}

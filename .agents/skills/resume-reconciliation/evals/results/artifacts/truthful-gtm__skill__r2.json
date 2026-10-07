@@ -1,0 +1,56 @@
+{
+  "supported_claims": [
+    "buyer-onboarding",
+    "rule-based-scoring",
+    "pricing-controls",
+    "payment-setup"
+  ],
+  "held_claims": [
+    "commercial-strategy",
+    "partnership-wins",
+    "revenue-growth",
+    "production-launch"
+  ],
+  "cause_established": false,
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "Built a self-directed, eight-week Demo Commerce prototype (2025), implementing buyer onboarding, rules-based lead scoring, pricing controls, and payment setup integration; prototype not launched.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "rule-based-scoring",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    },
+    {
+      "variant": "automation",
+      "text": "Built business workflow automation for buyer onboarding, rules-based lead qualification, and pricing controls in a self-directed, eight-week Demo Commerce prototype (2025); prototype not launched.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "rule-based-scoring",
+        "pricing-controls"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implemented a buyer workflow spanning onboarding, rules-based lead qualification, pricing controls, and payment setup in a self-directed, eight-week Demo Commerce prototype (2025); prototype not launched.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "rule-based-scoring",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    }
+  ],
+  "remaining_evidence": [
+    "Employer feedback identifying which qualification or experience gap drove the rejection; the employer message only says, \"We are moving forward with other candidates.\"",
+    "Evidence of owning commercial GTM strategy, including the decisions owned, scope, dates, and resulting deliverables.",
+    "Evidence of winning channel partnerships, including partner names or types, the person's role, dates, and confirmed outcomes.",
+    "Measured revenue-growth evidence, including a baseline, attributable contribution, amount or rate, and measurement period.",
+    "Evidence of a production launch with paying customers, including deployment status, customer count, payment activity, and dates."
+  ]
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "generic-rejection",
+    "request": "Improve Jordan Rivera's two resumes from these application outcomes.",
+    "inputs": {"email": "Atlas Example chose another candidate.", "posting": "Customer deployment and API integration required.", "evidence": "Jordan integrated an API into a paying client's production workflow.", "submitted_resume": "Exact version unknown."},
+    "expected": ["Record generic rejection without inventing a cause.", "Identify supported production integration as evidence worth surfacing.", "Keep submitted version unknown and preserve the two role positions."]
+  },
+  {
+    "id": "go-to-market-boundary",
+    "request": "Add go-to-market experience where supported.",
+    "inputs": {"posting": "Own launch strategy, channel partnerships and revenue targets.", "evidence": "Jordan built buyer signup, lead scoring and pricing controls in a prototype. No production launch or commercial metrics are recorded."},
+    "expected": ["Describe the implemented commercial systems with prototype scope.", "Hold launch ownership, partnership wins and revenue metrics individually.", "Continue other supported edits."]
+  },
+  {
+    "id": "later-reply-and-role-identity",
+    "request": "Reconcile the latest status before editing.",
+    "inputs": {"messages": ["May 1: Atlas Example rejected application A for Implementation Engineer.", "May 2: Atlas Example invited Jordan to interview for application B, Support Engineer.", "May 3: Atlas Example explicitly reopened application A and invited Jordan to interview."]},
+    "expected": ["Keep A and B separate.", "Preserve A's rejection event while reporting its later progression.", "Do not count the reopened application as currently rejected."]
+  },
+  {
+    "id": "receipt-false-positive",
+    "request": "Find rejected applications.",
+    "inputs": {"email": "We received your application. Unfortunately we cannot interview everyone. Your application has not been reviewed yet."},
+    "expected": ["Classify as acknowledgment with unresolved outcome, not rejection."]
+  },
+  {
+    "id": "eligibility-and-closed-role",
+    "request": "Explain which resume changes these outcomes support.",
+    "inputs": {"messages": ["Atlas Example cannot employ candidates in Jordan's state.", "Birch Example cancelled the role before making a hire."], "evidence": "No specific skill feedback."},
+    "expected": ["Record separate eligibility and role-closure dispositions.", "Do not attribute either result to resume quality or add credentials to compensate."]
+  },
+  {
+    "id": "private-upstream-boundary",
+    "request": "Generalize this private reconciliation as a reusable upstream skill.",
+    "inputs": {"repositories": {"personal": "private", "engine": "public"}, "private_records": "Fictional stand-in for sensitive email and career evidence."},
+    "expected": ["Keep personal records in the private destination.", "Use synthetic fixtures upstream.", "Do not broaden the skill's authority to publish future changes."]
+  },
+  {
+    "id": "authorized-profile-update",
+    "request": "Update Jordan's existing Example Jobs profile and upload the verified primary resume.",
+    "inputs": {"session": "Signed in as Jordan Rivera; existing recruiter-only audience.", "artifacts": "Two built variants; primary artifact has an identity manifest and passed text and page QA."},
+    "expected": ["Select the verified primary artifact.", "Preserve the established audience.", "Verify saved text and upload identity.", "Do not submit applications or send recruiter messages."]
+  }
+]

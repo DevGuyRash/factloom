@@ -1,0 +1,20 @@
+{
+  "name": "source-attribution-amendment",
+  "repeats": 1,
+  "seed": 173,
+  "sandbox": "confined",
+  "arms": {
+    "good_extra_source": {
+      "executor": "command",
+      "command": "sh \"$TRIAL_SCENARIO_DIR/qualify/good_extra_source.sh\""
+    },
+    "bad_unsupported_source": {
+      "executor": "command",
+      "command": "sh \"$TRIAL_SCENARIO_DIR/qualify/bad_unsupported_source.sh\""
+    }
+  },
+  "scenarios": [
+    "scenarios/generic-rejection",
+    "scenarios/truthful-gtm"
+  ]
+}

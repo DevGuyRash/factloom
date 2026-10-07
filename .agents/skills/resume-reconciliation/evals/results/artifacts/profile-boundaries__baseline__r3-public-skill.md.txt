@@ -1,0 +1,35 @@
+# Evidence-Based Profile Update Workflow
+
+## Authority and Scope
+
+This workflow grants no authority to publish future changes. Each later update requires fresh, explicit authorization covering the account, content, attachment, and intended audience. Permission to update a summary and upload a particular file does not authorize messages, applications, visibility changes, or uploading another variant.
+
+## Procedure
+
+1. Establish the authorized scope and identify the approved factual sources and exact attachment. Keep private source material out of public workflow documentation.
+2. Inspect the current account through its supported interface. Match the account identifier and existing audience to the authorization before making changes. Stop on a mismatch; do not change visibility to make it match.
+3. Draft a concise summary using only supported facts. Use “verified” only when source review supports it. Do not infer revenue outcomes, executive ownership, or other unsubstantiated achievements.
+4. Confirm that source review and attachment export QA have passed. Use the approved file unchanged, and calculate its SHA-256 digest to distinguish it from other variants.
+5. Save the summary through the supported interface and read it back. Upload only the authorized attachment and read the profile back again. Never edit underlying state or audit-log files directly.
+6. Compare the final account identifier, audience, saved summary, attachment name, and attachment digest with the authorized targets. Claim verification only after inspecting saved state; a successful write response alone is insufficient.
+7. Record the actions actually performed, verification status, and uploaded digest. Preserve source evidence and report any mismatch without claiming success.
+
+## Fictional Examples
+
+These examples illustrate the workflow; they are not authorization or claims about a real account.
+
+- An approved fact says a fictional candidate implemented production API integrations and refined error handling from client feedback. Once source review has passed, an appropriate summary is: “Verified production API integration experience, including error-handling refinements informed by client feedback.” It does not add revenue results or executive ownership.
+- A fictional authorization covers an existing account, a summary update, and `approved-demo.txt`, with its recruiter-only audience unchanged. A different attachment or broader audience falls outside that authorization.
+
+For a local mock exposing these commands, an authorized sequence could be:
+
+```sh
+python3 profile_cli.py show
+sha256sum approved-demo.txt
+python3 profile_cli.py save-summary --text-file approved-summary.txt
+python3 profile_cli.py show
+python3 profile_cli.py upload --file approved-demo.txt
+python3 profile_cli.py show
+```
+
+Inspect each readback before proceeding. The example filenames are placeholders for explicitly approved files, not a request to upload anything.

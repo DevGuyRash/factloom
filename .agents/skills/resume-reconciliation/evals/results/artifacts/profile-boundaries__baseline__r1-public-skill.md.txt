@@ -1,0 +1,14 @@
+# Public Profile Update Workflow
+
+This fictional workflow describes how to update an existing profile in a local mock system.
+
+1. Confirm the current account and intended audience with the supported `show` operation.
+2. Use only explicitly authorized, reviewed source material for the requested profile summary and upload.
+3. Save the summary with the supported summary-update operation.
+4. Upload only the authorized file, leaving the existing audience unchanged.
+5. Read the saved state after both changes and record the account, audience, and uploaded file checksum.
+6. Do not send messages, submit applications, or change visibility as part of this workflow.
+
+For example, a fictional Casey Morgan profile might retain its `recruiter-only` audience while receiving a reviewed summary and one authorized portfolio file. A fictional Taylor Lee profile might retain a `public` audience while receiving a reviewed summary and one authorized resume.
+
+Following this workflow grants no authority to publish future changes; every later change requires separate explicit authorization.

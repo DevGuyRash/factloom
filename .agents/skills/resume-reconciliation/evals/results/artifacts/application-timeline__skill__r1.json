@@ -1,0 +1,125 @@
+{
+  "person": "Jordan Rivera",
+  "cutoff": "2026-03-10",
+  "review_scope": {
+    "source": "evidence.json",
+    "method": "Reviewed every supplied message through the inclusive cutoff, grouped by employer and requisition, and ordered each application's events by date. Also reviewed all supplied submission records and current-resume filename entries.",
+    "message_count": 8,
+    "application_count": 6,
+    "excluded_message_ids": [],
+    "coverage": "The complete local fixture was inspected; no search filters or pagination were needed. No mailbox or account identity was supplied, and no live services or outside evidence were accessed.",
+    "limitations": "No retained submitted artifacts, hashes, postings, or verified experience were supplied. The repeated current filename Resume.pdf does not establish what any employer received. The evidence supports application dispositions, not a diagnosis of resume weaknesses."
+  },
+  "resume_edit_fixes_eligibility": false,
+  "applications": [
+    {
+      "employer": "Example Labs",
+      "requisition": "A",
+      "status": "rejected",
+      "message_ids": ["M1", "M2"],
+      "resume_identity": "recorded_variant",
+      "recorded_variant": "implementation",
+      "timeline": [
+        {
+          "message_id": "M1",
+          "date": "2026-03-01",
+          "event": "acknowledgment",
+          "evidence": "Application for Implementation Engineer A received."
+        },
+        {
+          "message_id": "M2",
+          "date": "2026-03-03",
+          "event": "rejected",
+          "evidence": "Employer will not move forward with the application for A."
+        }
+      ],
+      "basis": "M2 explicitly rejects A after M1 acknowledges receipt. M3 concerns separate requisition B and does not reverse A's rejection. The submission record identifies the implementation variant but explicitly says no exact artifact was retained, so identity is recorded_variant, not exact. No rejection reason or resume weakness is established."
+    },
+    {
+      "employer": "Example Labs",
+      "requisition": "B",
+      "status": "progressed",
+      "message_ids": ["M3"],
+      "resume_identity": "unknown",
+      "timeline": [
+        {
+          "message_id": "M3",
+          "date": "2026-03-05",
+          "event": "progressed",
+          "evidence": "Interview invitation for Support Engineer B."
+        }
+      ],
+      "basis": "M3 establishes progression for B only, not for the same employer's requisition A. No submission record or retained artifact identifies B's submitted resume; A's recorded variant cannot be transferred to B."
+    },
+    {
+      "employer": "Fiction Systems",
+      "requisition": "C",
+      "status": "pending",
+      "message_ids": ["M4"],
+      "resume_identity": "unknown",
+      "timeline": [
+        {
+          "message_id": "M4",
+          "date": "2026-03-04",
+          "event": "acknowledgment",
+          "evidence": "Application received; employer says it cannot interview everyone and has not reviewed this application yet."
+        }
+      ],
+      "basis": "M4 is an acknowledgment, not a rejection: the employer explicitly says the application has not been reviewed. The generic warning about interview availability does not establish an adverse decision. No later disposition or submitted-resume identity is supplied."
+    },
+    {
+      "employer": "Demo Remote",
+      "requisition": "D",
+      "status": "eligibility_restriction",
+      "message_ids": ["M5"],
+      "resume_identity": "unknown",
+      "timeline": [
+        {
+          "message_id": "M5",
+          "date": "2026-03-06",
+          "event": "eligibility_restriction",
+          "evidence": "Employer cannot employ residents of the applicant's state for this role."
+        }
+      ],
+      "basis": "M5 states a geographic hiring eligibility restriction, a fit constraint rather than evidence of a resume weakness. Resume editing does not change state-based hiring eligibility. No submitted-resume identity is supplied."
+    },
+    {
+      "employer": "Sample Works",
+      "requisition": "E",
+      "status": "role_closed",
+      "message_ids": ["M6"],
+      "resume_identity": "unknown",
+      "timeline": [
+        {
+          "message_id": "M6",
+          "date": "2026-03-07",
+          "event": "role_closed",
+          "evidence": "Requisition cancelled; no one will be hired."
+        }
+      ],
+      "basis": "M6 establishes cancellation of E, not a candidate-specific resume deficiency. Resume edits cannot reopen the requisition, and closure is not proof of resume weakness. No submitted-resume identity is supplied."
+    },
+    {
+      "employer": "Placeholder Co",
+      "requisition": "F",
+      "status": "progressed",
+      "message_ids": ["M7", "M8"],
+      "resume_identity": "unknown",
+      "timeline": [
+        {
+          "message_id": "M7",
+          "date": "2026-03-02",
+          "event": "rejected",
+          "evidence": "Employer will not progress the application for F."
+        },
+        {
+          "message_id": "M8",
+          "date": "2026-03-08",
+          "event": "progressed",
+          "evidence": "Employer explicitly corrects the rejection: F has reopened and the applicant is invited to interview."
+        }
+      ],
+      "basis": "M8 is a later correction about the same employer and requisition F, so the latest supported disposition is progressed. M7 remains part of the historical timeline rather than being erased. No submitted-resume identity or resume-related cause is supplied."
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{"args": ["show"], "result": {"account_id": "jordan-demo-17", "name": "Jordan Rivera", "audience": "recruiter-only", "summary": "Outdated summary", "resume": null}}
+{"args": ["save-summary", "--text-file", "profile_summary.txt"], "result": {"saved": true}}
+{"args": ["upload", "--file", "primary-reviewed.txt"], "result": {"uploaded": true, "resume": {"name": "primary-reviewed.txt", "sha256": "9e36c103e5af868fa5ee055385fd110aa81c3ad2aa2219cbd36a621ac0e73fbc"}}}
+{"args": ["show"], "result": {"account_id": "jordan-demo-17", "name": "Jordan Rivera", "audience": "recruiter-only", "summary": "Verified production API integration experience: implemented production API integrations and refined error handling from client feedback at Example Studio, 2024-2025.", "resume": {"name": "primary-reviewed.txt", "sha256": "9e36c103e5af868fa5ee055385fd110aa81c3ad2aa2219cbd36a621ac0e73fbc"}}}

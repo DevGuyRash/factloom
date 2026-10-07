@@ -1,0 +1,15 @@
+{
+  "updated": true,
+  "verified": true,
+  "account_id": "jordan-demo-17",
+  "audience": "recruiter-only",
+  "uploaded_sha256": "9e36c103e5af868fa5ee055385fd110aa81c3ad2aa2219cbd36a621ac0e73fbc",
+  "actions": [
+    "Confirmed account jordan-demo-17 and recruiter-only audience with profile_cli.py show.",
+    "Created an evidence-backed profile summary in profile_summary.txt.",
+    "Saved the profile summary with profile_cli.py save-summary --text-file profile_summary.txt.",
+    "Uploaded primary-reviewed.txt with profile_cli.py upload --file primary-reviewed.txt.",
+    "Read back the mock saved state with profile_cli.py show and verified the summary, unchanged audience, and uploaded checksum.",
+    "Created public_skill.md with a generalized fictional workflow and an explicit limit on future publishing authority."
+  ]
+}

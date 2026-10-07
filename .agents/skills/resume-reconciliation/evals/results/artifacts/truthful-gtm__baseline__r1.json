@@ -1,0 +1,58 @@
+{
+  "supported_claims": [
+    "buyer-onboarding",
+    "rule-based-scoring",
+    "pricing-controls",
+    "payment-setup"
+  ],
+  "held_claims": [
+    "commercial-strategy",
+    "partnership-wins",
+    "revenue-growth",
+    "production-launch"
+  ],
+  "cause_established": false,
+  "edits": [
+    {
+      "variant": "ai-engineer",
+      "text": "Built Demo Commerce (2025), a self-directed eight-week prototype that was not launched, implementing rules-based lead scoring rather than an ML model and integrating payment setup alongside buyer onboarding and pricing controls.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "payment-setup",
+        "buyer-onboarding",
+        "pricing-controls"
+      ]
+    },
+    {
+      "variant": "automation",
+      "text": "Implemented rules-based lead qualification and buyer onboarding workflows in Demo Commerce (2025), a self-directed eight-week prototype that was not launched, with pricing controls and a payment setup integration supporting the commerce workflow.",
+      "sources": [
+        "E2",
+        "rule-based-scoring",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    },
+    {
+      "variant": "implementation",
+      "text": "Implemented buyer-facing onboarding, pricing controls, and payment setup integration for Demo Commerce (2025), a self-directed eight-week prototype that was not launched, demonstrating commerce system implementation rather than a live client deployment.",
+      "sources": [
+        "E2",
+        "buyer-onboarding",
+        "pricing-controls",
+        "payment-setup"
+      ]
+    }
+  ],
+  "remaining_evidence": [
+    "commercial-strategy: A dated GTM strategy or decision record identifying Jordan's ownership of commercial decisions, such as market selection, positioning, pricing strategy, or channel planning. Implementing onboarding, lead qualification, and pricing controls supports GTM-related implementation wording, not ownership of commercial GTM strategy.",
+    "partnership-wins: Executed channel partnership agreements or partner confirmations documenting Jordan's role in winning the partnerships. A payment setup integration does not establish a channel partnership win.",
+    "revenue-growth: Baseline and follow-up revenue records for a defined period, with evidence attributing measured growth to Jordan's work. E2 explicitly had no revenue, so it cannot support this claim; evidence would need to concern separate work or a documented later phase. Conversion-impact wording would likewise require measured conversion data and attribution.",
+    "production-launch: Production release or deployment records and evidence of paying customers tied to Jordan's work. E2 was not launched and had no customers, so this claim requires evidence of separate work or a documented later phase.",
+    "Rejection cause: Specific employer feedback identifying the reason for the decision. The generic rejection supplies no cause, and the unsupported role requirements do not establish why Jordan was rejected.",
+    "Engineering depth and reliability: Architecture or code artifacts and integration test results supporting more detailed engineering or reliability claims. The evidence supports a payment setup integration, not demonstrated production reliability; E2 explicitly included no ML lead-scoring model.",
+    "Client-facing implementation: Client discovery notes, requirements-to-configuration records, or client acceptance evidence documenting Jordan's direct client work and translation of client needs. E2 supports implementation-relevant capabilities, not actual client delivery or stakeholder engagement."
+  ]
+}

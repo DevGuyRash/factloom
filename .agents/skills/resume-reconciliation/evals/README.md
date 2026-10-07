@@ -1,0 +1,17 @@
+# Resume reconciliation behavioral screen
+
+This bounded ADE screen checks four fictional workflows: generic rejection uncertainty, truthful go-to-market wording, application identity and later replies, and expressly authorized profile changes with private/public separation. It compares the skill with the same executor and task requirements without the skill. It does not measure hiring outcomes, real-site compatibility, or automatic skill selection.
+
+Read `protocol.md` before running. The current installed ADE split-testing skill and `references/trials.md` define the runtime API; these files use ADE 2.4.5's documented schema. Use its `trial.py` path from your installed plugin, not an assumed global command. Use a supported executor credential route configured on your host. Do not copy credentials into fixtures or commit runtime homes. The portable plan lets ADE discover the provider's API-key variable; use its documented `TRIAL_ENV_FILE` only when a trusted host configuration requires it. Resolve a managed executor shim to its native executable as ADE documents if confinement cannot run the shim.
+
+Run the `qualify.json` plan first in an output directory outside every Git repository. The good arm must pass every case and the bad arm must fail every case. Also run `qualify-attribution.json` (legitimate extra sources pass, invented sources fail) `qualify-identity.json` (correct composite identities pass, wrong employers fail), and `qualify-missing.json` (every missing artifact fails). Then run `plan.json` with two jobs. The plan pins `gpt-6-astra` and `max` effort, three repeats, confined execution, and no model judge. An execution is 24 agent calls; determine availability and applicable pricing before use. No live sites or personal repositories are needed. Avoid increasing concurrency on a busy machine.
+
+The candidate arm reads only the current canonical `SKILL.md` and ledger reference, mapped individually into its isolated home. The expected outputs, checks, qualification scripts, and neighboring trials are not candidate resources. Keep native records from ADE, including the skill-load evidence. A listed but unread skill does not count as an exposed treatment.
+
+Required checks are deterministic artifact/state checks, followed by manual semantic review of actual generated wording and mock interface calls. They are intentionally bounded and cannot prove that every unsupported phrase is absent. Read each candidate artifact and inspect any disagreement before drawing a conclusion. Preserve original results and record any instrument amendment before rescoring; never silently relabel an original run or tune the skill until the same fixtures pass.
+
+The profile simulation uses a local mock CLI and plain-text resume stand-ins. It validates identity, audience, upload hash, supported actions, and saved-state readback. PDF/DOCX extraction and rendering, authentication, and real-site uploads require independent QA.
+
+The dated result report under `../references/behavioral-evaluation.md` distinguishes original and corrected scores and records limits. Public evidence contains fictional data only. Native execution transcripts remain with the evaluator because they include host paths and runtime metadata; their hashes and artifact-only summaries identify the retained observations.
+
+Generated public workflows are retained as `*.md.txt` to preserve their original bytes as trial evidence. Their mock-interface paths belong to the scenario fixture and are not links to live repository instructions.

@@ -1,0 +1,23 @@
+# Evidence-led profile reconciliation
+
+This generalized workflow is for fictional, evidence-led career-profile updates.
+
+## Workflow
+
+1. Define the finite scope from the current request. Treat profile editing, file upload, applications, messages, and visibility changes as separate actions.
+2. Use only the supplied evidence. Preserve the documented work, dates, and scope; do not turn an unsupported outcome or responsibility into a fact.
+3. Confirm the signed-in account, target profile, and intended audience through the supported interface before changing anything.
+4. Prepare the profile wording and identify the exact reviewed file. Preserve the source evidence and input files.
+5. Apply only the expressly authorized summary update and upload through the supported interface.
+6. Read the saved profile state afterward. Verify the account, audience, summary, uploaded filename, and uploaded file hash.
+
+## Fictional examples
+
+- If a fictional candidate's evidence says they implemented production API integrations and refined error handling from client feedback at a fictional studio during 2024-2025, keep that scope intact; do not add revenue results or executive ownership.
+- If a fictional user authorizes an upload while retaining a recruiter-only audience, confirm that audience and upload only the named reviewed file; do not change visibility.
+
+## Limits
+
+This workflow grants no authority to publish future changes. Every future profile update or upload requires fresh, explicit authorization for that specific action and destination.
+
+It also does not authorize sending messages, submitting applications, changing visibility, subscribing to services, or changing account permissions.

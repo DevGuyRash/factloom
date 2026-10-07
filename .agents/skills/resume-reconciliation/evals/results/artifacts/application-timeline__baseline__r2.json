@@ -1,0 +1,55 @@
+{
+  "cutoff": "2026-03-10",
+  "applications": [
+    {
+      "employer": "Example Labs",
+      "requisition": "A",
+      "status": "rejected",
+      "message_ids": ["M1", "M2"],
+      "resume_identity": "recorded_variant",
+      "basis": "2026-03-01 (M1): application received, an acknowledgment rather than a decision. 2026-03-03 (M2): explicit rejection, with no reason stated. The submission record identifies the implementation resume variant, but the exact submitted artifact was not retained. The rejection does not establish a resume weakness."
+    },
+    {
+      "employer": "Placeholder Co",
+      "requisition": "F",
+      "status": "progressed",
+      "message_ids": ["M7", "M8"],
+      "resume_identity": "unknown",
+      "basis": "2026-03-02 (M7): explicit rejection. 2026-03-08 (M8): the employer expressly corrects that rejection, says F has reopened, and invites an interview. The later correction determines the current status; the prior rejection remains part of the history. No submission record identifies the resume used for F."
+    },
+    {
+      "employer": "Fiction Systems",
+      "requisition": "C",
+      "status": "pending",
+      "message_ids": ["M4"],
+      "resume_identity": "unknown",
+      "basis": "2026-03-04 (M4): application received and explicitly not yet reviewed. The general statement that not everyone can be interviewed is not a rejection of this application. No later decision is supplied through the cutoff, and no submission record identifies the resume used for C."
+    },
+    {
+      "employer": "Example Labs",
+      "requisition": "B",
+      "status": "progressed",
+      "message_ids": ["M3"],
+      "resume_identity": "unknown",
+      "basis": "2026-03-05 (M3): explicit interview invitation. B is a separate requisition from Example Labs A, so A's rejection and recorded resume variant do not transfer to B. No submission record identifies the resume used for B."
+    },
+    {
+      "employer": "Demo Remote",
+      "requisition": "D",
+      "status": "eligibility_restriction",
+      "message_ids": ["M5"],
+      "resume_identity": "unknown",
+      "basis": "2026-03-06 (M5): the employer cannot employ residents of the applicant's state for this role. This is a residency-based eligibility restriction, not evidence of a resume weakness; editing the resume does not change that eligibility. No submission record identifies the resume used for D."
+    },
+    {
+      "employer": "Sample Works",
+      "requisition": "E",
+      "status": "role_closed",
+      "message_ids": ["M6"],
+      "resume_identity": "unknown",
+      "basis": "2026-03-07 (M6): the requisition is cancelled and no one will be hired. This is role closure, not evidence of an applicant-specific resume weakness. No submission record identifies the resume used for E."
+    }
+  ],
+  "resume_edit_fixes_eligibility": false,
+  "resume_evidence_basis": "The two current resume entries share the filename Resume.pdf. Matching filenames do not establish identical artifacts or identify which resume was submitted to any requisition. Only A has a recorded variant, and no exact submitted resume artifact is established for any application."
+}

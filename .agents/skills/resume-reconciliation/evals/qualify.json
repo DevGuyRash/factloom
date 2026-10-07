@@ -1,0 +1,22 @@
+{
+  "name": "resume-reconciliation-qualify",
+  "repeats": 1,
+  "seed": 173,
+  "sandbox": "confined",
+  "arms": {
+    "good": {
+      "executor": "command",
+      "command": "sh \"$TRIAL_SCENARIO_DIR/qualify/good.sh\""
+    },
+    "bad": {
+      "executor": "command",
+      "command": "sh \"$TRIAL_SCENARIO_DIR/qualify/bad.sh\""
+    }
+  },
+  "scenarios": [
+    "scenarios/generic-rejection",
+    "scenarios/truthful-gtm",
+    "scenarios/application-timeline",
+    "scenarios/profile-boundaries"
+  ]
+}
