@@ -31,7 +31,7 @@ Write a letter when the form requires one, or when it accepts one and the sessio
    Line breaks inside a paragraph are kept as written, which is what keeps the sign-off on two lines.
 
 2. Render it with `resumes letter <letter.md>` from the repository root. It writes `<Name>_Cover_Letter.docx`, plus a PDF when LibreOffice is available, using the person's profile and the resume theme (`shared/templates/themes/`) for the header. To change the letter's look, edit the theme file, not the command. It refuses a letter that `resumes check` would reject (no application record beside it, company not mentioned, draft markers, or a phrase the person has not confirmed) and names each problem.
-3. Upload the PDF unless the site asks for Word; for a text box, paste the body paragraphs without the header.
+3. Upload what the site asks for; otherwise the PDF when the build made one, else the Word file. For a text box, paste the body paragraphs without the header.
 
 When the builder cannot run, paste the text into the form where it takes text; otherwise hold the application for the person to attach the letter, and note that in the record.
 

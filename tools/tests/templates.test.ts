@@ -27,7 +27,7 @@ test("the automation prompt points to the skill and carries the person's own wor
   try {
     const text = await render(fx.root, ["automation-prompt", "--person", "pat-lee"]);
     assert.match(text, /^Continue Pat Lee's job applications in .*resumes-fixture-[^,]*, following its AGENTS\.md and its job-application skill/);
-    assert.match(text, /render this prompt with `\.\/resumes template automation-prompt --person pat-lee`/);
+    assert.match(text, /render this prompt with `(\.\/resumes|resumes\.cmd) template automation-prompt --person pat-lee`/);
     assert.match(text, /lasts until Pat Lee says stop/);
     assert.match(text, /Pre-approved: uploading my resume and entering my contact details on application forms\./);
     assert.doesNotMatch(text, /<!--|Search focus|\{\{/);

@@ -5,17 +5,20 @@ import { readDoc } from "../lib/frontmatter.ts";
 import { listTemplates, renderTemplate, resolveTemplate } from "../lib/templates.ts";
 import { findOne, rel, repoRoot } from "../lib/repo.ts";
 
+/** How this computer runs the tools: `resumes.cmd` on Windows, `./resumes` elsewhere. */
+const CLI = process.platform === "win32" ? "resumes.cmd" : "./resumes";
+
 /**
  * What a template rendered for a person can use besides --set values: their name, this repository's path, and the
  * standing instruction from their profile in their own words (the automation prompt carries it to a host's schedule).
  */
 function personContext(person: string): Record<string, unknown> {
   const path = findOne(person, "profile");
-  if (!path) return { repo: repoRoot() };
+  if (!path) return { repo: repoRoot(), cli: CLI };
   const { data, body } = readDoc(path);
   const section = body.split(/^(?=## )/m).find((s) => /^## Standing instruction\s*$/.test(s.split("\n")[0]));
   const instruction = section ? section.split("\n").slice(1).join("\n").replace(/<!--[\s\S]*?-->/g, "").trim() : "";
-  return { name: data.name, repo: repoRoot(), standing_instruction: instruction };
+  return { name: data.name, repo: repoRoot(), cli: CLI, standing_instruction: instruction };
 }
 
 /** Render any document template: `resumes template <name> --person p [--out file] [--set key=value ...]`. */

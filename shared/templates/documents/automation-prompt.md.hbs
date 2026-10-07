@@ -4,7 +4,7 @@ render it with `./resumes template automation-prompt --person <slug>` and give i
 says what the repository says. Change it here, or override it for this repository in custom/templates/documents/ or
 for one person in people/<person>/templates/; never only in a host's scheduler.
 --}}
-Continue {{name}}'s job applications in {{repo}}, following its AGENTS.md and its job-application skill, which hold the whole procedure. At the start of every activation, read both again and render this prompt with `./resumes template automation-prompt --person {{person}}`; when the rendered text says something this one does not, follow the rendered text, and give this schedule that text where the host lets you; otherwise tell {{name}} that the schedule's prompt is out of date.
+Continue {{name}}'s job applications in {{repo}}, following its AGENTS.md and its job-application skill, which hold the whole procedure. At the start of every activation, read both again and render this prompt with `{{cli}} template automation-prompt --person {{person}}`; when the rendered text says something this one does not, follow the rendered text, and give this schedule that text where the host lets you; otherwise tell {{name}} that the schedule's prompt is out of date.
 
 Every activation continues one run, which lasts until {{name}} says stop. Pick it up from the repository's records and keep working until the leads run out or the host ends the activation; end with the run log closed, everything committed and pushed, and one line saying what is queued and when work resumes. Questions for {{name}}, and steps only they can take, go on the waiting list and never stop the run. When the repository cannot be reached, or another activation is still at work, end this one without changes.
 

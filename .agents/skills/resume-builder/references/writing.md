@@ -11,7 +11,7 @@ Most resumes pass three readers. Software extracts the text into fields that rec
 - Length is what the person's evidence for these targets needs, and no more: one page suits most people early in their careers and anyone whose relevant record is short; a second page suits a longer record of relevant work. A screening model reads the second page but rewards it no more than the first, and a person may not reach it, so length never excuses putting the strongest evidence low.
 - Markets set their own rules: some cap length (US federal applications at two pages; about two is the norm in the UK, Canada, and Germany), academic CVs have no limit, and some countries expect a photo or birth date that others leave off. Research the person's market.
 - Order is reverse-chronological, or a hybrid that leads with the strongest relevant evidence: a career change, a return to work, or someone new to a field may lead with projects, training, or a relevant earlier role. A layout of skills without dated roles reads as hiding something. Within each role, the bullet that matters most to this reader comes first.
-- Set `pages` in the variant when a page limit is a decision; the build fits the resume to it.
+- Set `pages` in the variant when a page limit is a decision; the build fits the resume to it where it can make a PDF to count pages (with LibreOffice installed), and otherwise the limit is kept by choosing what to include.
 
 ## Sections
 
@@ -29,4 +29,4 @@ Use the words the target field and its postings use for skills the person truly 
 
 ## Layout and files
 
-Use a theme marked `ats: safe` for anything a job portal will parse: one column, real text rather than images or icons, contact details in the body rather than a page header, standard headings, one date format. A designed layout (`ats: caution`) suits a resume a person reads first. Send PDF unless a form asks for Word, and keep files small. The build reads each file's text back and reports anything a parser would lose (a bullet garbled by a font, columns read out of order); the review's parser pass looks at the rest ([review](review.md)). Name the file for the person (`<Name>_Resume`), which the variant's `output` sets.
+Use a theme marked `ats: safe` for anything a job portal will parse: one column, real text rather than images or icons, contact details in the body rather than a page header, standard headings, one date format. A designed layout (`ats: caution`) suits a resume a person reads first. Send what a form asks for; otherwise the PDF when the build made one (it needs LibreOffice) or the Word file, which applicant systems read as well. Keep files small. The build reads each file's text back and reports anything a parser would lose (a bullet garbled by a font, columns read out of order); the review's parser pass looks at the rest ([review](review.md)). Name the file for the person (`<Name>_Resume`), which the variant's `output` sets.

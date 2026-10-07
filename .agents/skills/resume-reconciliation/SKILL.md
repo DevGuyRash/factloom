@@ -15,7 +15,7 @@ Define a finite review: the applications in scope and a cutoff date. Fill gaps f
 
 Keep one identity per application: employer, recruiter when distinct, role, requisition or posting link, and period. Order its messages by date, and tell apart a rejection of the candidate, a role filled, paused, or closed, a withdrawal, an eligibility restriction, and later progress; a later message about another role does not replace this outcome. The [ledger reference](references/ledger.md) gives the fields and evidence distinctions, and where the ledger lives.
 
-Identify what was sent with its confidence: the exact file (a tailored PDF kept in the application directory), the recorded variant only, or unknown. A current resume, a reused file name, or a submission date alone does not establish what was sent.
+Identify what was sent with its confidence: the exact file (the tailored resume kept in the application directory), the recorded variant only, or unknown. A current resume, a reused file name, or a submission date alone does not establish what was sent.
 
 ## Investigate and decide
 
