@@ -61,3 +61,23 @@ test("the built file's text must give back the name, the email, and every bullet
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("resumes text prints what a parser reads from the built Word file", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "text-"));
+  const write = process.stdout.write.bind(process.stdout);
+  let out = "";
+  try {
+    const variant: Variant = { variant: "v", theme: "classic-blue", headline: "Financial analyst", output: "Pat_Lee_Resume", sections: [{ title: "Experience", entries: [{ job: "acme" }] }] };
+    const { files } = await writeFitted(loadTheme("classic-blue", REAL_ROOT), resolveContent(facts, variant), dir, variant.output);
+    const docx = files.find((f) => f.endsWith(".docx"))!;
+    const text = (await import("../src/commands/text.ts")).default;
+    process.stdout.write = ((chunk: string | Uint8Array) => { out += String(chunk); return true; }) as typeof process.stdout.write;
+    assert.equal(await text.run([docx]), 0);
+    process.stdout.write = write;
+    assert.match(out, /Pat Lee[\s\S]*Analyst, Acme[\s\S]*Cut the monthly close from ten days to six/);
+    assert.equal(await text.run([join(dir, "missing.docx")]), 1);
+  } finally {
+    process.stdout.write = write;
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

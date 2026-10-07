@@ -15,7 +15,7 @@ The writer is the worst judge of a draft: models in particular rate their own wo
 
 ## Reading as the machines that will read it
 
-- **The parser.** Read the PDF's text layer in the order software gets it (for example `pdftotext -layout <file.pdf> -`): name and contact first and intact, headings recognizable, dates next to their roles, nothing important only in a header, footer, or graphic. Check the Word file the same way when one is sent.
+- **The parser.** Read the text of the file that will be sent, in the order software gets it (`./resumes text <file>` prints it for a Word file, and for a PDF where this computer has a PDF reader): name and contact first and intact, headings recognizable, dates next to their roles, nothing important only in a header, footer, or graphic.
 - **The AI screener.** Summarize the resume against a real posting for the target role as a screening model would: what it concludes about fit, level, and gaps. Where it misses a strength the facts support, the wording or placement is hiding it.
 
 ## Then
