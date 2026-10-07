@@ -25,7 +25,7 @@ Then mine for incidents, one question at a time, following the answer rather tha
 - What were you thanked, promoted, chosen, or trusted for?
 - What do you know about this work that newcomers get wrong, and what shows it?
 
-For each incident, probe for what makes it specific: the scale in the field's own units (people, money, volume, frequency, time, errors, area, patients, students), the tools and why they chose that approach, the constraints, and what changed because of it, for whom. Accept ranges and approximations, and note whether a figure came from a document or memory. Never suggest a figure: "unknown" and "I can't confirm that" are good answers, and a bullet can be specific without a number.
+For each incident, probe for what makes it specific: the scale in the field's own units (people, money, volume, frequency, time, errors, area, patients, students), the tools, the constraints, and what changed because of it, for whom. Ask what they decided along the way, what they weighed, and what they guarded against: the reasoning behind a choice shows judgment that a list of tasks cannot. Ask who used the result and what changed for them, which is evidence even without a number. And ask who else worked on it and what was theirs, so the resume claims the person's share. Accept ranges and approximations, and note whether a figure came from a document or memory. Never suggest a figure: "unknown" and "I can't confirm that" are good answers, and a bullet can be specific without a number.
 
 ## Pace and record
 
