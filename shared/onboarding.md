@@ -55,16 +55,10 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: confirm
 
 ### mail.replies (core)
-- Ask: When an employer or recruiter writes back, may the agent answer for you where your answers already settle it (your interest, times within your interview availability, pay within your answers, a resume or link you would send anyway), telling you what it sent? Or should it only tell you? It may also book interview slots within your availability, if you say so. Offers, negotiations, contracts, and anything your answers do not settle always come to you.
+- Ask: When an employer or recruiter writes back, may the agent answer for you where your answers already settle it (your interest, times within your interview availability, pay within your answers, a resume or link you would send anyway), and send the follow-ups and thank-yous `followups.cadence` schedules, telling you what it sent? Or should it only tell you? It may also book interview slots within your availability, checking your calendar for conflicts when it can reach one, if you say so. Offers, negotiations, contracts, and anything your answers do not settle always come to you.
 - Seen as: "Are you still interested in this role?", "Please share your availability for a 30-minute call", "What are your rate expectations?", "Could you send your updated resume?"
 - Shape: choice: tell me only; answer what my answers settle; answer and book interviews within my availability
 - Default: answer what my answers settle, and book interviews within my availability
-- Policy: confirm
-
-### availability.interviews (core)
-- Ask: When can employers reach you for calls and interviews (days, hours, and time zone), and how much notice do you need?
-- Seen as: "What is your availability for an interview?", "Please list a few times that work for you this week", "Preferred contact hours"
-- Shape: days and hours with time zone; notice needed
 - Policy: confirm
 
 ### mail.receipts (core)
@@ -73,11 +67,35 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Default: yes, to the archive
 - Policy: confirm
 
+### calendar.access (core)
+- Ask: May the agent look at your calendar to avoid double-booking, and add the interviews it schedules? It reads only what it needs to find free times and changes only events it creates. It needs a route to the calendar, as mail does: the host's connector or plugin, a calendar tab signed in to its browser, a calendar MCP server, or a command-line client.
+- Shape: yes / no
+- Default: Yes
+- Policy: confirm
+
 ### browser.tabs (core)
 - Ask: The agent closes the browser tabs it opens once it is done with them. May it also close tabs you opened yourself, once their posting is worked (applied, held, or skipped, with its link saved in the record)?
 - Shape: yes / no
 - Default: Yes
 - Policy: confirm
+
+### followups.cadence (core)
+- Ask: When an application gets no reply, how long should the agent wait before following up, and how many follow-ups at most? And a thank-you within a day after each interview? Where `mail.replies` allows, they are sent for you, and only to a person you could write to (a recruiter or hiring contact, never a no-reply address); otherwise they are left as drafts.
+- Shape: days to the first follow-up and between later ones; the most; thank-you yes / no
+- Default: a first follow-up after 7 days, a second 7 days later, then stop; a thank-you within a day of each interview
+- Policy: confirm
+
+### prefs.notifications (core)
+- Ask: When may the agent notify you, and what is urgent enough at any hour? Interview invitations, offers, recruiter messages, and deadlines are the usual ones; a summary of the day can wait for a time you choose.
+- Shape: quiet hours with their time zone; what may break through them; the time of the daily summary
+- Default: interviews, offers, recruiter messages, and deadlines at any hour; everything else once a day, in the summary
+- Policy: confirm
+
+### prefs.active-hours (core)
+- Ask: Are there hours when the agent should not work, because you are using the computer or its browser, or the machine must stay free? Outside them it works whenever it is scheduled.
+- Shape: days and hours with the time zone, or none
+- Default: any hour
+- Policy: auto
 
 ### accounts.profile-edits (core)
 - Ask: When a job site's own profile would send something out of date with an application (desired pay, location, the default resume), may the agent update that profile to match this session's answers?
@@ -126,9 +144,9 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ## Work authorization and eligibility
 
 ### work-auth.us-authorized (essential)
-- Ask: Are you legally authorized to work in the United States for any employer?
+- Ask: Are you legally authorized to work in the United States for any employer? If your authorization has an end date (a visa or work permit), when is it?
 - Seen as: "Are you legally authorized to work in the United States?", "…in the country where the job is located?", "…in the stated location of this role?", "Are you currently eligible to work legally in the United States?"; some forms offer several categories (citizen or national, permit without sponsorship, permit needing sponsorship, not authorized)
-- Shape: yes / no
+- Shape: yes / no; the end date, if it has one
 - Policy: auto
 
 ### work-auth.sponsorship (essential)
@@ -196,9 +214,9 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: auto
 
 ### prefs.schedule (core)
-- Ask: How many hours a week can you commit (fewest and most), which hours and time zones can you work and overlap with, and how often at most will you work shifts, weekends, on-call, or overtime?
+- Ask: How many hours a week can you commit (fewest and most), which hours and time zones can you work and overlap with, how often at most will you work shifts, weekends, on-call, or overtime, and which fixed commitments (classes, another job, caregiving) must the schedule work around?
 - Seen as: "How many hours per week can you commit?", "Can you overlap at least 4 hours with Pacific time?", "Are you available on weekends?", "This role includes a one-week on-call rotation every six weeks"
-- Shape: hours a week (fewest and most); working hours and time-zone overlap; how often at most for shifts, weekends, on-call, and overtime
+- Shape: hours a week (fewest and most); working hours and time-zone overlap; how often at most for shifts, weekends, on-call, and overtime; fixed commitments with their days and hours
 - Policy: confirm
 
 ### prefs.remote-setup (core)
@@ -222,10 +240,31 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 ## Timing
 
 ### availability.start (essential)
-- Ask: How soon could you start after an offer (notice period or earliest date)?
-- Seen as: "When is the earliest you would want to start working with us?", "Notice period / availability details"
-- Shape: relative period or date
+- Ask: How soon could you start after an offer: right away, or after a notice period at a current job (how long)? Is the date flexible, earlier or later? Is there a date you cannot start before, or must start by?
+- Seen as: "When is the earliest you would want to start working with us?", "Notice period / availability details", "Are you able to start by <date>?", "Available to start" (a date field, or a list: immediately, 2 weeks, 1 month)
+- Use: answers start-date and notice questions with a concrete date counted from the day of the application, and screens postings that fix a start date
+- Shape: right away, or a notice period or earliest date; how flexible; the earliest and latest dates, if any
 - Policy: auto
+
+### availability.interviews (core)
+- Ask: When can employers reach you for calls and interviews: which days and hours, in which time zone (its name, such as America/Phoenix, so daylight saving comes out right), and how much notice do you need? If you have a current job, which hours are off limits? Which formats are fine (phone, video), how many interviews a week at most, and is a same-day request OK?
+- Seen as: "What is your availability for an interview?", "Please list a few times that work for you this week", "Preferred contact hours", "Best time to reach you"
+- Use: the agent offers or books only times inside these windows, never sooner than the notice, and names the time zone in every reply
+- Shape: days and hours with the time zone; notice; formats; the most a week; same-day yes / no
+- Policy: confirm
+
+### availability.in-person (core)
+- Ask: Final rounds are sometimes in person, even for remote roles. Would you attend one: how far would you travel, only when the employer pays or also at your own cost, how many days' notice do you need, and how many days off can you take?
+- Seen as: "Are you able to attend an in-person interview?", "The final round is onsite in <city>", "Can you come to our office for a working session?"
+- Shape: distance or places; who pays; days' notice; days off
+- Policy: confirm
+
+### availability.unavailable (core)
+- Ask: Any dates, now or coming up, when you cannot interview or start: trips, appointments, family events, a busy stretch at a current job? Tell the agent whenever one comes up; it stops using each once its dates have passed.
+- Seen as: "Please let us know of any dates you are unavailable", "Do you have any planned time off in the next 3 months?"
+- Shape: dated ranges, or none
+- Default: none
+- Policy: confirm
 
 ## Compensation and employment type
 
@@ -259,9 +298,9 @@ Each entry lists what to ask the person, phrasings seen on forms, the answer sha
 - Policy: auto
 
 ### employment.engagement (core)
-- Ask: For contract work: what is the shortest contract you would take, how many hours a week (fewest and most), and does your hourly minimum hold for part-time or short contracts too?
+- Ask: For contract work: what is the shortest contract you would take, and the longest (or a date you must be done by), how many hours a week (fewest and most), and does your hourly minimum hold for part-time or short contracts too?
 - Seen as: "This is a 3-month contract", "10 to 20 hours per week", "Are you available full time for the duration of the project?"
-- Shape: shortest length; hours per week; minimum rule
+- Shape: shortest and longest length, or a date to be done by; hours per week; minimum rule
 - Policy: confirm
 
 ### employment.exclusivity (core)
