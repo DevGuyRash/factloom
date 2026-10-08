@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { listApplications } from "./applications.ts";
 import { peek, readDoc } from "./frontmatter.ts";
 import { dropWaiting, factsWithoutExperience, importedNotes } from "./intake.ts";
@@ -6,7 +7,8 @@ import { loadPipelineConfig } from "./pipeline-config.ts";
 import { loadQueue } from "./queue.ts";
 import { findByType, personDir, repoRoot, today } from "./repo.ts";
 import { dueSearches } from "./searches.ts";
-import { INTERVIEW_STATUS, RESPONDED_STATUS } from "./schema.ts";
+import { FILE_NAMES, INTERVIEW_STATUS, RESPONDED_STATUS } from "./schema.ts";
+import { relative } from "./when.ts";
 
 export type GroupCounts = { total: number; responded: number; interview: number };
 export type StatsReport = {
@@ -97,12 +99,14 @@ export function aggregatePay(person: string, by: "variant" | "role" | "site" = "
 
 export type PendingSnapshot = {
   statusCounts: Record<string, number>;
-  /** Held applications, with the kind of hold and the catalog id one waits on when `app hold` recorded them. */
-  held: { dir: string; company: string; role: string; reason: string; kind?: string; waitsOn?: string }[];
+  /** Held applications, with the kind of hold, the catalog id one waits on, and when it is due or its posting closes, when `app hold` and `app new` recorded them. */
+  held: { dir: string; company: string; role: string; reason: string; kind?: string; waitsOn?: string; due?: string; closes?: string }[];
   /** Applications whose final submit was clicked (`app submitting`) but never recorded as sent: check the site, never resend. */
   submitClicked: { dir: string; company: string; role: string; at: string }[];
-  /** Sent applications with a step still to come (an assessment, an account at the employer). */
-  pendingSteps: { dir: string; company: string; role: string; pending: string }[];
+  /** Sent applications with a step still to come (an assessment, an account at the employer), and when it is due. */
+  pendingSteps: { dir: string; company: string; role: string; pending: string; due?: string }[];
+  /** Interviews still to come, and those of the last week, soonest first; `thankYou` is whether a thank-you was drafted. */
+  interviews: { dir: string; company: string; role: string; at: string; ms: number; when: string; thankYou: boolean }[];
   /** Application records whose frontmatter does not parse, so no command can see them. */
   unreadable: { dir: string; error: string }[];
   queueOpen: number;
@@ -131,7 +135,8 @@ export function heldReason(recordPath: string | null): string {
   if (!recordPath) return "";
   const lines = readDoc(recordPath).body.split("\n").map((l) => l.trim());
   const held = lines.map((l) => l.match(HELD_LINE)).filter((m) => m !== null).pop();
-  if (held) return `${held[2]} (since ${held[1]})`;
+  // The due time is shown as its own field; the note line keeps it for whoever reads the record.
+  if (held) return `${held[2].replace(/ \(due [^)]*\)$/, "")} (since ${held[1]})`;
   return lines.find((l) => l && !l.startsWith("#") && !l.startsWith("<!--")) ?? "";
 }
 
@@ -147,6 +152,7 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
   const followupsDue: PendingSnapshot["followupsDue"] = [];
   const submitClicked: PendingSnapshot["submitClicked"] = [];
   const pendingSteps: PendingSnapshot["pendingSteps"] = [];
+  const interviews: PendingSnapshot["interviews"] = [];
   const unreadable: PendingSnapshot["unreadable"] = [];
   const todayStr = today();
   for (const app of listApplications(person, root)) {
@@ -156,9 +162,17 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
     const who = { dir: app.dir, company: String(r.company), role: String(r.role) };
     if (r.submit_clicked && r.status !== "submitted") submitClicked.push({ ...who, at: String(r.submit_clicked) });
-    if (r.status === "submitted" && r.pending) pendingSteps.push({ ...who, pending: `${r.pending}${r.pending_waits_on ? ` [waits on ${r.pending_waits_on}]` : ""}` });
+    if (r.status === "submitted" && r.pending) pendingSteps.push({ ...who, pending: `${r.pending}${r.pending_waits_on ? ` [waits on ${r.pending_waits_on}]` : ""}`, ...(r.due ? { due: String(r.due) } : {}) });
     if (r.status === "blocked") {
-      held.push({ ...who, reason: heldReason(app.recordPath), ...(r.hold_kind ? { kind: String(r.hold_kind) } : {}), ...(r.waits_on ? { waitsOn: String(r.waits_on) } : {}) });
+      held.push({ ...who, reason: heldReason(app.recordPath), ...(r.hold_kind ? { kind: String(r.hold_kind) } : {}), ...(r.waits_on ? { waitsOn: String(r.waits_on) } : {}), ...(r.due ? { due: String(r.due) } : {}), ...(r.closes ? { closes: String(r.closes) } : {}) });
+    }
+    if (Array.isArray(r.interviews)) {
+      const now = Date.now();
+      for (const value of r.interviews.map(String)) {
+        const ms = Date.parse(value);
+        if (Number.isNaN(ms) || ms < now - 7 * 86400000) continue;
+        interviews.push({ ...who, at: value, ms, when: relative(ms, now), thankYou: existsSync(join(app.dir, FILE_NAMES.thankYou)) });
+      }
     }
     if (r.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= todayStr) {
       followupsDue.push({ dir: app.dir, company: String(r.company), role: String(r.role), followUp: r.follow_up });
@@ -182,5 +196,6 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     pending: importedNotes(person, root).filter((n) => n.status !== "merged").map((n) => ({ path: n.path, status: n.status })),
     noExperienceYet: factsWithoutExperience(person, root),
   };
-  return { statusCounts, held, submitClicked, pendingSteps, unreadable, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
+  interviews.sort((x, y) => x.ms - y.ms);
+  return { statusCounts, held, submitClicked, pendingSteps, interviews, unreadable, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
 }

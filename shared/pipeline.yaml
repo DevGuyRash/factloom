@@ -22,6 +22,10 @@ guide_research_days: 90
 # `run start --takeover` starts anyway. A run log quiet for longer is closed as abandoned.
 run_active_minutes: 15
 
+# `queue next` suggests a posting ahead of the rest when the close date recorded for it (`queue add --closes`) is within
+# this many days. A queued posting whose close date has passed is closed as skipped, with the date as the reason.
+closing_soon_days: 7
+
 # `build-resumes` and `tailor` report what falls below this floor: a role shown with too few bullets, too few in
 # all, a fragment or a wall of text, a repeated bullet, an empty section, a job without dates, placeholder text,
 # and anything the built file's text does not give back (a name, an email, a bullet, or a role's bullet order).

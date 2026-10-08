@@ -18,7 +18,7 @@ function daysSince(dateStr: string): number {
 }
 
 function fmt(i: QueueItem): string {
-  return `[${i.status}]${i.score !== undefined ? ` score=${i.score}` : ""} ${i.company ?? "?"} — ${i.role ?? "?"} (${i.posted ? `posted ${i.posted}, ` : ""}found ${i.found}) ${i.url}`;
+  return `[${i.status}]${i.score !== undefined ? ` score=${i.score}` : ""} ${i.company ?? "?"} — ${i.role ?? "?"} (${i.posted ? `posted ${i.posted}, ` : ""}found ${i.found}${i.closes ? `, closes ${i.closes}` : ""}) ${i.url}`;
 }
 
 function resolveUrl(items: QueueItem[], ref: string): string {
@@ -37,7 +37,7 @@ const command: Command = {
   name: "queue",
   summary: "Manage the posting queue: add, list, next, skip, start, done, drop, reopen",
   usage: [
-    "resumes queue add --url U [--company C] [--role R] [--source S] [--posted YYYY-MM-DD] [--score N] [--pick] [--person p]",
+    "resumes queue add --url U [--company C] [--role R] [--source S] [--posted YYYY-MM-DD] [--closes YYYY-MM-DD] [--score N] [--pick] [--person p]",
     "resumes queue list [--rule <catalog-id>] [--person p]",
     "resumes queue next [--count N] [--person p]",
     "resumes queue skip --url U [--company C] [--role R] [--source S] --reason TEXT [--rule <catalog-id>] [--no-log] [--person p]",
@@ -63,10 +63,12 @@ const command: Command = {
       }
       const posted = flag(a, "posted");
       if (posted && !DATE.test(posted)) throw new Error("--posted takes YYYY-MM-DD");
+      const closes = flag(a, "closes");
+      if (closes && !DATE.test(closes)) throw new Error("--closes takes YYYY-MM-DD, the last day the posting accepts applications");
       const scoreStr = flag(a, "score");
       const result = enqueue(person, {
         url, company, role: flag(a, "role"), source: flag(a, "source"), score: scoreStr ? Number(scoreStr) : undefined,
-        ...(posted ? { posted } : {}), ...(has(a, "pick") ? { pick: true } : {}),
+        ...(posted ? { posted } : {}), ...(closes ? { closes } : {}), ...(has(a, "pick") ? { pick: true } : {}),
       });
       if (!result.added) {
         console.log(result.reason === "queued"
@@ -116,7 +118,7 @@ const command: Command = {
 
     if (sub === "list" || sub === "next") {
       const closed = syncQueue(person);
-      if (closed) console.log(`closed ${closed} queue item(s) whose application was already submitted, held, or skipped`);
+      if (closed) console.log(`closed ${closed} queue item(s): their application had moved on, or their close date had passed`);
     }
 
     if (sub === "list" && flag(a, "rule")) {

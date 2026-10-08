@@ -16,6 +16,12 @@ const KINDS = {
 } as const;
 type Kind = keyof typeof KINDS;
 
+/** The next interview recorded on an application (the latest one when all are past), as stored, or undefined. */
+function nextInterview(value: unknown): string | undefined {
+  const all = Array.isArray(value) ? value.map(String).filter((x) => !Number.isNaN(Date.parse(x))).sort((a, b) => Date.parse(a) - Date.parse(b)) : [];
+  return all.find((x) => Date.parse(x) >= Date.now()) ?? all[all.length - 1];
+}
+
 /** The application record and posting snapshot found directly in an application directory. */
 function readApplicationDir(dir: string) {
   let record: Record<string, unknown> | null = null;
@@ -73,6 +79,7 @@ const command: Command = {
       person, name: profile.name, email: profile.email, phone: profile.phone,
       company, role, application: dirArg.split(/[\\/]/).filter(Boolean).pop(),
       applied: record.applied, status: record.status, url: record.url,
+      interview: nextInterview(record.interviews),
       dossier: dossier?.data ?? null, postingSummary,
       stories: matched.map((s) => ({ id: s.id, competencies: s.competencies, situation: s.situation, action: s.action, result: s.result })),
       competencies, date: today(),

@@ -10,6 +10,7 @@ import { updateFor } from "../lib/queue.ts";
 import { rel, resolvePerson, stamp, today } from "../lib/repo.ts";
 import { logEvent } from "../lib/runlog.ts";
 import { DATE } from "../lib/schema.ts";
+import { parseWhen } from "../lib/when.ts";
 
 function addDays(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00`);
@@ -49,16 +50,18 @@ const label = (app: Application) => `${app.record?.company ?? "?"} — ${app.rec
  * `app new` creates an application, refusing blocked employers and the same job twice, and showing a possible
  * duplicate for the agent to judge. `submitting` marks the moment before the final click; `submit`, `hold`, `skip`,
  * and `reopen` update the record, its queue entry, and the run log (unless --no-log); `note` adds a dated line,
- * so records are never edited by hand.
+ * so records are never edited by hand. A hold can carry a due time (an assessment that expires, a link that lapses),
+ * which `status` surfaces; `resolve` closes the pending step of a sent application when it is done.
  */
 const command: Command = {
   name: "app",
   summary: "Create, submit, hold, skip, or reopen a job application",
   usage: [
-    "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--posted YYYY-MM-DD] [--posting-file <file|->] [--location L] [--arrangement A] [--pay-min N] [--pay-max N] [--pay-period hour|year] [--distinct-from <dir> --because TEXT] [--person p]",
+    "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--posted YYYY-MM-DD] [--closes YYYY-MM-DD] [--posting-file <file|->] [--location L] [--arrangement A] [--pay-min N] [--pay-max N] [--pay-period hour|year] [--distinct-from <dir> --because TEXT] [--person p]",
     "resumes app submitting <dir> [--person p]",
     "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--answers <file|->] [--follow-up <days|YYYY-MM-DD>] [--no-log] [--person p]",
-    "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--answers <file|->] [--no-log] [--person p]",
+    "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--due <YYYY-MM-DD|datetime with offset>] [--answers <file|->] [--no-log] [--person p]",
+    "resumes app resolve <dir> [--note TEXT] [--no-log] [--person p]",
     "resumes app skip <dir> --reason TEXT [--rule <catalog-id>] [--no-log] [--person p]",
     "resumes app reopen <dir> --reason TEXT [--person p]",
     'resumes app note <dir> "<text>" [--person p]',
@@ -110,6 +113,8 @@ const command: Command = {
       }
       const posted = flag(a, "posted");
       if (posted && !DATE.test(posted)) throw new Error("--posted takes YYYY-MM-DD");
+      const closes = flag(a, "closes");
+      if (closes && !DATE.test(closes)) throw new Error("--closes takes YYYY-MM-DD, the last day the posting accepts applications");
       const app = createApplication(person, {
         ...job, site: flag(a, "site"), posted, description, location: flag(a, "location"), arrangement: flag(a, "arrangement"),
         pay_min: number("pay-min"), pay_max: number("pay-max"), pay_period: flag(a, "pay-period"),
@@ -118,7 +123,11 @@ const command: Command = {
         note(app, `a different job from ${dup.app.name}: ${because}`);
         note(dup.app, `${app.name} is a different job: ${because}`);
       }
-      updateFor(person, { url: job.url, source: job.source }, { status: "in-progress" });
+      if (closes) {
+        const { data, body } = loadRecord(app);
+        writeDoc(app.recordPath!, { ...data, closes }, body);
+      }
+      updateFor(person, { url: job.url, source: job.source }, { status: "in-progress", ...(closes ? { closes } : {}) });
       console.log(rel(app.dir));
       return 0;
     }
@@ -151,6 +160,7 @@ const command: Command = {
       data.follow_up = followUp && DATE.test(followUp) ? followUp : addDays(applied, followUp ? Number(followUp) : cfg.follow_up_days);
       data.updated = applied;
       delete data.submit_clicked;
+      delete data.due;
       const confirmation = flag(a, "confirmation");
       if (confirmation) data.confirmation = confirmation;
       const proof = flag(a, "proof");
@@ -176,22 +186,25 @@ const command: Command = {
       const kind = flag(a, "kind");
       if (kind && !(HOLD_KINDS as readonly string[]).includes(kind)) throw new Error(`--kind is one of ${HOLD_KINDS.join(", ")}`);
       const waits = flag(a, "waits");
+      const dueArg = flag(a, "due");
+      const due = dueArg === undefined ? undefined : parseWhen(dueArg)?.text;
+      if (dueArg !== undefined && !due) throw new Error("--due takes YYYY-MM-DD, or a date and time with its UTC offset such as 2026-10-12T14:00-07:00");
       const app = findApplication(person, dirArg);
       addAnswers(app, flag(a, "answers"));
       const status = loadRecord(app).data.status;
       if (status === "submitted") {
         // Sent, with a step still to come (an assessment, an account at the employer): it stays submitted, and keeps
         // what the step waits on, so an answer that settles it points back here.
-        note(app, `pending — ${reason}`, { pending: reason, pending_kind: kind, pending_waits_on: waits });
-        log("note", `${label(app)}: sent, pending ${reason}`);
-        console.log(`${rel(app.dir)} stays submitted; pending: ${reason}`);
+        note(app, `pending — ${reason}${due ? ` (due ${due})` : ""}`, { pending: reason, pending_kind: kind, pending_waits_on: waits, due });
+        log("note", `${label(app)}: sent, pending ${reason}${due ? ` (due ${due})` : ""}`);
+        console.log(`${rel(app.dir)} stays submitted; pending: ${reason}${due ? ` (due ${due})` : ""}`);
         return 0;
       }
-      note(app, `held — ${reason}`, { status: "blocked", hold_kind: kind, waits_on: waits });
+      note(app, `held — ${reason}${due ? ` (due ${due})` : ""}`, { status: "blocked", hold_kind: kind, waits_on: waits, due });
       // The record now carries the posting; its queue entry is done, so it does not come back from `queue next`.
       updateFor(person, loadRecord(app).data, { status: "done", outcome: "held", note: reason, application: app.name });
-      log("held", `${label(app)}: ${reason}`);
-      console.log(`held ${rel(app.dir)}: ${reason}`);
+      log("held", `${label(app)}: ${reason}${due ? ` (due ${due})` : ""}`);
+      console.log(`held ${rel(app.dir)}: ${reason}${due ? ` (due ${due})` : ""}`);
       return 0;
     }
 
@@ -216,8 +229,23 @@ const command: Command = {
       const app = findApplication(person, dirArg);
       const status = loadRecord(app).data.status;
       if (status !== "skipped" && status !== "blocked") throw new Error(`${rel(app.dir)} is ${status}; only skipped or held applications reopen`);
-      note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined, skip_rule: undefined });
+      note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined, skip_rule: undefined, due: undefined });
       console.log(`reopened ${rel(app.dir)}: ${reason}`);
+      return 0;
+    }
+
+    if (sub === "resolve") {
+      // The pending step of a sent application (an assessment, an account at the employer) is done.
+      const dirArg = a._[0];
+      if (!dirArg) throw new Error("app resolve needs <dir>");
+      const app = findApplication(person, dirArg);
+      const { data } = loadRecord(app);
+      if (data.status !== "submitted" || !data.pending) throw new Error(`${rel(app.dir)} has no pending step to resolve (a held application is finished with app reopen or app submit)`);
+      const done = String(data.pending);
+      const text = flag(a, "note");
+      note(app, `pending step done — ${done}${text ? ` — ${text}` : ""}`, { pending: undefined, pending_kind: undefined, pending_waits_on: undefined, due: undefined });
+      log("note", `${label(app)}: pending step done, ${done}`);
+      console.log(`${rel(app.dir)}: pending step done (${done})`);
       return 0;
     }
 

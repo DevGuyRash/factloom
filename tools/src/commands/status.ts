@@ -3,6 +3,7 @@ import type { Command } from "../lib/command.ts";
 import { listPeople, rel, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { closures, loadSearchesDoc, passStatus } from "../lib/searches.ts";
 import { pendingSnapshot } from "../lib/stats.ts";
+import { relative, whenMs } from "../lib/when.ts";
 
 /**
  * One-screen "what's pending": submits clicked but not recorded (first, since resending is the worst mistake), held
@@ -31,15 +32,28 @@ const command: Command = {
       console.log(`SUBMIT CLICKED, NOT RECORDED: ${rel(c.dir, root)} (${c.company} — ${c.role}) at ${c.at}: check the site or mail for a confirmation and record it with app submit; never send it again`);
     }
     for (const u of s.unreadable) console.log(`unreadable record: ${rel(u.dir, root)}: ${u.error}`);
+    // Interviews first: they are the one pending item with a clock the person cannot move.
+    const upcoming = s.interviews.filter((i) => i.ms >= Date.now());
+    const recent = s.interviews.filter((i) => i.ms < Date.now());
+    if (s.interviews.length) {
+      console.log(`interviews: ${upcoming.length} coming up, ${recent.length} in the last week`);
+      for (const i of s.interviews) console.log(`  - ${i.at} (${i.when}${i.ms < Date.now() && !i.thankYou ? "; no thank-you drafted" : ""}) ${rel(i.dir, root)} (${i.company} — ${i.role})`);
+    }
+    // A moment with a clock (a due time, a close date), soonest first; one that has passed says so.
+    const clock = (value: string | undefined, label: string) => {
+      const ms = whenMs(value);
+      return value && ms !== null ? ` [${label} ${value}, ${ms < Date.now() ? "overdue" : relative(ms)}]` : "";
+    };
+    const soonest = <T extends { due?: string }>(items: T[]) => [...items].sort((x, y) => (whenMs(x.due) ?? Infinity) - (whenMs(y.due) ?? Infinity));
     console.log(`held: ${s.held.length}`);
     const kinds = [...new Set(s.held.map((h) => h.kind ?? "unsorted"))];
     for (const kind of kinds) {
-      const group = s.held.filter((h) => (h.kind ?? "unsorted") === kind);
+      const group = soonest(s.held.filter((h) => (h.kind ?? "unsorted") === kind));
       if (kinds.length > 1 || kind !== "unsorted") console.log(`  ${kind} (${group.length}):`);
-      for (const h of group) console.log(`  - ${rel(h.dir, root)} (${h.company} — ${h.role}): ${h.reason || "no reason recorded"}${h.waitsOn ? ` [waits on ${h.waitsOn}]` : ""}`);
+      for (const h of group) console.log(`  - ${rel(h.dir, root)} (${h.company} — ${h.role}): ${h.reason || "no reason recorded"}${h.waitsOn ? ` [waits on ${h.waitsOn}]` : ""}${clock(h.due, "due")}${clock(h.closes, "posting closes")}`);
     }
     if (s.pendingSteps.length) console.log(`sent, with a step pending: ${s.pendingSteps.length}`);
-    for (const p of s.pendingSteps) console.log(`  - ${rel(p.dir, root)} (${p.company} — ${p.role}): ${p.pending}`);
+    for (const p of soonest(s.pendingSteps)) console.log(`  - ${rel(p.dir, root)} (${p.company} — ${p.role}): ${p.pending}${clock(p.due, "due")}`);
     console.log(`queue: ${s.queueOpen} open, ${s.queueStale} stale`);
     console.log(`follow-ups due: ${s.followupsDue.length}`);
     for (const f of s.followupsDue) console.log(`  - ${rel(f.dir, root)} (${f.company} — ${f.role}) due ${f.followUp}`);

@@ -49,6 +49,7 @@ const command: Command = {
       perWeek,
       held: snapshot.held.map((h) => ({ ...h, dir: rel(h.dir, root) })),
       followupsDue: snapshot.followupsDue.map((f) => ({ ...f, dir: rel(f.dir, root) })),
+      interviews: snapshot.interviews.map((i) => ({ ...i, dir: rel(i.dir, root) })),
       queueOpen: snapshot.queueOpen,
       queueStale: snapshot.queueStale,
       staleDays: cfg.stale_queue_days,

@@ -12,6 +12,8 @@ export type PipelineConfig = {
   guide_research_days: number;
   /** `run start` treats a run log written to within this many minutes as another activation still at work. */
   run_active_minutes: number;
+  /** A queued posting whose stated close date is within this many days is suggested ahead of the rest. */
+  closing_soon_days: number;
   /** What `build-resumes` and `tailor` report a resume as falling below; a floor, not a judgment of the writing. */
   resume_floor: { bullets_per_entry: number; bullets_total: number; bullet_words_min: number; bullet_words_max: number };
   score: {
@@ -30,6 +32,7 @@ const DEFAULTS: PipelineConfig = {
   hours_per_year: 2080,
   guide_research_days: 90,
   run_active_minutes: 15,
+  closing_soon_days: 7,
   resume_floor: { bullets_per_entry: 1, bullets_total: 4, bullet_words_min: 4, bullet_words_max: 45 },
   score: {
     weights: { must_haves: 35, pay_ok: 10, arrangement_ok: 10, location_ok: 10, seniority: 20, preferred: 15 },

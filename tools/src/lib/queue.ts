@@ -14,6 +14,8 @@ export type QueueItem = {
   score?: number; outcome?: string; note?: string; application?: string; posted?: string; pick?: boolean;
   /** The catalog id of the answer or constraint that ruled the posting out, so a changed answer finds it. */
   rule?: string;
+  /** The last day the posting accepts applications (YYYY-MM-DD), when it states one. */
+  closes?: string;
 };
 type QueueDoc = { type: "queue"; person: string; items: QueueItem[] };
 
@@ -78,6 +80,14 @@ export function updateFor(person: string, record: Pick<Record_, "url" | "source"
 export function syncQueue(person: string, root = repoRoot(), apps: Application[] = listApplications(person, root)): number {
   const { items } = loadQueue(person, root);
   let closed = 0;
+  // A posting whose own close date has passed accepts no more applications: closed as skipped, with the date as the reason.
+  const todayStr = today();
+  for (const [i, item] of items.entries()) {
+    if (item.status === "queued" && item.closes && item.closes < todayStr) {
+      items[i] = { ...item, status: "done", outcome: "skipped", note: `close date ${item.closes} passed` };
+      closed++;
+    }
+  }
   for (const app of apps) {
     const r = app.record;
     if (!r || r.status === "drafted") continue;
@@ -96,12 +106,15 @@ const daysSince = (date: string) => Math.floor((Date.now() - Date.parse(`${date}
 
 /**
  * The open items in a suggested order, each with why it is there: work already in progress, then the person's own
- * picks and priority employers, then the rest; fresh before stale; higher scores, then newer postings, first.
- * The order is a default: the agent may take any item when it has a reason.
+ * picks and priority employers, then the rest; within each, postings about to close first (soonest first), then fresh
+ * before stale; higher scores, then newer postings, first. The order is a default: the agent may take any item when it
+ * has a reason.
  */
 export function rankQueue(person: string, root = repoRoot()): Ranked[] {
   const { items } = loadQueue(person, root);
-  const staleDays = loadPipelineConfig(root).stale_queue_days;
+  const cfg = loadPipelineConfig(root);
+  const staleDays = cfg.stale_queue_days;
+  const todayStr = today();
   const ranked = items.filter((i) => i.status !== "done").map((item) => {
     const why: string[] = [];
     if (item.status === "in-progress") why.push("in progress");
@@ -113,10 +126,14 @@ export function rankQueue(person: string, root = repoRoot()): Ranked[] {
     if (item.score !== undefined) why.push(`score ${item.score}`);
     why.push(item.posted ? `posted ${item.posted}` : `found ${item.found}`);
     if (stale) why.push("stale");
+    // Days until the posting stops accepting applications; only a close date within reach changes the order.
+    const toClose = item.closes ? Math.round((Date.parse(`${item.closes}T00:00:00`) - Date.parse(`${todayStr}T00:00:00`)) / 86400000) : undefined;
+    const closing = toClose !== undefined && toClose >= 0 && toClose <= cfg.closing_soon_days ? toClose : undefined;
+    if (item.closes) why.push(closing === undefined ? `closes ${item.closes}` : `closes ${item.closes} (${closing === 0 ? "today" : `in ${closing} day${closing === 1 ? "" : "s"}`})`);
     const tier = item.status === "in-progress" ? 0 : item.pick || priority ? 1 : 2;
-    return { item, why, tier, stale, age };
+    return { item, why, tier, stale, age, closing };
   });
-  ranked.sort((a, b) => a.tier - b.tier || Number(a.stale) - Number(b.stale) || (b.item.score ?? -1) - (a.item.score ?? -1) || a.age - b.age);
+  ranked.sort((a, b) => a.tier - b.tier || (a.closing ?? Infinity) - (b.closing ?? Infinity) || Number(a.stale) - Number(b.stale) || (b.item.score ?? -1) - (a.item.score ?? -1) || a.age - b.age);
   return ranked.map(({ item, why }) => ({ item, why }));
 }
 
