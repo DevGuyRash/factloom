@@ -77,7 +77,7 @@ A person's profile may carry a standing instruction, in their own words, on how 
 
 - Run `./resumes check` after edits and fix what it reports; the pre-commit hook and CI run it too.
 - `./resumes setup` prepares a checkout (git hooks including the privacy guard, diff drivers for Word and PDF files, the engine remote); `./resumes doctor` reports what is missing. LibreOffice adds PDF output.
-- `./resumes update` brings in the newest engine, and lists generated resumes that render differently afterwards so they can be rebuilt and reviewed. Uncommitted records under `people/` and `custom/` are set aside for the merge and put back after it; uncommitted changes to engine files stop it, and so does an activation at work with uncommitted records.
+- `./resumes update` brings in the newest engine, and lists generated resumes that render differently afterwards so they can be rebuilt and reviewed. Records under `people/` and `custom/` stay where they are, modified or not, and staged ones are unstaged for the merge and staged again after it; uncommitted changes to engine files stop it, and so do records staged while an activation is at work (it is probably mid-commit).
 - When a person has `resumes/source/`, change resumes there and rebuild rather than editing the generated files.
 - Commit as records change (every few outcomes in a long run), with messages describing what changed, and push at the end of a session or activation, and at least daily in a run that lasts days.
 
