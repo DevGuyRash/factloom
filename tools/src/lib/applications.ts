@@ -1,14 +1,16 @@
 import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { peek, readDoc } from "./frontmatter.ts";
-import { personDir, repoRoot, today, walkMarkdown } from "./repo.ts";
-import { APPLICATION_DIR, FILE_NAMES, type ApplicationStatus } from "./schema.ts";
+import { peek, readDoc, writeDoc } from "./frontmatter.ts";
+import { appendEvent } from "./application-history.ts";
+import { personDir, repoRoot, stamp, today, walkMarkdown } from "./repo.ts";
+import { APPLICATION_DIR, FILE_NAMES, type ApplicationStatus, type ApplicationDetails, type ApplicationEvent } from "./schema.ts";
 import { normalizeCompany, normalizeUrl, similarity, slugify } from "./text.ts";
 import { renderTemplate } from "./templates.ts";
 
-export type Record_ = {
+export type Record_ = ApplicationDetails & {
   type: "application"; person: string; company: string; role: string; status: ApplicationStatus; updated: string;
   url?: string; source?: string; site?: string; applied?: string; resume?: string; cover_letter?: string;
+  events?: ApplicationEvent[]; custom_statuses?: string[];
   requisition?: string; score?: number; follow_up?: string; confirmation?: string; [k: string]: unknown;
 };
 /** One application directory. `recordError` says why a record.md that is there could not be read. */
@@ -150,7 +152,7 @@ export function describeApplication(app: Application): string {
   return parts.join("; ");
 }
 
-export type NewApplication = {
+export type NewApplication = ApplicationDetails & {
   company: string; role: string; url?: string; source?: string; site?: string; requisition?: string; date?: string; status?: ApplicationStatus;
   /** The posting as captured: its full text, and the details `pay` and screening read. */
   description?: string; posted?: string; location?: string; arrangement?: string; pay_min?: number; pay_max?: number; pay_period?: string;
@@ -167,8 +169,18 @@ export function createApplication(person: string, job: NewApplication, root = re
   for (let n = 2; existsSync(dir) && opts.distinct; n++) dir = join(applicationsDir(person, root), `${name}-${n}`);
   if (existsSync(dir)) throw new Error(`${dir} already exists`);
   mkdirSync(dir, { recursive: true });
-  const ctx = { person, date, status: job.status ?? "drafted", ...job };
+  const status = job.status ?? "drafted";
+  const events = [{ kind: "created", on: date, status, recorded_at: stamp() }];
+  const ctx = { person, date, status, ...job, events };
   writeFileSync(join(dir, FILE_NAMES.record), renderTemplate("application-record", ctx, person, root));
+  const recordPath = join(dir, FILE_NAMES.record);
+  const { data, body } = readDoc<Record_>(recordPath);
+  let changed = false;
+  for (const key of ["address_of_record", "alternate_location", "contact", "contact_method", "date_contacted"] as const) {
+    if (job[key] !== undefined && JSON.stringify(data[key]) !== JSON.stringify(job[key])) { Object.assign(data, { [key]: job[key] }); changed = true; }
+  }
+  if (!data.events) { appendEvent(data, { kind: "created", on: date, status: data.status }); changed = true; }
+  if (changed) writeDoc(recordPath, data, body);
   writeFileSync(join(dir, FILE_NAMES.posting), renderTemplate("posting", ctx, person, root));
   return listApplications(person, root).find((a) => a.dir === dir)!;
 }

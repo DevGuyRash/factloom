@@ -2,7 +2,7 @@
 // fields valid, `person` matching its directory, and date-shaped fields parsing as dates. All
 // read from schema.ts so this stays in sync with the rest of the tools automatically.
 import { sep } from "node:path";
-import { DATE, DOC_TYPES, ENUMS, isDocType } from "../lib/schema.ts";
+import { APPLICATION_LABEL, DATE, DOC_TYPES, ENUMS, isDocType } from "../lib/schema.ts";
 import type { CheckContext, Rule } from "./types.ts";
 
 function isEmpty(v: unknown): boolean {
@@ -37,6 +37,7 @@ const rule: Rule = {
         if (e.type !== t) continue;
         const val = doc.data[e.field];
         if (isEmpty(val)) continue;
+        if (t === "application" && e.field === "status" && typeof val === "string" && APPLICATION_LABEL.test(val) && Array.isArray(doc.data.custom_statuses) && doc.data.custom_statuses.includes(val)) continue;
         if (!(e.values as readonly string[]).includes(String(val))) {
           errors.push(`${doc.rel}: ${e.field} '${String(val)}' is not one of [${[...e.values].sort().join(", ")}]`);
         }

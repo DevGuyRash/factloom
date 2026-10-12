@@ -38,10 +38,37 @@ export const APPLY = ["enabled", "disabled"] as const;
 export const GUIDE_STATUS = ["ready", "needs-review"] as const;
 export const APPLICATION_STATUS = [
   "drafted", "blocked", "submitted", "skipped", "withdrawn", "rejected", "interviewing", "offer", "closed",
+  "hired", "started", "not-hired", "work-not-available",
 ] as const;
-export type ApplicationStatus = (typeof APPLICATION_STATUS)[number];
+/** Built-ins remain discoverable; explicit custom statuses use a lowercase hyphenated slug. */
+export type ApplicationStatus = (typeof APPLICATION_STATUS)[number] | (string & {});
+export const APPLICATION_LABEL = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+/** Outcomes that close application reminders while retaining their pending fields and history. */
+export const TERMINAL_APPLICATION_STATUS: readonly ApplicationStatus[] = ["rejected", "not-hired", "work-not-available", "withdrawn", "closed", "hired", "started", "skipped"];
+export const OUTCOME_STATUS = ["rejected", "interviewing", "offer", "withdrawn", "closed", "hired", "started", "not-hired", "work-not-available"] as const;
+export const APPLICATION_LOCATION_FIELDS = ["country", "address", "zip", "city", "state"] as const;
+export const APPLICATION_CONTACT_FIELDS = ["title", "first", "last", "phone", "email", "website"] as const;
+export type EmployerLocation = Partial<Record<(typeof APPLICATION_LOCATION_FIELDS)[number], string>>;
+export type EmployerContact = Partial<Record<(typeof APPLICATION_CONTACT_FIELDS)[number], string>>;
+/** Optional additions to existing application records. Missing/null values mean unknown, never inferred. */
+export type ApplicationDetails = {
+  address_of_record?: EmployerLocation;
+  alternate_location?: EmployerLocation;
+  contact_method?: string;
+  contact?: EmployerContact;
+  date_contacted?: string;
+  hired?: string;
+  start_date?: string;
+  started?: string;
+};
+export const APPLICATION_EVENT_KINDS = ["created", "details-updated", "contacted", "submitted", "held", "skipped", "reopened", "pending-resolved", "interview-scheduled", "interview-rescheduled", "interview-cancelled", "interview-attended", "hired", "start-scheduled", "started", "note"] as const;
+/** on is when it happened; recorded_at is when we learned/recorded it. at is an interview's scheduled time. */
+export type ApplicationEvent = {
+  kind: string; on: string; recorded_at: string; status?: ApplicationStatus; note?: string;
+  at?: string; replaces?: string; round?: string; contact_method?: string; start_date?: string;
+};
 /** Statuses that mean the employer answered, and those that mean an interview happened. */
-export const RESPONDED_STATUS: readonly ApplicationStatus[] = ["rejected", "interviewing", "offer", "closed"];
+export const RESPONDED_STATUS: readonly ApplicationStatus[] = ["rejected", "interviewing", "offer", "closed", "hired", "started", "not-hired", "work-not-available"];
 export const INTERVIEW_STATUS: readonly ApplicationStatus[] = ["interviewing", "offer"];
 export const QUEUE_STATUS = ["queued", "in-progress", "done"] as const;
 export const POLICIES = ["auto", "confirm", "ask", "person"] as const;

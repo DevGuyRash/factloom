@@ -55,8 +55,8 @@ export function enqueue(person: string, item: Omit<QueueItem, "found" | "status"
   return { added: true, item: next, ...(match ? { match } : {}) };
 }
 
-const SENT = new Set(["submitted", "rejected", "interviewing", "offer", "closed", "withdrawn"]);
-const outcomeOf = (status: string) => (status === "blocked" ? "held" : SENT.has(status) ? "submitted" : status);
+const SENT = new Set(["submitted", "rejected", "interviewing", "offer", "closed", "withdrawn", "hired", "started", "not-hired"]);
+const outcomeOf = (r: Record_) => (r.status === "blocked" ? "held" : r.applied || SENT.has(r.status) ? "submitted" : r.status);
 
 /** The open queue items for one application record: those whose link is the record's employer link or its job-board link. */
 function itemsFor(items: QueueItem[], record: Pick<Record_, "url" | "source">): number[] {
@@ -92,7 +92,7 @@ export function syncQueue(person: string, root = repoRoot(), apps: Application[]
     const r = app.record;
     if (!r || r.status === "drafted") continue;
     for (const i of itemsFor(items, r)) {
-      items[i] = { ...items[i], status: "done", outcome: outcomeOf(r.status), application: app.name };
+      items[i] = { ...items[i], status: "done", outcome: outcomeOf(r), application: app.name };
       closed++;
     }
   }

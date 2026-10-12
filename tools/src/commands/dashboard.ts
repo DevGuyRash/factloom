@@ -1,6 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { flag, parseArgs } from "../lib/args.ts";
+import { calendarDate } from "../lib/application-history.ts";
 import { listApplications } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
@@ -34,10 +35,15 @@ const command: Command = {
     const cfg = loadPipelineConfig(root);
 
     const perWeekMap = new Map<string, number>();
+    let unknownAppliedDates = 0;
     // Applications sent per week: drafted, held, and skipped records went nowhere.
     for (const app of listApplications(person, root)) {
       if (!app.record || !wasSent(app.record)) continue;
-      const d = typeof app.record.applied === "string" ? app.record.applied : app.name.slice(0, 10);
+      // A record's directory dates its creation, not its submission. Keep undated legacy outcomes
+      // in the totals without assigning them to an invented week.
+      const submitted = Array.isArray(app.record.events) ? app.record.events.find((e) => e?.kind === "submitted" && typeof e.on === "string" && calendarDate(e.on.slice(0, 10))) : undefined;
+      const d = typeof app.record.applied === "string" && calendarDate(app.record.applied) ? app.record.applied : submitted?.on.slice(0, 10);
+      if (!d) { unknownAppliedDates++; continue; }
       perWeekMap.set(weekOf(d), (perWeekMap.get(weekOf(d)) ?? 0) + 1);
     }
     const perWeek = [...perWeekMap.entries()].sort(([x], [y]) => x.localeCompare(y)).map(([week, count]) => ({ week, count }));
@@ -47,6 +53,7 @@ const command: Command = {
       updated: today(),
       statusCounts: snapshot.statusCounts,
       perWeek,
+      unknownAppliedDates,
       held: snapshot.held.map((h) => ({ ...h, dir: rel(h.dir, root) })),
       followupsDue: snapshot.followupsDue.map((f) => ({ ...f, dir: rel(f.dir, root) })),
       interviews: snapshot.interviews.map((i) => ({ ...i, dir: rel(i.dir, root) })),

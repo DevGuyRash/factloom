@@ -133,11 +133,11 @@ test("a recent interview with no thank-you drafted is flagged until one is draft
   await printed(outcomeCommand.run, [old, "interviewing", "--at", inHours(-24 * 9), ...p]);
   let seen = await printed(statusCommand.run, p);
   assert.match(seen.text, /interviews: 0 coming up, 1 in the last week/);
-  assert.match(seen.text, /\(30 hours ago; no thank-you drafted\).*Acme/);
+  assert.match(seen.text, /\(30 hours ago; attendance unconfirmed; no thank-you drafted\).*Acme/);
   assert.doesNotMatch(seen.text, /Oldco/, "nine days ago is past the week status keeps");
   await printed(draftCommand.run, ["thank-you", join(fx.root, dir), ...p]);
   seen = await printed(statusCommand.run, p);
-  assert.match(seen.text, /\(30 hours ago\)/);
+  assert.match(seen.text, /\(30 hours ago; attendance unconfirmed\)/);
   assert.doesNotMatch(seen.text, /no thank-you drafted/);
   assert.ok(existsSync(join(fx.root, dir, "thank-you.md")));
 }));

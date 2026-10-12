@@ -11,7 +11,13 @@ role: {{yaml role}}
 resume:
 cover_letter: no
 updated: {{date}}
----
+{{#if address_of_record}}address_of_record: {{yaml address_of_record}}
+{{/if}}{{#if alternate_location}}alternate_location: {{yaml alternate_location}}
+{{/if}}{{#if contact}}contact: {{yaml contact}}
+{{/if}}{{#if contact_method}}contact_method: {{yaml contact_method}}
+{{/if}}{{#if date_contacted}}date_contacted: {{date_contacted}}
+{{/if}}{{#if events}}events: {{yaml events}}
+{{/if}}---
 
 # {{company}} — {{role}}
 
@@ -20,3 +26,5 @@ updated: {{date}}
 <!-- One line per question: the question, the answer, and its source (catalog id, profile, derived: basis, or person). Sensitive answers by id only. -->
 
 ## Notes
+
+<!-- Employer is company; job title is role. app details records verified employer addresses/contact details; app event and outcome append dated milestones. Missing fields stay unknown. Applicant home addresses and private contact details stay in *.local.*. -->

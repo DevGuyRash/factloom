@@ -3,6 +3,7 @@
 // letter, etc. — see cover-letter-lint.ts for the letter-specific checks).
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, sep } from "node:path";
+import { applicationRecordErrors } from "../lib/application-history.ts";
 import { isApplicationDirName } from "../lib/applications.ts";
 import type { CheckContext, Rule } from "./types.ts";
 
@@ -10,6 +11,9 @@ const rule: Rule = {
   name: "applications",
   run(ctx: CheckContext) {
     const errors: string[] = [];
+    for (const doc of ctx.byType("application")) {
+      for (const error of applicationRecordErrors(doc.data!)) errors.push(`${doc.rel}: ${error}`);
+    }
     const peopleDir = join(ctx.root, "people");
     if (!existsSync(peopleDir)) return { errors, warnings: [] };
     for (const person of readdirSync(peopleDir)) {
