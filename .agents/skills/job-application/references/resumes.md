@@ -12,18 +12,18 @@ Change a resume by editing `facts.yaml` or a variant file, then rebuild. Never h
 
 1. Bring in their existing resumes ([intake](intake.md)), or, when they have none or theirs is not working, build one with the resume-builder skill (`./resumes import` reads `drop/` in any format; reading, reconciling versions, and writing `facts.yaml` are yours).
 2. `facts.yaml` keeps each claim as the person wrote it; any number or claim you reword, merge, or cannot trace goes in that bullet's `confirm` list.
-3. `./resumes variant new <name> --person <slug> [--theme <theme>]` writes a structure listing every fact and builds it; trim and reorder the structure for that kind of role, then `./resumes build-resumes --person <slug> --variant <name>`. Make further variants with `--from <variant>` and change what differs.
-4. Compare the built resume with the original line by line, show it to the person, and settle the guide's `review` items before using it.
+3. `./resumes variant new <name> --person <slug> --no-build [--theme <theme>]` creates a guide and structure listing every fact; trim and reorder it for that kind of role. Before revising existing sources, add a manual pending-approval item to every affected guide. Build review copies with `./resumes build-resumes --person <slug> --variant <name> --out <review-dir>` before replacing approved active files; these copies do not regenerate guide flags. Make another variant with `--from <variant>` only when the target needs a different argument or evidence selection.
+4. Compare the built resume with the sources and follow the resume-builder [review](../../resume-builder/references/review.md), including extraction and visual checks for each delivered format. Show material changes and unresolved claims to the person; settle the guide's `review` before use. Bullet flags do not cover headlines, titles, skills, or paragraphs: unresolved claims there need manual guide review items.
 5. Research the market for each variant and write its guide (below).
 
 ## Writing and refreshing a guide
 
 A guide says what its resume is for: the roles to apply to with it, the ones to leave to a sibling variant, and how to find them. Write it from current research, not from the resume alone, when a variant is new, when `./resumes status` lists it as needing research (its `researched` date is missing or older than the pipeline's `guide_research_days`), or when the person changes direction.
 
-1. Research the market for what this variant shows the person can do: read a broad sample of recent postings (twenty or more, across the boards the person uses and employers' own career pages) and current pay data for the person's locations. Keep the date and source of everything you use.
+1. Follow the resume-builder [research](../../resume-builder/references/research.md): reuse current findings, inspect distinct employers' actual requirements, map them to evidence, and cover differences that could change the target or writing. Record source dates, coverage, limits, and material gaps. Research pay when it affects the target or the person asks; do not repeat a fixed posting quota for every sibling variant.
 2. Decide the targets from that research: the titles employers use for this work today, newer titles included; the seniority the person's facts support; the industries and kinds of employers hiring; and the qualifications postings commonly require. Keep only targets the person's facts support, and list stretch roles apart for the person to approve.
-3. Write the guide: `headline`, `use_for` (role families, best fits first), `avoid_for` (naming the sibling variant to use instead), `keywords` (terms postings use that the person's facts truthfully support), the "Target roles" section (titles, seniority, industries, pay ranges by location), and dated "Market notes" with their sources. Set `researched` to today. When the person accepts only some engagements (contract only, remote only), offer to state that in the resume's headline, since quick-apply flows send the resume with no field for it.
-4. Save searches that find these roles: one for each target title on each job site the person uses, sorted newest first (`./resumes searches add <id> --url <url> --variant <variant> --site <site> --query <title>`), so the rotation in SKILL.md's "Searching" runs them. Remove searches for titles the guide no longer targets from the searches file.
+3. Write the guide: `headline`, `use_for` (role families, best fits first), `avoid_for` (naming the sibling variant to use instead), `keywords` (terms supported by the person's facts), "Target roles" (titles, seniority, industries, and relevant sourced pay), and dated "Market notes" with the evidence mapping and sources. Set `researched` to the date findings were actually checked; disclose limited coverage. Consider whether an engagement constraint belongs in the headline or guide for the intended audience.
+4. When job-search setup is in scope, save searches for the supported target titles on the person's job sites, sorted newest first (`./resumes searches add <id> --url <url> --variant <variant> --site <site> --query <title>`), and remove obsolete targets. Guide research by itself does not start searches, applications, or schedules, or change `apply`.
 5. Show the person the targets and the stretch roles; anything they question goes in the guide's `review`.
 
 Research shapes the targeting only. It never adds a claim to a resume: a qualification the market wants that the person's facts do not show is a gap to tell them about, never a keyword to add.
@@ -31,8 +31,8 @@ Research shapes the targeting only. It never adds a claim to a resume: a qualifi
 ## Choosing a theme
 
 - `./resumes themes preview --person <slug> --variant <name> --png` renders the variant in every theme for the person to choose from, with page counts.
-- Upload resumes to job portals in a theme marked `ats: safe`. A theme marked `ats: caution` (the sidebar layout) is for resumes a person reads first: email, referrals, networking, print. `./resumes build-resumes --theme <name> --out <dir>` renders a one-off copy in another theme without changing the variant.
-- When a variant must stay within a page count, set `pages: N` in it; the build tightens spacing, then type (never below 9 pt), then margins, until it fits, and says what it changed.
+- Use a theme marked `ats: safe` as the starting point for portals, then verify the delivered file's text and layout; the label is not certification by an employer's parser. A theme marked `ats: caution` (the sidebar layout) is for a person-first context. `./resumes build-resumes --theme <name> --out <dir>` renders a one-off copy without changing the variant.
+- When a variant must stay within a page count, set `pages: N`; the build tightens spacing, type (never below 9 pt), and margins, and reports changes. Prefer better content selection over unreadable compression; the floor is not the target.
 - `./resumes themes new <name> --from <theme>` starts a theme in `custom/` (or the person's own with `--person`); `./resumes themes check` reports unreadable colors and fonts this machine lacks.
 
 ## Building
@@ -43,9 +43,13 @@ Research shapes the targeting only. It never adds a claim to a resume: a qualifi
 
 After each variant builds into its active directory, its `guide.md` `review` and `status` fields are rewritten from the `confirm` phrases of the bullets that variant actually uses (`status: needs-review` when any remain, `ready` otherwise), keeping review items the person wrote by hand; `generated: true` records that the files come from `resumes/source/`, and `fitted` records the page-fitting step a variant with `pages` needed, so checks reproduce the file without LibreOffice. Edit `confirm` lists in `facts.yaml`, not the guide, and rebuild.
 
+Keep unresolved non-bullet claims and pending approval as manual `review` items. `ready` means those recorded flags are clear; it does not prove factual truth, editorial approval, visual quality, or actual ATS parsing.
+
 ## Keywords
 
 `resumes keywords <application-dir> [--variant <name>]` reads that application's posting snapshot and a resume variant (`--variant`, else the record's `resume:` field, else the best match, with every variant ranked in the report to help choose), matches both against the person's facts through the lexicon (`shared/lexicon.yaml`, plus `custom/lexicon.yaml` for terms this repository adds), and writes `keywords.md` (`type: keyword-report`) listing terms matched in both, terms true of the person but missing from the resume, and posting terms with no evidence anywhere in their facts. Add new terms to `custom/lexicon.yaml`, not to the command.
+
+This is a lexical diagnostic, not a hiring score. Read the requirements and evidence in context: preserve useful supported terms and skills, distinguish required from preferred, and address visibility gaps without adding unsupported claims or maximizing term counts.
 
 ## Tailoring
 
