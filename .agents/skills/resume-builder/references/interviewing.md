@@ -1,35 +1,32 @@
 # Interviewing for the raw material
 
-People undersell what they did and forget most of it. The interview's job is to recover concrete incidents with their scale and consequences, in the person's own words, before anything is drafted.
+Recover specific work, the person's contribution, and its consequences. Start with the profile, facts, evidence, stories, imported resumes, and prior confirmations already available. Ask only for missing material that could change the target, a claim, or its placement; useful drafting can proceed while other evidence is missing.
 
 ## Start from what exists
 
-Ask first for anything that records their work: old resumes (even years old), a LinkedIn profile or data export, performance reviews, thank-you messages, job postings they were hired against, certificates, portfolios, code repositories, published work, reference letters. Bring in files as [intake](../../job-application/references/intake.md) describes. These jog memory and become sources in `evidence.md`.
+Use records the person has supplied or authorized: resumes, LinkedIn, reviews, portfolios, repositories, certificates, published work, and relevant feedback. Import files through [intake](../../job-application/references/intake.md). A repository shows an artifact; establish authorship, personal contribution, dates, deployment status, and users before turning it into an employment or outcome claim. Keep employer and customer confidential details out of public artifacts and public engine changes.
 
-Ask for something they wrote themselves (an email, a post, a message they are proud of), so cover letters and summaries can sound like them.
+Reuse available writing samples for their voice. If voice matters and no sample exists, ask for one without making it a prerequisite for a factual draft.
 
-## The timeline
+## Timeline and contribution
 
-Every role, newest first: employer, official title, dates (month and year), place, and whether it was full-time, part-time, contract, freelance, or unpaid. Include what resumes often leave out when it shows ability: volunteering, a family business, military service, caregiving, school projects, side work. A break is an honest dated entry when it helps the story, never something to hide or disguise.
+Establish each relevant role's employer, official title, dates at the precision known, and employment type. Record contract, freelance, volunteer, and self-directed work as such. Clarify a functional title separately from the official one. Keep gaps honest; include a labeled explanation only when it helps and the person wants it, without inventing activity or requesting private reasons.
 
-## Each role
+For important roles, let them describe the problem and a concrete incident before probing. Useful angles include what a normal or difficult week involved, why someone relied on them, what they inherited, what they changed, and what remained when they left. Follow the answer rather than completing a questionnaire.
 
-Let them tell it before you probe: a normal week, a hard week, and the problem they were brought in to solve. Then change the angle: what their manager, a demanding customer, or their successor would say they were known for, and what they left behind compared with what they inherited. Working backward from their last day often recovers what forward recall misses.
+- What did you personally decide, build, deliver, explain, or improve? Who else contributed?
+- Who used it, and what could they do afterwards? Was it a proposal, prototype, pilot, live deployment, or ongoing responsibility?
+- What made it difficult: scale, constraints, competing needs, reliability, cost, timing, or stakeholders?
+- What evidence shows the result: a measurement, adoption, delivery, feedback, a before-and-after, or a concrete capability?
 
-Then mine for incidents, one question at a time, following the answer rather than a script. Questions that tend to work:
+For customer-facing or go-to-market work, recover discovery, solution design, demonstrations, sales support, training, adoption, and feedback where they actually occurred. Separate supporting a commercial process from owning the deal, account, strategy, launch, or revenue. Preserve technical depth alongside the business reason for doing the work.
 
-- What did you accomplish there that someone else in the job would not have?
-- What went wrong, and what did you do about it?
-- What goals did you start with, and did you beat them?
-- What did people come to you for? What broke while you were away?
-- What were you thanked, promoted, chosen, or trusted for?
-- What do you know about this work that newcomers get wrong, and what shows it?
+## Numbers and sources
 
-For each incident, probe for what makes it specific: the scale in the field's own units (people, money, volume, frequency, time, errors, area, patients, students), the tools, the constraints, and what changed because of it, for whom. Ask what they decided along the way, what they weighed, and what they guarded against: the reasoning behind a choice shows judgment that a list of tasks cannot. Ask who used the result and what changed for them, which is evidence even without a number. And ask who else worked on it and what was theirs, so the resume claims the person's share. Accept ranges and approximations, and note whether a figure came from a document or memory. Never suggest a figure: "unknown" and "I can't confirm that" are good answers, and a bullet can be specific without a number.
+Ask for figures only where they would strengthen a relevant claim. Record units, period, baseline, how measured, and the person's share. Label memory estimates and ranges as such; never turn them into precise measured gains. Unknown is a valid answer. A concrete deliverable or observed user benefit can be strong evidence without a metric. Intended benefits remain intended until observed.
 
-## Pace and record
+Record claims in `facts.yaml` with the source and confirmation in `evidence.md`; useful incidents also go in `stories.md`. Keep unresolved or conflicting phrases in `confirm`, and unresolved non-bullet claims in the guide's manual `review`. Prior approval carries forward unless new evidence conflicts with it or the claim changes.
 
-- One question at a time; adapt to a terse or a talkative person; after two or three probes that turn up nothing, move on.
-- Write what they say into `facts.yaml` and `evidence.md` as you go, in their words, with the source of each claim; incidents worth telling in letters and interviews go into `stories.md` too.
-- Read drafted bullets back to them as you write them, and close by confirming every number, title, and date.
-- Contact details beyond the profile, addresses, and ID numbers go only into git-ignored `*.local.*` files.
+## Keep the burden small
+
+Offer one focused question at a time in a live interview, or a short prioritized batch for asynchronous work. Stop probing an unproductive incident and use the supported material. Show proposed wording and the exact uncertainty when asking for confirmation; group final checks instead of repeatedly asking the person to approve the same facts. Contact details beyond the profile and private records belong only in git-ignored `*.local.*` files.
