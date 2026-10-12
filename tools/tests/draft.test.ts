@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import draftCmd from "../src/commands/draft.ts";
 import { createCompany } from "../src/lib/companies.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 const STORIES = `---\ntype: stories\nperson: pat-lee\n---\n\n### automating-own-workflow\n\n- Competencies: automation, ownership\n- Situation: Acme's AP work spans Jira and Oracle Fusion.\n- Action: Built a Rust/WebAssembly rule engine to automate it.\n- Result: The team adopted it.\n\n### large-stakeholder-programs\n\n- Competencies: stakeholder management\n- Situation: A statewide program spanned 200+ districts.\n- Action: Served as primary contact.\n- Result: Reporting stayed coordinated.\n`;
 
@@ -18,6 +18,7 @@ function fixtureWithApplication() {
     "people/pat-lee/applications/2026-09-20_acme-corp_ai-engineer/record.md": RECORD,
     "people/pat-lee/applications/2026-09-20_acme-corp_ai-engineer/posting.md": POSTING,
   });
+  verifyFixtureApplication(fx.root, "2026-09-20_acme-corp_ai-engineer");
   return { fx, dir: join(fx.root, "people/pat-lee/applications/2026-09-20_acme-corp_ai-engineer") };
 }
 

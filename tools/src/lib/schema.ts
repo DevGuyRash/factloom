@@ -109,3 +109,24 @@ export const FILE_NAMES = {
   sessionAnswers: "session.local.md",
   sessionCredentials: "accounts.local.md",
 } as const;
+
+/** Scam screening is independent of hiring status. Automated findings are review requests, not fraud verdicts. */
+export const SCAM_STATES = ["unreviewed", "needs-review", "cleared", "confirmed-scam"] as const;
+export type ScamState = (typeof SCAM_STATES)[number];
+export type ScamFinding = {
+  id: string; code: string; reason: string; source: string; observed_at: string;
+  disposition: "open" | "false-positive" | "confirmed-scam";
+};
+export type ScamAssessment = {
+  fingerprint: string; context: "posting" | "email"; source: string; observed_at: string;
+  claimed_sender?: string; sender_domain?: string; reply_to_domain?: string; link_domains: string[]; finding_ids: string[];
+};
+export type ScamVerification = { application_url?: string; official_url: string; trusted_domains: string[]; verified_at: string; reason: string };
+export type ScamResolution = {
+  decision: "cleared" | "false-positive" | "confirmed-scam"; reason: string; source: string; recorded_at: string; finding_ids: string[];
+  verification?: ScamVerification;
+};
+export type ScamReview = {
+  state: ScamState; findings: ScamFinding[]; assessments: ScamAssessment[]; reviews: ScamResolution[];
+  verification?: ScamVerification;
+};

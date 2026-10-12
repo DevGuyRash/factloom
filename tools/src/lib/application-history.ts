@@ -4,6 +4,7 @@ import { flag, has, type Args } from "./args.ts";
 import type { Record_ } from "./applications.ts";
 import { stamp, today } from "./repo.ts";
 import { APPLICATION_CONTACT_FIELDS, APPLICATION_LABEL, APPLICATION_LOCATION_FIELDS, type ApplicationDetails, type ApplicationEvent } from "./schema.ts";
+import { scamReviewErrors } from "./scam.ts";
 import { normalizeAt } from "./when.ts";
 
 export function calendarDate(value: string): boolean {
@@ -58,7 +59,7 @@ export const DETAILS_USAGE = [...APPLICATION_LOCATION_FIELDS.map((f) => `[--${f}
 
 /** Validate optional structured fields without requiring old records to have them. */
 export function applicationRecordErrors(data: Record<string, unknown>): string[] {
-  const errors: string[] = [];
+  const errors: string[] = [...scamReviewErrors(data.scam_review)];
   for (const [key, fields] of [["address_of_record", APPLICATION_LOCATION_FIELDS], ["alternate_location", APPLICATION_LOCATION_FIELDS], ["contact", APPLICATION_CONTACT_FIELDS]] as const) {
     const value = data[key];
     if (value == null) continue;

@@ -5,6 +5,7 @@ import type { Command } from "../lib/command.ts";
 import { findCompany } from "../lib/companies.ts";
 import { peek, readDoc } from "../lib/frontmatter.ts";
 import { personOf, repoRoot, today, walkMarkdown } from "../lib/repo.ts";
+import { requireScamClear } from "../lib/scam.ts";
 import { FILE_NAMES } from "../lib/schema.ts";
 import { matchStories, listStories } from "../lib/stories.ts";
 import { renderTemplate } from "../lib/templates.ts";
@@ -55,6 +56,8 @@ const command: Command = {
     const root = parts.slice(0, parts.lastIndexOf("people")).join(sep) || repoRoot();
     const { record, recordBody, posting, postingBody } = readApplicationDir(dir);
     if (!record) { console.error(`${dirArg}: no application record (expected a type: application file)`); return 1; }
+
+    if (kind === "follow-up" || kind === "thank-you") requireScamClear(record, `Drafting a ${kind}`);
 
     let profile: Record<string, unknown> = {};
     for (const p of walkMarkdown(join(root, "people", person))) {

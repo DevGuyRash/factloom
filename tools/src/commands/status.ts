@@ -28,6 +28,7 @@ const command: Command = {
     const root = repoRoot();
     const s = pendingSnapshot(person, root);
     console.log(`status for ${person}`);
+    for (const r of s.scamReviews) console.log(`SCAM REVIEW ${r.state}: ${rel(r.dir, root)} (${r.company} — ${r.role}): ${r.reasons.join("; ") || "independent verification needed"}`);
     for (const c of s.submitClicked) {
       console.log(`SUBMIT CLICKED, NOT RECORDED: ${rel(c.dir, root)} (${c.company} — ${c.role}) at ${c.at}: check the site or mail for a confirmation and record it with app submit; never send it again`);
     }

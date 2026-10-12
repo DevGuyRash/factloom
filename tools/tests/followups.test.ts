@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import command from "../src/commands/followups.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 function withFixture(files: Record<string, string>, fn: (fx: ReturnType<typeof makeFixture>) => Promise<void> | void) {
   return async () => {
@@ -41,7 +41,9 @@ test(
       "people/pat-lee/applications/2099-01-01_b_role/record.md":
         '---\ntype: application\nperson: pat-lee\ncompany: "B"\nrole: "Role"\nstatus: submitted\napplied: "2099-01-01"\nfollow_up: "2099-01-08"\nupdated: "2099-01-01"\n---\n',
     },
-    async () => {
+    async (fx) => {
+      verifyFixtureApplication(fx.root, "2020-01-01_a_role");
+      verifyFixtureApplication(fx.root, "2099-01-01_b_role");
       const { code, lines } = await captureLog(() => command.run(["--person", "pat-lee"]));
       assert.equal(code, 0);
       assert.ok(lines.some((l) => l.includes("A — Role")));

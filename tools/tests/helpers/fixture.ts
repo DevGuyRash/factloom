@@ -2,6 +2,9 @@
 import { cpSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { findApplication, type Record_ } from "../../src/lib/applications.ts";
+import { readDoc, writeDoc } from "../../src/lib/frontmatter.ts";
+import { hostOf, resolveScam } from "../../src/lib/scam.ts";
 import { fileURLToPath } from "node:url";
 
 export const REAL_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -20,4 +23,14 @@ export function makeFixture(files: Record<string, string> = {}): { root: string;
   write("people/pat-lee/profile.md", "---\ntype: profile\nperson: pat-lee\nname: Pat Lee\nemail: pat@example.com\nphone: (555) 010-0100\nlocation: Phoenix, AZ\nlinks:\n  - https://github.com/example\napply: enabled\n---\n");
   for (const [k, v] of Object.entries(files)) write(k, v);
   return { root, write, cleanup: () => rmSync(root, { recursive: true, force: true }) };
+}
+
+/** Explicit ordinary-workflow fixture setup: these fictional employers have been independently verified.
+ * Scam tests exercise unreviewed/unsafe flows without this helper; this is not a production bypass.
+ */
+export function verifyFixtureApplication(root: string, ref: string): void {
+  const app = findApplication("pat-lee", ref, root);
+  const { data, body } = readDoc<Record_>(app.recordPath!);
+  data.scam_review = resolveScam(data.scam_review, "cleared", "Fictional test employer and application route independently verified", "Fictional official careers fixture", "https://employer.example/careers", data.url ? [hostOf(data.url)!] : [], data.url);
+  writeDoc(app.recordPath!, data, body);
 }

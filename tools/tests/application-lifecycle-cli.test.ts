@@ -22,6 +22,7 @@ function fixture(fn: (fx: ReturnType<typeof makeFixture>, cli: (args: string[], 
 
 test("CLI retains known interaction counts after hired and custom outcomes without inventing applied dates", fixture((fx, cli) => {
   const dir = cli(["app", "new", "--company", "Example Works", "--role", "Analyst"]).trim();
+  cli(["risk", "resolve", dir, "cleared", "--official-url", "https://employer.example/careers", "--trusted-domains", "example.com", "--source", "Fictional independently verified employer fixture", "--reason", "This ordinary-flow test uses a verified employer."]);
   const record = () => JSON.parse(cli(["export", "--format", "json"]))[0];
   cli(["outcome", dir, "interviewing", "--on", "2025-03-01"]);
   const before = cli(["stats"]);
@@ -47,6 +48,7 @@ test("CLI retains known interaction counts after hired and custom outcomes witho
 
 test("CLI suppresses terminal pending reminders while retaining the pending information and event history", fixture((_fx, cli) => {
   const dir = cli(["app", "new", "--company", "Example Works", "--role", "Analyst"]).trim();
+  cli(["risk", "resolve", dir, "cleared", "--official-url", "https://employer.example/careers", "--trusted-domains", "example.com", "--source", "Fictional independently verified employer fixture", "--reason", "This ordinary-flow test uses a verified employer."]);
   cli(["app", "submit", dir, "--no-log"]);
   cli(["app", "hold", dir, "--reason", "Pending assessment", "--due", "2099-03-01", "--no-log"]);
   assert.match(cli(["status"]), /sent, with a step pending: 1/);
@@ -66,6 +68,7 @@ test("CLI missing answers leave record, proof, queue and run log untouched; corr
   const url = "https://example.com/jobs/1";
   cli(["queue", "add", "--url", url, "--company", "Example Works", "--role", "Analyst"]);
   const dir = cli(["app", "new", "--company", "Example Works", "--role", "Analyst", "--url", url]).trim();
+  cli(["risk", "resolve", dir, "cleared", "--official-url", "https://employer.example/careers", "--trusted-domains", "example.com", "--source", "Fictional independently verified employer fixture", "--reason", "This ordinary-flow test uses a verified employer."]);
   const recordPath = join(fx.root, dir, "record.md");
   const queuePath = join(fx.root, "people/pat-lee/queue.md");
   const proof = fx.write("input-proof.txt", "Fictional receipt confirmation");

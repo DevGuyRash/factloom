@@ -85,10 +85,10 @@ test("score says whether a posting clears the minimum, and notes a fit map witho
     (data as Record<string, unknown>).fit = { must_haves_met: 0, must_haves_total: 5, pay_ok: true, arrangement_ok: true, location_ok: true, seniority: "stretch", preferred_met: 0, preferred_total: 2 };
     writeDoc(`${appDir}/record.md`, data, body);
     const out = await capture(() => scoreCommand.run([appDir, "--person", "pat-lee"]));
-    assert.match(out, /: 42 \(meets 0 of 5 must-haves, under 50% from the pipeline default: skip, with that as the reason\)\n {2}points: must-haves 0\/35, pay 10\/10, arrangement 10\/10, location 10\/10, seniority 12\/20, preferred 0\/15$/);
+    assert.match(out, /: 42 \(meets 0 of 5 must-haves, under 50% from the pipeline default: skip, with that as the reason\)\n {2}points: must-haves 0\/35, pay 10\/10, arrangement 10\/10, location 10\/10, seniority 12\/20, preferred 0\/15\neligibility: held for scam review \(needs-review\); fit is not a safety verdict$/);
     // Screening before a record exists writes nothing, and says where the points came from.
     const spec = await capture(() => scoreCommand.run(["--fit", "must_haves=3/4 pay_ok=yes seniority=match", "--person", "pat-lee"]));
-    assert.match(spec, /^87 \(clears the minimum of 60; minimum from the saved answer\)\n {2}points: must-haves 26\/35, pay 10\/10, seniority 20\/20 \(not stated: arrangement, location, preferred\)$/);
+    assert.match(spec, /^87 \(clears the minimum of 60; minimum from the saved answer\)\n {2}points: must-haves 26\/35, pay 10\/10, seniority 20\/20 \(not stated: arrangement, location, preferred\)\neligibility: independently verify the employer and application route before progressing; fit is not a safety verdict$/);
     assert.equal(readdirSync(dir).length, 1);
     // The person's own must-have share, stated with their minimum, replaces the pipeline default.
     writeDoc(`${fx.root}/people/pat-lee/answers.md`, { type: "answers", person: "pat-lee" }, "\n### prefs.min-fit\n- Answer: 60, must-haves 40%\n- Policy: auto\n- Confirmed: 2026-09-01\n");

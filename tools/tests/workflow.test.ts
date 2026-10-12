@@ -9,7 +9,7 @@ import queue from "../src/commands/queue.ts";
 import sitenote from "../src/commands/sitenote.ts";
 import status from "../src/commands/status.ts";
 import { readDoc } from "../src/lib/frontmatter.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 function withFixture(files: Record<string, string>, fn: (fx: ReturnType<typeof makeFixture>) => Promise<void> | void) {
   return async () => {
@@ -58,6 +58,7 @@ test(
     assert.deepEqual([posting.data.location, posting.data.arrangement, posting.data.pay_min, posting.data.pay_max, posting.data.pay_period, posting.data.posted], ["Remote (US)", "remote", 60, 70, "hour", "2026-10-01"]);
     assert.match(posting.body, /Remote, contract, \$60-\$70 an hour\./);
 
+    verifyFixtureApplication(fx.root, dir);
     // A short reference finds the application.
     await app.run(["submitting", "acme_senior", "--person", "pat-lee"]);
     assert.match(await output(() => status.run(["--person", "pat-lee"])), /SUBMIT CLICKED, NOT RECORDED: .*Acme — Senior Analyst.*never send it again/);
@@ -158,6 +159,7 @@ test(
 
     await app.run(["new", "--company", "Omega", "--role", "Engineer", "--url", "https://omega.example/jobs/3", "--person", "pat-lee"]);
     writeFileSync(`${fx.root}/answers.txt`, "Authorized to work in the US? — Yes (work-auth.us-authorized)\nYears of Python? — 3 (experience.years.python, derived: two dated jobs)\n");
+    verifyFixtureApplication(fx.root, "omega_engineer");
     assert.equal(await app.run(["submit", "omega_engineer", "--answers", `${fx.root}/answers.txt`, "--person", "pat-lee"]), 0);
     const dir = readdirSync(`${fx.root}/people/pat-lee/applications`).find((n) => n.includes("omega"))!;
     const body = readDoc(`${fx.root}/people/pat-lee/applications/${dir}/record.md`).body;

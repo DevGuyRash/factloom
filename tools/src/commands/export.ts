@@ -12,7 +12,7 @@ function csvEscape(v: unknown): string {
 const FIELDS = ["company", "role", "status", "site", "source", "applied", "follow_up", "score", "resume", "cover_letter", "url", "updated", "contact_method", "date_contacted", "hired", "start_date", "started",
   ...APPLICATION_LOCATION_FIELDS.map((f) => `address_of_record.${f}`),
   ...APPLICATION_LOCATION_FIELDS.map((f) => `alternate_location.${f}`),
-  ...APPLICATION_CONTACT_FIELDS.map((f) => `contact.${f}`), "events", "record_notes"] as const;
+  ...APPLICATION_CONTACT_FIELDS.map((f) => `contact.${f}`), "events", "scam_review", "record_notes"] as const;
 
 /** One row per application from record frontmatter, as CSV or JSON. */
 const command: Command = {

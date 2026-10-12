@@ -6,6 +6,7 @@ import { findEmployer } from "./employers.ts";
 import { loadPipelineConfig } from "./pipeline-config.ts";
 import { findOne, personDir, repoRoot, today } from "./repo.ts";
 import { FILE_NAMES, QUEUE_STATUS } from "./schema.ts";
+import { scamBlocked } from "./scam.ts";
 import { normalizeUrl } from "./text.ts";
 
 export type QueueStatus = (typeof QUEUE_STATUS)[number];
@@ -115,7 +116,10 @@ export function rankQueue(person: string, root = repoRoot()): Ranked[] {
   const cfg = loadPipelineConfig(root);
   const staleDays = cfg.stale_queue_days;
   const todayStr = today();
-  const ranked = items.filter((i) => i.status !== "done").map((item) => {
+  // Risk holds stay on their application rather than being repeatedly offered as the next job.
+  // Legacy records without screening metadata are left alone until a new progression action.
+  const riskHeldLinks = new Set(listApplications(person, root).flatMap((a) => a.record?.scam_review && scamBlocked(a.record) ? [a.record.url, a.record.source].filter((u): u is string => !!u).map(normalizeUrl) : []));
+  const ranked = items.filter((i) => i.status !== "done" && ![i.url, i.source].some((u) => u && riskHeldLinks.has(normalizeUrl(u)))).map((item) => {
     const why: string[] = [];
     if (item.status === "in-progress") why.push("in progress");
     if (item.pick) why.push("the person's pick");

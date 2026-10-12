@@ -52,6 +52,7 @@ const command: Command = {
       person,
       updated: today(),
       statusCounts: snapshot.statusCounts,
+      scamReviews: snapshot.scamReviews.map((r) => ({ ...r, dir: rel(r.dir, root), reason: r.reasons.join("; ") })),
       perWeek,
       unknownAppliedDates,
       held: snapshot.held.map((h) => ({ ...h, dir: rel(h.dir, root) })),

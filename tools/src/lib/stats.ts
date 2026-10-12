@@ -8,6 +8,7 @@ import { loadQueue } from "./queue.ts";
 import { findByType, personDir, repoRoot, today } from "./repo.ts";
 import { dueSearches } from "./searches.ts";
 import { FILE_NAMES, INTERVIEW_STATUS, RESPONDED_STATUS, TERMINAL_APPLICATION_STATUS } from "./schema.ts";
+import { scamBlocked, scamState, scamReasons } from "./scam.ts";
 import { relative } from "./when.ts";
 
 export type GroupCounts = { total: number; responded: number; interview: number };
@@ -105,6 +106,7 @@ export function aggregatePay(person: string, by: "variant" | "role" | "site" = "
 
 export type PendingSnapshot = {
   statusCounts: Record<string, number>;
+  scamReviews: { dir: string; company: string; role: string; state: string; reasons: string[] }[];
   /** Held applications, with the kind of hold, the catalog id one waits on, and when it is due or its posting closes, when `app hold` and `app new` recorded them. */
   held: { dir: string; company: string; role: string; reason: string; kind?: string; waitsOn?: string; due?: string; closes?: string }[];
   /** Applications whose final submit was clicked (`app submitting`) but never recorded as sent: check the site, never resend. */
@@ -155,6 +157,7 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
   const cfg = loadPipelineConfig(root);
   const statusCounts: Record<string, number> = {};
   const held: PendingSnapshot["held"] = [];
+  const scamReviews: PendingSnapshot["scamReviews"] = [];
   const followupsDue: PendingSnapshot["followupsDue"] = [];
   const submitClicked: PendingSnapshot["submitClicked"] = [];
   const pendingSteps: PendingSnapshot["pendingSteps"] = [];
@@ -167,6 +170,8 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     if (!r) continue;
     statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
     const who = { dir: app.dir, company: String(r.company), role: String(r.role) };
+    if (!r.scam_review && r.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= todayStr) scamReviews.push({ ...who, state: "unreviewed", reasons: ["Independent verification is needed before this due follow-up; the legacy record is unchanged."] });
+    if (r.scam_review && scamBlocked(r)) scamReviews.push({ ...who, state: scamState(r.scam_review, r.url), reasons: scamReasons(r.scam_review, r.url) });
     if (r.submit_clicked && r.status !== "submitted") submitClicked.push({ ...who, at: String(r.submit_clicked) });
     if (wasSent(r) && !TERMINAL_APPLICATION_STATUS.includes(r.status) && r.pending) pendingSteps.push({ ...who, pending: `${r.pending}${r.pending_waits_on ? ` [waits on ${r.pending_waits_on}]` : ""}`, ...(r.due ? { due: String(r.due) } : {}) });
     if (r.status === "blocked") {
@@ -182,7 +187,7 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
         interviews.push({ ...who, at: value, ms, when: `${relative(ms, now)}${attended ? "; attended" : ms < now ? "; attendance unconfirmed" : ""}`, thankYou: existsSync(join(app.dir, FILE_NAMES.thankYou)) });
       }
     }
-    if (r.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= todayStr) {
+    if (r.status === "submitted" && !scamBlocked(r) && typeof r.follow_up === "string" && r.follow_up <= todayStr) {
       followupsDue.push({ dir: app.dir, company: String(r.company), role: String(r.role), followUp: r.follow_up });
     }
   }
@@ -205,5 +210,5 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     noExperienceYet: factsWithoutExperience(person, root),
   };
   interviews.sort((x, y) => x.ms - y.ms);
-  return { statusCounts, held, submitClicked, pendingSteps, interviews, unreadable, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
+  return { statusCounts, scamReviews, held, submitClicked, pendingSteps, interviews, unreadable, queueOpen: open.length, queueStale, followupsDue, inboxCount, guidesNeedingReview, guidesNeedingResearch, searchesDue: dueSearches(person, root).length, intake };
 }

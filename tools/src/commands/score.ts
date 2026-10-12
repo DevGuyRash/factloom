@@ -5,6 +5,7 @@ import { writeDoc } from "../lib/frontmatter.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { updateFor } from "../lib/queue.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
+import { scamBlocked, scamState } from "../lib/scam.ts";
 import { computeScore, describeParts, minimumScore, mustHaveMinimum, parseFitSpec, scoreParts, type Fit, type Minimum } from "../lib/scoring.ts";
 
 /**
@@ -52,6 +53,7 @@ const command: Command = {
     if (spec !== undefined && !a._[0]) {
       const fit = parseFitSpec(spec);
       show("", computeScore(fit), fit);
+      console.log("eligibility: independently verify the employer and application route before progressing; fit is not a safety verdict");
       return 0;
     }
 
@@ -61,6 +63,7 @@ const command: Command = {
         const s = scoreOne(person, app);
         if (s !== null) {
           show(`${rel(app.dir)}: `, s.score, s.fit);
+          if (app.record && scamBlocked(app.record)) console.log(`  eligibility: held for scam review (${scamState(app.record.scam_review, app.record.url)}); fit is not a safety verdict`);
           scored++;
         }
       }
@@ -86,6 +89,7 @@ const command: Command = {
       return 1;
     }
     show(`${rel(app.dir)}: `, s.score, s.fit);
+    if (app.record && scamBlocked(app.record)) console.log(`eligibility: held for scam review (${scamState(app.record.scam_review, app.record.url)}); fit is not a safety verdict`);
     return 0;
   },
 };

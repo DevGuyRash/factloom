@@ -18,6 +18,7 @@ const command: Command = {
     console.log("  date_contacted, hired, start_date (planned), started (actual): YYYY-MM-DD");
     console.log("  events[]: kind, on (date/datetime), recorded_at (datetime); optional status, note, at, replaces, round, contact_method, start_date");
     console.log(`  event kinds: ${APPLICATION_EVENT_KINDS.join(", ")}, outcome status, or custom slug`);
+    console.log("  scam_review: state, findings (reason/source/date/disposition), assessments (claimed sender/domains), reviews (dated resolutions), independently verified official URL/domains; hiring status is separate");
     console.log("\nconventional file names:");
     for (const [k, v] of Object.entries(FILE_NAMES)) console.log(`  ${k.padEnd(16)} ${v}`);
     return 0;

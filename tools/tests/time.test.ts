@@ -12,7 +12,7 @@ import queueCommand from "../src/commands/queue.ts";
 import statusCommand from "../src/commands/status.ts";
 import { readDoc } from "../src/lib/frontmatter.ts";
 import { normalizeAt, parseWhen, relative } from "../src/lib/when.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 type Run = (argv: string[]) => number | Promise<number>;
 
@@ -72,7 +72,9 @@ function onDay(days: number): string {
 async function newApplication(p: string[], company: string, extra: string[] = []): Promise<string> {
   const r = await printed(appCommand.run, ["new", "--company", company, "--role", "Analyst", "--url", `https://${company.toLowerCase()}.example/jobs/1`, ...extra, ...p]);
   assert.equal(r.code, 0, r.text);
-  return r.text.trim().split("\n").pop()!;
+  const ref = r.text.trim().split("\n").pop()!;
+  verifyFixtureApplication(process.env.RESUMES_ROOT!, ref);
+  return ref;
 }
 
 test("an interview is recorded with its offset, appears in status, the prep draft, and the dashboard, moves, and is cancelled", () => withFixture(async (fx, p) => {
