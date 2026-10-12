@@ -17,7 +17,7 @@ function searchTerms(person: string, days: number): { employers: string[]; sites
   const employers = new Set<string>(), sites = new Set<string>();
   for (const app of listApplications(person)) {
     const r = app.record;
-    if (!r || !["submitted", "blocked", "interviewing", "offer"].includes(r.status)) continue;
+    if (!r || !(["submitted", "blocked", "interviewing", "offer", "hired"].includes(r.status) || (r.applied && !["rejected", "not-hired", "work-not-available", "closed", "withdrawn", "started", "skipped"].includes(r.status)))) continue;
     if (String(r.applied ?? r.updated ?? app.name.slice(0, 10)) < from) continue;
     // The name people write in mail: the record's company without legal suffixes, first words only.
     const name = normalizeCompany(String(r.company)).split(" ").slice(0, 2).join(" ");

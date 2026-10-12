@@ -144,7 +144,7 @@ test("fixed choices from usage", () => {
   assert.deepEqual(values(["export", "--format", ""]), ["csv", "json"]);
   assert.deepEqual(values(["pay", "--by", "r"]), ["role"]);
   assert.deepEqual(values(["run", "log", "--kind", ""]), ["note", "error", "applied", "held", "skipped"]);
-  assert.deepEqual(values(["outcome", "people/x/applications/y", ""]), ["rejected", "interviewing", "offer", "withdrawn", "closed"]);
+  assert.deepEqual(values(["outcome", "people/x/applications/y", ""]), ["rejected", "interviewing", "offer", "withdrawn", "closed", "hired", "started", "not-hired", "work-not-available"]);
   assert.deepEqual(values(["draft", ""]), ["follow-up", "thank-you", "interview-prep"]);
   assert.deepEqual(values(["onboarding", "answer", "prefs.min-fit", "65", "--policy", ""]), ["auto", "confirm", "ask", "person"]);
 });

@@ -1,13 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { listApplications } from "./applications.ts";
+import { listApplications, type Record_ } from "./applications.ts";
 import { peek, readDoc } from "./frontmatter.ts";
 import { dropWaiting, factsWithoutExperience, importedNotes } from "./intake.ts";
 import { loadPipelineConfig } from "./pipeline-config.ts";
 import { loadQueue } from "./queue.ts";
 import { findByType, personDir, repoRoot, today } from "./repo.ts";
 import { dueSearches } from "./searches.ts";
-import { FILE_NAMES, INTERVIEW_STATUS, RESPONDED_STATUS } from "./schema.ts";
+import { FILE_NAMES, INTERVIEW_STATUS, RESPONDED_STATUS, TERMINAL_APPLICATION_STATUS } from "./schema.ts";
 import { relative } from "./when.ts";
 
 export type GroupCounts = { total: number; responded: number; interview: number };
@@ -18,19 +18,25 @@ export type StatsReport = {
   bySite: Record<string, GroupCounts>;
 };
 
-function bump(map: Record<string, GroupCounts>, key: string, status: string) {
+function bump(map: Record<string, GroupCounts>, key: string, record: Record_) {
   const k = key || "(unknown)";
   const c = (map[k] ??= { total: 0, responded: 0, interview: 0 });
   c.total++;
-  if ((RESPONDED_STATUS as readonly string[]).includes(status)) c.responded++;
-  if ((INTERVIEW_STATUS as readonly string[]).includes(status)) c.interview++;
+  const events = Array.isArray(record.events) ? record.events : [];
+  const statuses = [record.status, ...events.map((e) => e.status ?? "")];
+  if (statuses.some((s) => RESPONDED_STATUS.includes(s))) c.responded++;
+  if (statuses.some((s) => INTERVIEW_STATUS.includes(s)) || events.some((e) => e.kind === "interview-attended")) c.interview++;
 }
 
 /** Statuses of an application that went to the employer. */
-const SENT = new Set(["submitted", "rejected", "interviewing", "offer", "closed"]);
+const SENT = new Set(["submitted", "rejected", "interviewing", "offer", "closed", "hired", "started", "not-hired"]);
 
-/** Whether an application went to the employer: drafted, held, and skipped ones never did. */
-export const wasSent = (r: { status: string; applied?: unknown }) => SENT.has(r.status) || (r.status === "withdrawn" && !!r.applied);
+/** Keep known employer interaction through later outcomes, even when its original applied date is unknown.
+ * Reading history is evidence for counts only: it never invents an applied/contact date on the record.
+ * Work-not-available alone can describe a posting closed before applying, so it needs earlier sent evidence.
+ */
+export const wasSent = (r: Pick<Record_, "status" | "applied" | "events">) => SENT.has(r.status) || !!r.applied ||
+  (Array.isArray(r.events) && r.events.some((e) => e && (e.kind === "submitted" || e.kind === "interview-attended" || SENT.has(e.status ?? ""))));
 
 /** Where a posting was found, as a site: the host of a link, or the text as given. */
 const sourceKey = (source: unknown) => {
@@ -51,10 +57,10 @@ export function computeStats(person: string, root = repoRoot()): StatsReport {
   for (const app of listApplications(person, root)) {
     const r = app.record;
     if (!r || !wasSent(r)) continue;
-    bump(out.byVariant, String(r.resume ?? "(none)"), r.status);
-    bump(out.byCoverLetter, r.cover_letter === "yes" ? "yes" : "no", r.status);
-    bump(out.bySource, sourceKey(r.source || r.url), r.status);
-    bump(out.bySite, String(r.site ?? "(unknown)"), r.status);
+    bump(out.byVariant, String(r.resume ?? "(none)"), r);
+    bump(out.byCoverLetter, r.cover_letter === "yes" ? "yes" : "no", r);
+    bump(out.bySource, sourceKey(r.source || r.url), r);
+    bump(out.bySite, String(r.site ?? "(unknown)"), r);
   }
   return out;
 }
@@ -162,16 +168,18 @@ export function pendingSnapshot(person: string, root = repoRoot()): PendingSnaps
     statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
     const who = { dir: app.dir, company: String(r.company), role: String(r.role) };
     if (r.submit_clicked && r.status !== "submitted") submitClicked.push({ ...who, at: String(r.submit_clicked) });
-    if (r.status === "submitted" && r.pending) pendingSteps.push({ ...who, pending: `${r.pending}${r.pending_waits_on ? ` [waits on ${r.pending_waits_on}]` : ""}`, ...(r.due ? { due: String(r.due) } : {}) });
+    if (wasSent(r) && !TERMINAL_APPLICATION_STATUS.includes(r.status) && r.pending) pendingSteps.push({ ...who, pending: `${r.pending}${r.pending_waits_on ? ` [waits on ${r.pending_waits_on}]` : ""}`, ...(r.due ? { due: String(r.due) } : {}) });
     if (r.status === "blocked") {
       held.push({ ...who, reason: heldReason(app.recordPath), ...(r.hold_kind ? { kind: String(r.hold_kind) } : {}), ...(r.waits_on ? { waitsOn: String(r.waits_on) } : {}), ...(r.due ? { due: String(r.due) } : {}), ...(r.closes ? { closes: String(r.closes) } : {}) });
     }
-    if (Array.isArray(r.interviews)) {
+    if (Array.isArray(r.interviews) && !TERMINAL_APPLICATION_STATUS.includes(r.status)) {
       const now = Date.now();
       for (const value of r.interviews.map(String)) {
         const ms = Date.parse(value);
+        const attended = Array.isArray(r.events) && r.events.some((e) => e.kind === "interview-attended" && e.at && Date.parse(e.at) === ms);
+        // Attendance is recorded separately; a past scheduled time alone never proves attendance.
         if (Number.isNaN(ms) || ms < now - 7 * 86400000) continue;
-        interviews.push({ ...who, at: value, ms, when: relative(ms, now), thankYou: existsSync(join(app.dir, FILE_NAMES.thankYou)) });
+        interviews.push({ ...who, at: value, ms, when: `${relative(ms, now)}${attended ? "; attended" : ms < now ? "; attendance unconfirmed" : ""}`, thankYou: existsSync(join(app.dir, FILE_NAMES.thankYou)) });
       }
     }
     if (r.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= todayStr) {

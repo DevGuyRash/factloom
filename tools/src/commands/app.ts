@@ -9,7 +9,10 @@ import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { updateFor } from "../lib/queue.ts";
 import { rel, resolvePerson, stamp, today } from "../lib/repo.ts";
 import { logEvent } from "../lib/runlog.ts";
-import { DATE } from "../lib/schema.ts";
+import { appendEvent, DETAILS_USAGE, detailsFromArgs, eventDate, onFromArgs } from "../lib/application-history.ts";
+import { wasSent } from "../lib/stats.ts";
+import { normalizeAt } from "../lib/when.ts";
+import { DATE, APPLICATION_EVENT_KINDS, OUTCOME_STATUS, type ApplicationEvent } from "../lib/schema.ts";
 import { parseWhen } from "../lib/when.ts";
 
 function addDays(date: string, days: number): string {
@@ -19,27 +22,28 @@ function addDays(date: string, days: number): string {
 }
 
 /** Appends a dated line to a record's body, applying a frontmatter patch (a key set to undefined is removed). */
-function note(app: Application, line: string, patch: Record<string, unknown> = {}) {
+function note(app: Application, line: string, patch: Record<string, unknown> = {}, event: Partial<ApplicationEvent> = {}, answersFile?: string) {
   const { data, body } = loadRecord(app);
+  const answeredBody = withAnswers(body, answersFile);
   const next = Object.fromEntries(Object.entries({ ...data, ...patch, updated: today() }).filter(([, v]) => v !== undefined));
-  writeDoc(app.recordPath!, next, `${body.trimEnd()}\n\n- ${today()}: ${line}\n`);
+  appendEvent(data, { kind: "note", on: today(), note: line, ...event });
+  writeDoc(app.recordPath!, { ...next, events: data.events }, `${answeredBody.trimEnd()}\n\n- ${event.on ?? today()}: ${line}\n`);
 }
 
 /**
  * Adds the answers given on the form (one line each: the question, the answer, its source) under the record's
  * "Answers given" heading, so they are written once, by the command, not edited into the record by hand.
  */
-function addAnswers(app: Application, file: string | undefined) {
-  if (file === undefined) return;
+function withAnswers(body: string, file: string | undefined): string {
+  if (file === undefined) return body;
   const lines = readFileSync(file === "-" ? 0 : file, "utf8").split("\n").map((l) => l.trim()).filter(Boolean).map((l) => (l.startsWith("- ") ? l : `- ${l}`));
-  if (!lines.length) return;
-  const { data, body } = loadRecord(app);
+  if (!lines.length) return body;
   const heading = /^## Answers given\s*$/m;
-  const next = heading.test(body)
+  return heading.test(body)
     ? body.replace(/(^## Answers given\s*\n(?:(?!^## ).*\n?)*)/m, (section) => `${section.trimEnd()}\n${lines.join("\n")}\n\n`)
     : `${body.trimEnd()}\n\n## Answers given\n\n${lines.join("\n")}\n`;
-  writeDoc(app.recordPath!, data, next);
 }
+
 
 /** Kinds of hold, so the waiting list groups what the person must do and retries know what to look for. */
 const HOLD_KINDS = ["answer", "person-step", "account", "captcha", "upload", "site", "confirmation", "other"] as const;
@@ -55,16 +59,19 @@ const label = (app: Application) => `${app.record?.company ?? "?"} — ${app.rec
  */
 const command: Command = {
   name: "app",
-  summary: "Create, submit, hold, skip, or reopen a job application",
+  summary: "Record applications, employer details, contacts, milestones, and notes",
   usage: [
-    "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--posted YYYY-MM-DD] [--closes YYYY-MM-DD] [--posting-file <file|->] [--location L] [--arrangement A] [--pay-min N] [--pay-max N] [--pay-period hour|year] [--distinct-from <dir> --because TEXT] [--person p]",
+    "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--posted YYYY-MM-DD] [--closes YYYY-MM-DD] [--posting-file <file|->] [--location L] [--arrangement A] [--pay-min N] [--pay-max N] [--pay-period hour|year] [--distinct-from <dir> --because TEXT] [--person p] " + DETAILS_USAGE,
     "resumes app submitting <dir> [--person p]",
-    "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--answers <file|->] [--follow-up <days|YYYY-MM-DD>] [--no-log] [--person p]",
+    "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--answers <file|->] [--follow-up <days|YYYY-MM-DD>] [--on <date>] [--no-log] [--person p]",
     "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--due <YYYY-MM-DD|datetime with offset>] [--answers <file|->] [--no-log] [--person p]",
     "resumes app resolve <dir> [--note TEXT] [--no-log] [--person p]",
     "resumes app skip <dir> --reason TEXT [--rule <catalog-id>] [--no-log] [--person p]",
     "resumes app reopen <dir> --reason TEXT [--person p]",
-    'resumes app note <dir> "<text>" [--person p]',
+    'resumes app note <dir> "<text>" [--on <date|datetime>] [--person p]',
+    "resumes app details <dir> " + DETAILS_USAGE + " [--note TEXT] [--person p]",
+    "resumes app event <dir> <kind> [--on <date|datetime>] [--at <datetime>] [--round TEXT] [--contact-method TEXT] [--note TEXT] [--person p]",
+    "resumes app history <dir> [--format text|json] [--person p]",
   ].join("\n       "),
   run(argv) {
     const [sub, ...rest] = argv;
@@ -115,8 +122,9 @@ const command: Command = {
       if (posted && !DATE.test(posted)) throw new Error("--posted takes YYYY-MM-DD");
       const closes = flag(a, "closes");
       if (closes && !DATE.test(closes)) throw new Error("--closes takes YYYY-MM-DD, the last day the posting accepts applications");
+      const details = detailsFromArgs(a);
       const app = createApplication(person, {
-        ...job, site: flag(a, "site"), posted, description, location: flag(a, "location"), arrangement: flag(a, "arrangement"),
+        ...job, ...details, site: flag(a, "site"), posted, description, location: flag(a, "location"), arrangement: flag(a, "arrangement"),
         pay_min: number("pay-min"), pay_max: number("pay-max"), pay_period: flag(a, "pay-period"),
       }, undefined, { distinct: true });
       if (dup) {
@@ -150,19 +158,29 @@ const command: Command = {
       if (!dirArg) throw new Error("app submit needs <dir>");
       const app = findApplication(person, dirArg);
       const { data, body } = loadRecord(app);
-      const applied = today();
+      const applied = onFromArgs(a);
+      if (!DATE.test(applied)) throw new Error("app submit --on takes YYYY-MM-DD");
+      if (data.applied) throw new Error(`already submitted on ${data.applied}; use app note or outcome, never submit twice`);
+      // Read all caller-supplied inputs before copying proof or changing the durable record. A missing
+      // answers file must leave this unsent record retriable, including its queue and run-log state.
+      for (const field of ["answers", "proof", "follow-up", "confirmation"]) {
+        if (has(a, field) && flag(a, field) === undefined) throw new Error(`--${field} needs a value`);
+      }
+      const answeredBody = withAnswers(body, flag(a, "answers"));
       const cfg = loadPipelineConfig();
       // The pipeline's follow_up_days is the default; a posting that states its own timeline can set another.
       const followUp = flag(a, "follow-up");
       if (followUp && !DATE.test(followUp) && !/^\d+$/.test(followUp)) throw new Error("--follow-up takes a number of days or a YYYY-MM-DD date");
       data.status = "submitted";
       data.applied = applied;
+      if (!data.date_contacted || applied < data.date_contacted) data.date_contacted = applied;
       data.follow_up = followUp && DATE.test(followUp) ? followUp : addDays(applied, followUp ? Number(followUp) : cfg.follow_up_days);
-      data.updated = applied;
+      data.updated = today();
       delete data.submit_clicked;
       delete data.due;
       const confirmation = flag(a, "confirmation");
       if (confirmation) data.confirmation = confirmation;
+      appendEvent(data, { kind: "submitted", on: applied, status: "submitted", ...(confirmation ? { note: confirmation } : {}) });
       const proof = flag(a, "proof");
       if (proof) {
         if (!existsSync(proof)) throw new Error(`${proof} does not exist`);
@@ -171,8 +189,7 @@ const command: Command = {
         data.proof = destName;
         if (!data.confirmation) data.confirmation = destName;
       }
-      writeDoc(app.recordPath!, data, body);
-      addAnswers(app, flag(a, "answers"));
+      writeDoc(app.recordPath!, data, answeredBody);
       updateFor(person, data, { status: "done", outcome: "submitted", application: app.name });
       log("applied", `${label(app)}${confirmation ? ` (${confirmation})` : ""}`);
       console.log(`submitted ${rel(app.dir)} (follow up ${data.follow_up})${proof ? `; proof saved as ${data.proof}` : ""}`);
@@ -190,17 +207,19 @@ const command: Command = {
       const due = dueArg === undefined ? undefined : parseWhen(dueArg)?.text;
       if (dueArg !== undefined && !due) throw new Error("--due takes YYYY-MM-DD, or a date and time with its UTC offset such as 2026-10-12T14:00-07:00");
       const app = findApplication(person, dirArg);
-      addAnswers(app, flag(a, "answers"));
-      const status = loadRecord(app).data.status;
-      if (status === "submitted") {
+      if (has(a, "answers") && flag(a, "answers") === undefined) throw new Error("--answers needs a file or -");
+      const answersFile = flag(a, "answers");
+      const record = loadRecord(app).data;
+      const status = record.status;
+      if (wasSent(record)) {
         // Sent, with a step still to come (an assessment, an account at the employer): it stays submitted, and keeps
         // what the step waits on, so an answer that settles it points back here.
-        note(app, `pending — ${reason}${due ? ` (due ${due})` : ""}`, { pending: reason, pending_kind: kind, pending_waits_on: waits, due });
+        note(app, `pending — ${reason}${due ? ` (due ${due})` : ""}`, { pending: reason, pending_kind: kind, pending_waits_on: waits, due }, {}, answersFile);
         log("note", `${label(app)}: sent, pending ${reason}${due ? ` (due ${due})` : ""}`);
-        console.log(`${rel(app.dir)} stays submitted; pending: ${reason}${due ? ` (due ${due})` : ""}`);
+        console.log(`${rel(app.dir)} stays ${status}; pending: ${reason}${due ? ` (due ${due})` : ""}`);
         return 0;
       }
-      note(app, `held — ${reason}${due ? ` (due ${due})` : ""}`, { status: "blocked", hold_kind: kind, waits_on: waits, due });
+      note(app, `held — ${reason}${due ? ` (due ${due})` : ""}`, { status: "blocked", hold_kind: kind, waits_on: waits, due }, { kind: "held", status: "blocked" }, answersFile);
       // The record now carries the posting; its queue entry is done, so it does not come back from `queue next`.
       updateFor(person, loadRecord(app).data, { status: "done", outcome: "held", note: reason, application: app.name });
       log("held", `${label(app)}: ${reason}${due ? ` (due ${due})` : ""}`);
@@ -214,7 +233,7 @@ const command: Command = {
       if (!dirArg || !reason) throw new Error("app skip needs <dir> --reason TEXT");
       const app = findApplication(person, dirArg);
       const rule = flag(a, "rule");
-      note(app, `skipped — ${reason}`, { status: "skipped", skip_rule: rule });
+      note(app, `skipped — ${reason}`, { status: "skipped", skip_rule: rule }, { kind: "skipped", status: "skipped" });
       updateFor(person, loadRecord(app).data, { status: "done", outcome: "skipped", note: reason, application: app.name, ...(rule ? { rule } : {}) });
       log("skipped", `${label(app)}: ${reason}`);
       console.log(`skipped ${rel(app.dir)}: ${reason}`);
@@ -229,7 +248,7 @@ const command: Command = {
       const app = findApplication(person, dirArg);
       const status = loadRecord(app).data.status;
       if (status !== "skipped" && status !== "blocked") throw new Error(`${rel(app.dir)} is ${status}; only skipped or held applications reopen`);
-      note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined, skip_rule: undefined, due: undefined });
+      note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined, skip_rule: undefined, due: undefined }, { kind: "reopened", status: "drafted" });
       console.log(`reopened ${rel(app.dir)}: ${reason}`);
       return 0;
     }
@@ -240,12 +259,66 @@ const command: Command = {
       if (!dirArg) throw new Error("app resolve needs <dir>");
       const app = findApplication(person, dirArg);
       const { data } = loadRecord(app);
-      if (data.status !== "submitted" || !data.pending) throw new Error(`${rel(app.dir)} has no pending step to resolve (a held application is finished with app reopen or app submit)`);
+      if (!wasSent(data) || !data.pending) throw new Error(`${rel(app.dir)} has no pending step to resolve (a held application is finished with app reopen or app submit)`);
       const done = String(data.pending);
       const text = flag(a, "note");
-      note(app, `pending step done — ${done}${text ? ` — ${text}` : ""}`, { pending: undefined, pending_kind: undefined, pending_waits_on: undefined, due: undefined });
+      note(app, `pending step done — ${done}${text ? ` — ${text}` : ""}`, { pending: undefined, pending_kind: undefined, pending_waits_on: undefined, due: undefined }, { kind: "pending-resolved" });
       log("note", `${label(app)}: pending step done, ${done}`);
       console.log(`${rel(app.dir)}: pending step done (${done})`);
+      return 0;
+    }
+
+    if (sub === "details") {
+      const dirArg = a._[0];
+      if (!dirArg) throw new Error("app details needs <dir>");
+      const app = findApplication(person, dirArg);
+      const { data } = loadRecord(app);
+      const patch = detailsFromArgs(a, data);
+      if (!Object.keys(patch).length) throw new Error("app details needs at least one employer, location, or contact flag");
+      note(app, `details updated${flag(a, "note") ? ` — ${flag(a, "note")}` : ""}`, patch, { kind: "details-updated" });
+      console.log(`updated details in ${rel(app.recordPath!)}`);
+      return 0;
+    }
+
+    if (sub === "event") {
+      const [dirArg, kind] = a._;
+      if (!dirArg || !kind) throw new Error(`app event needs <dir> <kind> (for example contacted or interview-attended; known: ${APPLICATION_EVENT_KINDS.join(", ")})`);
+      // Lifecycle state changes have their own commands so status, reminders, and queue stay in sync.
+      if (["created", "details-updated", "submitted", "held", "skipped", "reopened", "pending-resolved", "interview-scheduled", "interview-rescheduled", "interview-cancelled", "start-scheduled", ...OUTCOME_STATUS].includes(kind)) throw new Error("use app new/details/submit/hold/skip/reopen/resolve or outcome for this lifecycle event");
+      const app = findApplication(person, dirArg);
+      const { data } = loadRecord(app);
+      const on = onFromArgs(a);
+      const atArg = flag(a, "at");
+      const at = atArg ? normalizeAt(atArg) : null;
+      if (has(a, "at") && (!at || !eventDate(at.text))) throw new Error("--at needs an interview datetime with offset");
+      if (at && kind !== "interview-attended") throw new Error("app event --at goes with interview-attended");
+      const method = flag(a, "contact-method");
+      if (has(a, "contact-method") && !method?.trim()) throw new Error("--contact-method needs text");
+      const patch: Record<string, unknown> = {};
+      if (kind === "contacted") {
+        const date = on.slice(0, 10);
+        if (!data.date_contacted || date < data.date_contacted) patch.date_contacted = date;
+        if (method) patch.contact_method = method;
+      }
+      const text = flag(a, "note");
+      const round = flag(a, "round");
+      note(app, `${kind}${at ? ` (interview ${at.text})` : ""}${round ? ` [${round}]` : ""}${text ? ` — ${text}` : ""}`, patch,
+        { kind, on, ...(text ? { note: text } : {}), ...(at ? { at: at.text } : {}), ...(round ? { round } : {}), ...(method ? { contact_method: method } : {}) });
+      console.log(`recorded ${kind} in ${rel(app.recordPath!)}`);
+      return 0;
+    }
+
+    if (sub === "history") {
+      const dirArg = a._[0];
+      if (!dirArg) throw new Error("app history needs <dir>");
+      const { data } = loadRecord(findApplication(person, dirArg));
+      const format = flag(a, "format") ?? "text";
+      if (!["text", "json"].includes(format)) throw new Error("--format must be text or json");
+      const events = data.events ?? [];
+      if (!Array.isArray(events)) throw new Error("events must be a list; repair the record");
+      if (format === "json") console.log(JSON.stringify(events, null, 2));
+      else if (!events.length) console.log("No structured history yet. Legacy dates and notes remain in the record; no events were inferred.");
+      else for (const e of events) console.log(`${e.on}: ${e.kind}${e.status ? ` [${e.status}]` : ""}${e.at ? ` (interview ${e.at})` : ""}${e.replaces ? ` (replaces ${e.replaces})` : ""}${e.round ? ` [${e.round}]` : ""}${e.start_date ? ` (start ${e.start_date})` : ""}${e.contact_method ? ` via ${e.contact_method}` : ""}${e.note ? ` — ${e.note}` : ""} (recorded ${e.recorded_at})`);
       return 0;
     }
 
@@ -254,7 +327,7 @@ const command: Command = {
       const text = words.join(" ").trim();
       if (!dirArg || !text) throw new Error('app note needs <dir> "<text>"');
       const app = findApplication(person, dirArg);
-      note(app, text.replace(/\s*\n\s*/g, " "));
+      note(app, text.replace(/\s*\n\s*/g, " "), {}, { on: onFromArgs(a) });
       console.log(`noted in ${rel(app.recordPath!)}`);
       return 0;
     }
