@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import appCommand from "../src/commands/app.ts";
 import dashboardCommand from "../src/commands/dashboard.ts";
 import draftCommand from "../src/commands/draft.ts";
@@ -41,6 +41,18 @@ async function withFixture(fn: (fx: ReturnType<typeof makeFixture>, p: string[])
     else process.env.RESUMES_ROOT = prev;
     fx.cleanup();
   }
+}
+
+/** Date-only deadlines are local end-of-day values; keep their expected durations fixed. */
+function withCalendarFixture(t: TestContext, fn: Parameters<typeof withFixture>[0]): Promise<void> {
+  const previousTZ = process.env.TZ;
+  process.env.TZ = "UTC";
+  t.after(() => {
+    if (previousTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = previousTZ;
+  });
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-10-12T16:00:00Z") });
+  return withFixture(fn);
 }
 
 /** `hours` from now, written as the wall clock of a zone `offset` from UTC, with that offset (`2026-10-12T14:00-07:00`). */
@@ -130,7 +142,7 @@ test("a recent interview with no thank-you drafted is flagged until one is draft
   assert.ok(existsSync(join(fx.root, dir, "thank-you.md")));
 }));
 
-test("a hold's due time is shown soonest first and as overdue once passed; resolve closes a sent application's pending step", () => withFixture(async (fx, p) => {
+test("a hold's due time is shown soonest first and as overdue once passed; resolve closes a sent application's pending step", (t) => withCalendarFixture(t, async (fx, p) => {
   const later = await newApplication(p, "Latecorp");
   const sooner = await newApplication(p, "Soonco");
   const open = await newApplication(p, "Plainco");
@@ -169,7 +181,7 @@ test("a hold's due time is shown soonest first and as overdue once passed; resol
   assert.equal(readDoc<{ due?: string }>(join(fx.root, later, "record.md")).data.due, undefined);
 }));
 
-test("a posting about to close is suggested first, and one whose close date passed is closed as skipped", () => withFixture(async (fx, p) => {
+test("a posting about to close is suggested first, and one whose close date passed is closed as skipped", (t) => withCalendarFixture(t, async (fx, p) => {
   const add = (n: string, extra: string[]) => printed(queueCommand.run, ["add", "--url", `https://${n}.example/job/1`, "--company", n, "--role", "Analyst", ...extra, ...p]);
   await add("farclose", ["--score", "90", "--closes", onDay(20)]);
   await add("noclose", ["--score", "95"]);
