@@ -113,8 +113,9 @@ own answers, and the checks on truthfulness and privacy, are the lines that bind
 
 ## Later updates
 
-- `resumes outcome <dir> rejected|interviewing|offer|withdrawn|closed [--note TEXT] --person <p>`
-  when the person reports what happened.
+- `resumes app details <dir>` records employer/contact/location fields; `app event` records dated contacts, attended interviews, and other milestones; `app note` keeps relevant notes. See [records](records.md) for fields and examples.
+- `resumes outcome <dir> rejected|interviewing|offer|withdrawn|closed|hired|started|not-hired|work-not-available [--on <date>] [--note TEXT] --person <p>` records what happened. `--custom` accepts another explicit status. Hiring can include `--start <date>` for the planned start; actual start remains separate.
+- `resumes app history <dir> [--format text|json]` shows structured events; earlier prose stays in the record.
 - `resumes followups [--days N] --person <p>` — submitted applications whose `follow_up` is due.
 
 ## End of session

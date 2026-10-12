@@ -47,6 +47,43 @@ Later sessions read it as a record of what the site said.
 | `submitted` | Sent, with `applied` set and the confirmation recorded. |
 | `skipped` | Not pursued; the record says why. |
 | `withdrawn`, `rejected`, `interviewing`, `offer`, `closed` | Later outcomes the person reports. |
+| `hired`, `started`, `not-hired`, `work-not-available` | Hiring, actual start, or an unsuccessful/unavailable opportunity. A planned start is separate from actually starting. |
+| Other lowercase-hyphenated slugs | Explicit extensions via `outcome <dir> <status> --custom` (declared in `custom_statuses`); standard lifecycle actions keep their own commands. |
+
+### Employer details, dates, and notes
+
+`company` remains the employer name and `role` the job title. Keep verified business details on the same application, supplied on `app new` or updated later with `app details`:
+
+```bash
+./resumes app details <dir> --country "United States" --address "<verified business address>" --zip "01234" --city "Example City" --state "MA" --contact-method email --contact-title Recruiter --contact-first Casey --contact-last Morgan --contact-phone "+1 202-555-0148" --contact-email "recruiting@example.com" --contact-website "https://example.com/careers" --alternate-address "<verified alternate business address>" --alternate-zip "01235" --alternate-city "Example City" --alternate-state "MA" --note "Business details verified on the employer's posting."
+```
+
+The location flags populate `address_of_record`; `--alternate-*` populate `alternate_location` (including optional `--alternate-country`); `--contact-*` populate `contact`. Each is an optional mapping. Postal codes and phone numbers are text, retaining leading zeros, punctuation, and international formats. A partial update preserves other fields. `--location` still describes the posting's location and does not guess an address. The alternate address is the employer's other work/interview location, when applicable.
+
+Record only verified business information relevant to this application. Omit unknown fields; never infer a street address from a city, copy an applicant's home address here, or seek unrelated personal details. Public business addresses and hiring contacts can go in the private application record; private personal contact details and applicant addresses remain in ignored `*.local.*` files. Notes can name a local file without copying its contents. If the privacy scan flags a verified public business address, add only that exact string to `custom/pii-allow.yaml` under `strings`, as the scan instructs; personal details stay local and the guard remains enabled.
+
+`events` is an append-only list. Each event has `kind`, `on` (when it happened), and `recorded_at` (when it was recorded), plus optional `status`, `note`, `at` (interview time), `replaces`, `round`, `contact_method`, or `start_date`. Calendar dates use `YYYY-MM-DD`; datetimes require an explicit UTC offset. The record's `updated` is the day it was edited, not the event date. Commands default `--on` to today, so supply the known original date when recording something later.
+
+```bash
+./resumes app event <dir> contacted --on 2026-10-12 --contact-method email --note "Sent the requested portfolio to the hiring contact."
+./resumes app submit <dir> --on 2026-10-13 --confirmation "Confirmation received"
+./resumes outcome <dir> interviewing --on 2026-10-14 --at 2026-10-16T14:00-04:00 --round "First interview" --note "Phone screen"
+./resumes outcome <dir> interviewing --on 2026-10-17 --at 2026-10-20T10:00-04:00 --round "Second interview"
+./resumes outcome <dir> interviewing --on 2026-10-18 --at 2026-10-21T10:00-04:00 --replaces 2026-10-20T10:00-04:00 --round "Second interview" --note "Employer rescheduled"
+./resumes app event <dir> interview-attended --on 2026-10-16 --at 2026-10-16T14:00-04:00 --round "First interview" --note "The person confirmed attending."
+./resumes outcome <dir> hired --on 2026-10-23 --start 2026-11-02 --note "The person confirmed the hiring decision."
+./resumes outcome <dir> started --on 2026-11-02 --note "First day completed."
+./resumes app note <dir> "Relevant context or follow-up notes" --on 2026-11-02
+./resumes app event <dir> assessment-completed --on 2026-10-18 --note "Assessment receipt saved."
+./resumes outcome <dir> background-check --custom --on 2026-10-24 --note "Employer reported this stage."
+./resumes app history <dir>
+```
+
+These commands only record facts. They do not submit applications, contact employers, book interviews, or accept offers. Record submission after actual confirmation, attendance only when confirmed, and actual start separately from a future planned start. `date_contacted` keeps the earliest known contact/submission date; every contact retains its own event. `applied` stays the submitted date. `hired` is the hiring-decision date, `start_date` the planned first day, and `started` the actual start. Unknown dates stay absent.
+
+Scheduled interviews remain in `interviews` for existing reminders. `--cancel <datetime>` removes that reminder but preserves its cancellation event; rescheduling preserves both the old and new times. Attendance uses a separate event, optionally linked by `--at`. More interviews append rather than replace earlier rounds. Events can be read as JSON with `app history --format json`; exports include structured fields/events and the Notes section. Custom statuses with an existing applied date still count as sent; historical responses/interviews survive later status changes, including when the submission date is unknown. The dashboard keeps undated submissions out of weekly buckets rather than treating the directory creation date as an applied date. Terminal outcomes suppress obsolete pending/interview reminders while retaining their details and history.
+
+Older records need no migration. Their dates, prose, unknown frontmatter, answers, and custom templates remain intact. New commands begin history from the facts being recorded now; they do not backfill events from prose or assume a scheduled interview happened. Check existing dated prose as well as structured history when reviewing a legacy record. Correct factual errors explicitly in the record with a dated explanation; ordinary updates never silently erase earlier events.
 
 ### Duplicates
 
