@@ -3,7 +3,7 @@ import { readdirSync } from "node:fs";
 import test from "node:test";
 import command from "../src/commands/app.ts";
 import { readDoc } from "../src/lib/frontmatter.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 function withFixture(files: Record<string, string>, fn: (fx: ReturnType<typeof makeFixture>) => Promise<void> | void) {
   return async () => {
@@ -54,6 +54,7 @@ test(
     await command.run(["new", "--company", "Acme", "--role", "AI Engineer", "--url", "https://acme.example/job/1", "--person", "pat-lee"]);
     const dir = `${fx.root}/people/pat-lee/applications`;
     const appDir = `${dir}/${readdirSync(dir)[0]}`;
+    verifyFixtureApplication(fx.root, appDir);
     const code = await command.run(["submit", appDir, "--confirmation", "CONF123", "--person", "pat-lee"]);
     assert.equal(code, 0);
     const { data } = readDoc(`${appDir}/record.md`);
@@ -135,6 +136,7 @@ test(
 
     // An item left open by an older engine closes the next time the queue is read.
     saveQueue("pat-lee", [{ ...item, status: "queued", outcome: undefined }]);
+    verifyFixtureApplication(fx.root, app);
     await command.run(["reopen", app, "--reason", "the person signed in", "--person", "pat-lee"]);
     await command.run(["submit", app, "--follow-up", "10", "--person", "pat-lee"]);
     item = loadQueue("pat-lee").items[0];

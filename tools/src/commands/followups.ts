@@ -1,6 +1,7 @@
 import { flag, parseArgs } from "../lib/args.ts";
 import { listApplications } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
+import { scamBlocked } from "../lib/scam.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
 
 /** Submitted applications whose follow_up date is due within `--days` (default 0: due today or overdue). */
@@ -19,11 +20,14 @@ const command: Command = {
       const r = app.record;
       return r?.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= horizonStr;
     });
-    if (!due.length) {
-      console.log("no follow-ups due");
+    const held = due.filter((app) => scamBlocked(app.record!));
+    for (const app of held) console.log(`held for verification: ${rel(app.dir)} (${app.record!.company} — ${app.record!.role}); inspect risk show before any follow-up`);
+    const eligible = due.filter((app) => !scamBlocked(app.record!));
+    if (!eligible.length) {
+      console.log(held.length ? "no cleared follow-ups due" : "no follow-ups due");
       return 0;
     }
-    for (const app of due) console.log(`${rel(app.dir)} — follow up by ${app.record!.follow_up} (${app.record!.company} — ${app.record!.role})`);
+    for (const app of eligible) console.log(`${rel(app.dir)} — follow up by ${app.record!.follow_up} (${app.record!.company} — ${app.record!.role})`);
     return 0;
   },
 };

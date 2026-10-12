@@ -1,15 +1,17 @@
 import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { peek, readDoc, writeDoc } from "./frontmatter.ts";
+import { assessScam } from "./scam.ts";
 import { appendEvent } from "./application-history.ts";
 import { personDir, repoRoot, stamp, today, walkMarkdown } from "./repo.ts";
-import { APPLICATION_DIR, FILE_NAMES, type ApplicationStatus, type ApplicationDetails, type ApplicationEvent } from "./schema.ts";
+import { APPLICATION_DIR, FILE_NAMES, type ApplicationStatus, type ApplicationDetails, type ApplicationEvent, type ScamReview } from "./schema.ts";
 import { normalizeCompany, normalizeUrl, similarity, slugify } from "./text.ts";
 import { renderTemplate } from "./templates.ts";
 
 export type Record_ = ApplicationDetails & {
   type: "application"; person: string; company: string; role: string; status: ApplicationStatus; updated: string;
   url?: string; source?: string; site?: string; applied?: string; resume?: string; cover_letter?: string;
+  scam_review?: ScamReview;
   events?: ApplicationEvent[]; custom_statuses?: string[];
   requisition?: string; score?: number; follow_up?: string; confirmation?: string; [k: string]: unknown;
 };
@@ -171,7 +173,8 @@ export function createApplication(person: string, job: NewApplication, root = re
   mkdirSync(dir, { recursive: true });
   const status = job.status ?? "drafted";
   const events = [{ kind: "created", on: date, status, recorded_at: stamp() }];
-  const ctx = { person, date, status, ...job, events };
+  const scam_review = assessScam({ text: job.description ?? "", context: "posting", source: job.url ?? "new application record", url: job.url });
+  const ctx = { person, date, status, ...job, events, scam_review };
   writeFileSync(join(dir, FILE_NAMES.record), renderTemplate("application-record", ctx, person, root));
   const recordPath = join(dir, FILE_NAMES.record);
   const { data, body } = readDoc<Record_>(recordPath);
@@ -180,6 +183,7 @@ export function createApplication(person: string, job: NewApplication, root = re
     if (job[key] !== undefined && JSON.stringify(data[key]) !== JSON.stringify(job[key])) { Object.assign(data, { [key]: job[key] }); changed = true; }
   }
   if (!data.events) { appendEvent(data, { kind: "created", on: date, status: data.status }); changed = true; }
+  if (!data.scam_review) { data.scam_review = scam_review; changed = true; }
   if (changed) writeDoc(recordPath, data, body);
   writeFileSync(join(dir, FILE_NAMES.posting), renderTemplate("posting", ctx, person, root));
   return listApplications(person, root).find((a) => a.dir === dir)!;

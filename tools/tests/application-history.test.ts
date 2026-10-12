@@ -9,7 +9,7 @@ import { applicationRecordErrors } from "../src/lib/application-history.ts";
 import { listApplications, type Record_ } from "../src/lib/applications.ts";
 import { readDoc, writeDoc } from "../src/lib/frontmatter.ts";
 import { computeStats, pendingSnapshot } from "../src/lib/stats.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 function fixture(fn: (fx: ReturnType<typeof makeFixture>) => Promise<void>) {
   return async () => {
@@ -28,6 +28,7 @@ const result = (args: string[]) => outcome.run([...args, "--person", "pat-lee"])
 async function create() {
   await app(["new", "--company", "Example Works", "--role", "Analyst"]);
   const record = listApplications("pat-lee")[0];
+  verifyFixtureApplication(process.env.RESUMES_ROOT!, record.name);
   return { dir: record.name, path: record.recordPath!, read: () => readDoc<Record_>(record.recordPath!) };
 }
 async function capture(fn: () => unknown) {

@@ -89,6 +89,10 @@ Older records need no migration. Their dates, prose, unknown frontmatter, answer
 
 `./resumes app new` compares the posting with the person's records. The same link (employer or job board) or the same requisition at that employer is the same job: it is already covered, so move on. The same employer with a similar title is only possibly the same job: the tool shows the earlier record (its status, date, requisition, and links) for you to compare with the posting in hand. A different team, level, location, or requisition makes it a different job: proceed with `--distinct-from <dir> --because "<what differs>"`. Nearly the same posting text under another firm's name (one client's role posted by several staffing firms) is shown the same way, by posting text: apply through one firm, and skip the other as the same opening, naming the first. A skipped posting never blocks another, and a skipped or held application comes back with `./resumes app reopen <dir> --reason "…"` when what ruled it out has changed.
 
+## Scam-review evidence
+
+`scam_review` is a separate, reviewable evidence record: findings with sources/dates/dispositions, observed sender/link domains, and independent verification/resolutions. It does not replace the original employer or hiring status. Unresolved review blocks new submission and follow-up progression; see [scam screening](scam-screening.md). Legacy records are left unchanged until reviewed for a new action.
+
 ## Submit or hold
 
 Submit when the person's standing instruction or their word in this session allows it and every field is settled. That instruction is the approval for every application in the run, so do not ask about individual ones:

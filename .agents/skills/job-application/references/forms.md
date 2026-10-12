@@ -80,7 +80,7 @@ When you reach a step that stays with the person, save progress where the site a
 
 ## Warning signs
 
-Hold the application and note why when an employer asks for money (including a paid identity or background verification before an offer), equipment purchases, bank details, or a Social Security number before an offer, or moves the process to a chat app with no verifiable company contact. These are common job-scam patterns.
+Assess the posting, employer/contact domains and requests through [scam screening](scam-screening.md). Record sources and dates with `risk check`; unresolved payment, equipment-check, credential, impersonation or early sensitive-data concerns hold that application before data entry or submission. A verified normal onboarding request, third-party ATS or recruiter alias can be resolved by the agent with evidence; a textual indicator alone never establishes fraud.
 
 ## Terms and consents
 

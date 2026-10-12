@@ -10,6 +10,7 @@ import { updateFor } from "../lib/queue.ts";
 import { rel, resolvePerson, stamp, today } from "../lib/repo.ts";
 import { logEvent } from "../lib/runlog.ts";
 import { appendEvent, DETAILS_USAGE, detailsFromArgs, eventDate, onFromArgs } from "../lib/application-history.ts";
+import { requireScamClear } from "../lib/scam.ts";
 import { wasSent } from "../lib/stats.ts";
 import { normalizeAt } from "../lib/when.ts";
 import { DATE, APPLICATION_EVENT_KINDS, OUTCOME_STATUS, type ApplicationEvent } from "../lib/schema.ts";
@@ -147,6 +148,7 @@ const command: Command = {
       if (!dirArg) throw new Error("app submitting needs <dir>");
       const app = findApplication(person, dirArg);
       const { data, body } = loadRecord(app);
+      requireScamClear(data, "Marking a submit click");
       writeDoc(app.recordPath!, { ...data, submit_clicked: stamp(), updated: today() }, body);
       log("note", `submitting ${label(app)}`);
       console.log(`${rel(app.dir)}: submit marked; run app submit as soon as the site confirms`);
@@ -158,6 +160,7 @@ const command: Command = {
       if (!dirArg) throw new Error("app submit needs <dir>");
       const app = findApplication(person, dirArg);
       const { data, body } = loadRecord(app);
+      requireScamClear(data, "Recording a submission");
       const applied = onFromArgs(a);
       if (!DATE.test(applied)) throw new Error("app submit --on takes YYYY-MM-DD");
       if (data.applied) throw new Error(`already submitted on ${data.applied}; use app note or outcome, never submit twice`);
@@ -246,6 +249,7 @@ const command: Command = {
       const reason = flag(a, "reason");
       if (!dirArg || !reason) throw new Error("app reopen needs <dir> --reason TEXT");
       const app = findApplication(person, dirArg);
+      requireScamClear(loadRecord(app).data, "Reopening an application");
       const status = loadRecord(app).data.status;
       if (status !== "skipped" && status !== "blocked") throw new Error(`${rel(app.dir)} is ${status}; only skipped or held applications reopen`);
       note(app, `reopened — ${reason}`, { status: "drafted", hold_kind: undefined, waits_on: undefined, skip_rule: undefined, due: undefined }, { kind: "reopened", status: "drafted" });

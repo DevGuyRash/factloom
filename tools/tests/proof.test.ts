@@ -5,7 +5,7 @@ import test from "node:test";
 import appCommand from "../src/commands/app.ts";
 import command from "../src/commands/proof.ts";
 import { readDoc } from "../src/lib/frontmatter.ts";
-import { makeFixture } from "./helpers/fixture.ts";
+import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 function withFixture(files: Record<string, string>, fn: (fx: ReturnType<typeof makeFixture>) => Promise<void> | void) {
   return async () => {
@@ -45,6 +45,7 @@ test(
     await appCommand.run(["new", "--company", "Acme", "--role", "Engineer", "--person", "pat-lee"]);
     const dir = `${fx.root}/people/pat-lee/applications`;
     const appDir = `${dir}/${readdirSync(dir)[0]}`;
+    verifyFixtureApplication(fx.root, appDir);
     await appCommand.run(["submit", appDir, "--confirmation", "Application #A-778", "--person", "pat-lee"]);
     const shot = join(fx.root, "page.png");
     writeFileSync(shot, "png");
