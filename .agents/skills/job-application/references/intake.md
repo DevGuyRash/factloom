@@ -2,9 +2,9 @@
 
 Use this when a person is being set up, mentions resumes they have, or when `./resumes status --person <slug>`, `./resumes import status --person <slug>`, or `./resumes doctor` shows files waiting in `drop/`, imported resumes not yet `merged`, or a `facts.yaml` with no jobs or projects yet. `./resumes import` does the mechanical part the same way every time. Reading, reconciling, and writing facts are yours, with whatever the host gives you: reading files and images directly, a browser, connected drives, `gh`.
 
-## 1. Gather everything at once
+## 1. Reuse records, then gather what is missing
 
-- In one message, ask for every resume they have, in any format and any number of versions, plus anything else that describes their work: a LinkedIn profile (its "Save to PDF" is the simplest), GitHub, a portfolio, certificates, performance reviews. Older versions often hold details newer ones dropped.
+- Read the existing profile, facts, evidence, imported notes, and prior confirmations first. Ask in one message for useful missing resumes or records, in any format: LinkedIn, a portfolio, repositories, certificates, or reviews. Older versions may recover omitted details; having every version is not a prerequisite for a draft.
 - Files go in `drop/`, or the person names paths or folders. `drop/` is shared by everyone in the repository: before importing, make sure every file there belongs to this person (open it, or ask). Another person's files go in `drop/<their-slug>/`, which only their import reads.
 - When files live where the host can reach them (a connected drive, an email attachment, a page in the browser), offer to fetch them into `drop/`; otherwise the person adds them. A cloud-drive shortcut (`.gdoc` and the like) is only a link: download the document as Word or PDF. Files a cloud drive keeps online only must be downloaded first; their placeholders are skipped.
 - Run `./resumes import --person <slug>`. It reads `drop/` (the person's own folder there, and loose files), or the files and folders given. Each file from `drop/` is moved into `resumes/archive/`; files from elsewhere, or with `--keep`, are copied. It extracts text where a converter can and writes one note per file under `resumes/source/imported/`. Each output line starts with `+` (text extracted), `?` (needs reading), `=` (already imported: the same bytes; it leaves `drop/`, and a missing archived original is put back), `-` (skipped, with the reason: a system file, a linked folder, a document bundle), or `!` (failed: the file stays where it was; fix the cause and run again).
@@ -23,15 +23,16 @@ For notes with `status: extracted`, compare the text with the original once, bef
 
 ## 3. Reconcile the versions
 
-- Line the versions up by employer and date. A claim every version agrees on becomes one fact.
-- Where versions differ (titles, dates, employer names, numbers, scope), ask the person, all of the differences in one message. Never choose silently, and do not assume the newest version is right: versions get edited for different jobs, and sometimes inflated.
-- A claim found in only one version is still the person's own statement. Use it with the claim's exact phrase in that bullet's `confirm` list (`confirm: ["the phrase"]`) until they confirm it in conversation.
+- Line versions up by employer and date; retain the source of each claim. Repeated wording may come from a shared draft, so agreement alone is not independent verification. Keep the person's recorded confirmations.
+- Where versions differ materially (titles, dates, employer names, numbers, scope), first check whether the person's evidence already resolves the difference. Ask them only about unresolved conflicts, in one prioritized message, while continuing with settled facts. Never choose silently or assume the newest version is right.
+- An unconfirmed claim found in only one version stays attributed to that source, with its exact phrase in the bullet's `confirm` list (`confirm: ["the phrase"]`) until the person confirms it. Preserve prior approval rather than reopening the same claim because it appears in an older file.
 - Official titles and dates go into the profile's employment history as the person confirms them. Forms ask for them and background checks compare them, so when the resumes show a working title or rounded dates, ask for the official ones rather than inferring them.
 
 ## 4. Write the facts
 
-- `resumes/source/facts.yaml`: jobs, projects, skills, and lines such as education, in the person's wording. Any number or claim you reword, merge, or cannot trace goes in that bullet's `confirm` list as its exact phrase.
+- `resumes/source/facts.yaml`: jobs, projects, skills, and lines such as education. Preserve approved meaning through editorial cleanup. An unresolved new or changed factual assertion, including one introduced by merging sources, goes in the bullet's `confirm` as its exact phrase; a clearer sentence with the same approved scope does not need confirmation again.
 - `evidence.md`: one line per claim with its source (for example "resume of 2024-11-25"), so cover letters and form answers can use it.
+- Preserve verified skills, distinctive experience, and prior corrections in the facts even when a particular variant omits them. Existing variants and historical tailored specs refer to bullets by index: reword in place and append additions rather than moving or deleting referenced bullets. Put unresolved headlines, skill labels, titles, or other non-bullet claims in the guide's manual `review`; bullet `confirm` flags do not cover them.
 - `profile.md`: contact details, links, the employment history and education tables. A street address goes in `private.local.md` (frontmatter `type: private`), never in `profile.md`.
 - Set each note's `status: merged` once its content is in the facts. A note whose file adds nothing (an archive whose files you imported, the same version in another format, a file that is not about the person's work) is `merged` too, with one line in the note saying why. These four statuses are the only ones read; anything else counts as `extracted`.
 - Then build variants and research their guides ([resumes](resumes.md), "A person's first resume").
@@ -42,4 +43,4 @@ Build it with the resume-builder skill (`.agents/skills/resume-builder/`): it in
 
 ## Afterwards
 
-Show the built resume beside the originals, settle the guide's `review` items, and carry on with onboarding. Files the person adds later go through the same steps; `./resumes status --person <slug>` shows them until their notes are `merged`.
+Review the built resume and extraction with the resume-builder skill, show the person the material changes and unresolved claims, and settle the guide's `review` items. Continue onboarding only within their requested scope; importing or improving a resume does not start applications or change `apply`. Files added later go through the same steps; `./resumes status --person <slug>` shows them until their notes are `merged`.
