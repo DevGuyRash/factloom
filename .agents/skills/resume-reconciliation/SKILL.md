@@ -7,6 +7,8 @@ description: Reconcile rejected job applications and employer feedback with the 
 
 Turn application outcomes into better-supported, role-specific resumes. A rejection establishes an outcome, not its cause. Keep three things apart: what an employer said, what a comparison of the role's requirements with the person's experience shows, and what remains a hypothesis. This review changes the person's resume sources and notes; applying, sending messages, and publishing stay with the job-application skill and the person's request.
 
+For company-authorized synthetic tests, use the builder's [research mode](../resume-builder/references/research-mode.md). Review the exact tested artifact and actual responses against its stated criteria; synthetic career content is evaluated for design fit and consistency rather than real-world truth. Keep research candidates and outcomes separate from genuine career records. A test response establishes neither real hiring success nor a general cause, and revisions or additional submissions stay within the authorized test scope. The factual-person workflow below otherwise applies.
+
 ## Establish the evidence set
 
 Start from the repository, which already holds most of it (AGENTS.md says where things live): each application's record (status, the outcome recorded with `./resumes outcome`, dated notes, the `resume:` variant, answers given), its posting snapshot, and the resume built for it (`resume-tailored.yaml` and its PDF in the application directory, or the variant named in the record). `./resumes stats` shows responses by variant, source, and site. Read the person's profile, evidence, and active guides, and keep their existing factual and audience constraints.
