@@ -21,6 +21,14 @@ For each note with `status: needs-reading`:
 
 For notes with `status: extracted`, compare the text with the original once, before committing anything from intake. Columns, tables, and text boxes can come out in the wrong order: fix the order in the note. Look as well for personal details the scan does not recognize (passport, license, or national ID numbers; a birth date without a label) and move those lines to the `.local.md` file.
 
+## Portable evidence across devices
+
+The tracked, sanitized imported note must stand on its own in the person's private repository. Preserve the relevant source wording, source label, who supplied it, when it was received, known document dates, verification status, and uncertainties. Link claims in `evidence.md` to this tracked note, not to an absolute device path or gitignored original. A checksum may identify an original but does not replace its usable evidence.
+
+Keep private originals and sensitive extracted fields outside Git. They are optional local backups, not a required reference for another agent or device. Portable handoffs and guides cite the tracked sanitized record; do not tell a future reader to consult a `.local` file, Downloads path, or unavailable attachment. If essential evidence cannot safely be tracked, record exactly what remains unverified and require a secure authorized handoff only when that evidence is actually needed. Never remove ignore rules or commit sensitive originals to make the workflow portable.
+
+An undated document stays undated. File creation/last-save metadata does not date every claim, and an old source saying “present” does not establish current employment. Keep later reported statements separate, attributed and dated; do not infer missing employer, location, specialty, scope, or title from them. When the original is unavailable on a new device, reuse the recorded completed verification rather than claiming a fresh inspection. If verification was never completed, keep that specific uncertainty open while drafting supported material.
+
 ## 3. Reconcile the versions
 
 - Line versions up by employer and date; retain the source of each claim. Repeated wording may come from a shared draft, so agreement alone is not independent verification. Keep the person's recorded confirmations.
