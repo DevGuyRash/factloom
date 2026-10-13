@@ -6,6 +6,8 @@ Recover specific work, the person's contribution, and its consequences. Start wi
 
 Use records the person has supplied or authorized: resumes, LinkedIn, reviews, portfolios, repositories, certificates, published work, and relevant feedback. Import files through [intake](../../job-application/references/intake.md). A repository shows an artifact; establish authorship, personal contribution, dates, deployment status, and users before turning it into an employment or outcome claim. Keep employer and customer confidential details out of public artifacts and public engine changes.
 
+Use the tracked sanitized source notes and evidence links across devices. Gitignored originals are optional backups; do not make local paths required citations or copy sensitive material into Git. Preserve unresolved source-verification limits as intake describes.
+
 Reuse available writing samples for their voice. If voice matters and no sample exists, ask for one without making it a prerequisite for a factual draft.
 
 ## Timeline and contribution
