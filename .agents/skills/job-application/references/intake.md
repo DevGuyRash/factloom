@@ -30,7 +30,7 @@ For notes with `status: extracted`, compare the text with the original once, bef
 
 ## 4. Write the facts
 
-- `resumes/source/facts.yaml`: jobs, projects, skills, and lines such as education, in the person's wording. Any number or claim you reword, merge, or cannot trace goes in that bullet's `confirm` list as its exact phrase.
+- `resumes/source/facts.yaml`: jobs, projects, skills, and lines such as education. Preserve approved meaning through editorial cleanup. An unresolved new or changed factual assertion, including one introduced by merging sources, goes in the bullet's `confirm` as its exact phrase; a clearer sentence with the same approved scope does not need confirmation again.
 - `evidence.md`: one line per claim with its source (for example "resume of 2024-11-25"), so cover letters and form answers can use it.
 - Preserve verified skills, distinctive experience, and prior corrections in the facts even when a particular variant omits them. Existing variants and historical tailored specs refer to bullets by index: reword in place and append additions rather than moving or deleting referenced bullets. Put unresolved headlines, skill labels, titles, or other non-bullet claims in the guide's manual `review`; bullet `confirm` flags do not cover them.
 - `profile.md`: contact details, links, the employment history and education tables. A street address goes in `private.local.md` (frontmatter `type: private`), never in `profile.md`.

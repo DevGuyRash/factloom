@@ -12,7 +12,7 @@ This review changes factloom's agent guidance and guide template. Those are engi
 4. **Review could manufacture endless work.** “Argue for rejecting it,” asking whenever a bullet lacks an outcome, and repeating review after any substantive edit had no materiality boundary. Reviews now identify a passage, consequence, evidence, and correction; distinguish blockers from taste; accept concrete work without invented metrics; recheck affected areas; and stop when no fixable material defect remains.
 5. **Intake could repeat settled questions.** It requested every source and reopened every disagreement or single-version claim. Intake now reads existing evidence and confirmations first, resolves only material remaining conflicts, and drafts the supported parts while unknowns wait. Repeated copies of a claim are not independent corroboration.
 6. **Audience differences needed a concrete method.** Variants now select proof for distinct hiring arguments. Technical implementation, customer discovery, demonstrations, enablement, adoption, operations, and commercial work stay available where supported. Skills and recognizable keywords remain useful; a lexical score cannot substitute for relevance. Business purpose, production use, personal ownership, and measured business results stay separate.
-7. **Approval coverage needed an explicit path.** `confirm` applies to bullet phrases, while headlines, skills, titles, and summaries can also make claims. The guide's existing manual review mechanism now explicitly holds those uncertainties and pending approval. A generated `ready` status is not factual or editorial validation.
+7. **Approval coverage needed an explicit path.** `confirm` applies to bullet phrases, while headlines, skills, titles, and summaries can also make claims. The guide's manual review items and `needs-review` status now identify those uncertainties and necessary pending approval. The tailoring command does not enforce these manual items, so agents must check the guides. A generated `ready` status is not factual or editorial validation.
 
 ## Primary-source checks
 
@@ -28,18 +28,31 @@ A searched historical OpenAI solutions-engineer URL redirected to the careers in
 
 ## Recursive review
 
-A second pass checked the revised instructions against the existing commands. It found that `--out` leaves guides unchanged, so an existing guide could still look ready while its source is being revised. The correction lives at the writing step: add a manual pending-approval item to every affected guide before source edits. The existing `--no-build` option also avoids rendering an all-facts starter before selecting content. Research, intake, builder, reconciliation, the guide template, and README now describe compatible behavior.
+A second pass checked the revised instructions against the existing commands. It found that `--out` leaves guides unchanged, so an existing guide could look ready while its source gains an unresolved claim. The writing step now adds specific manual review items and sets `needs-review` only for variants selecting unresolved material or needing approval for a new intended use. The existing `--no-build` option also avoids rendering an all-facts starter before selecting content.
+
+Further instruction review found that blanket confirmation for rewording, and the initial correction's broad guide holds, would burden purely editorial changes and unchanged siblings. The final rule preserves approved meaning and intended use through editorial cleanup; it verifies and confirms unresolved substantive changes instead. Exact-wording review remains when expressly requested. An unused changed bullet does not hold a sibling. These distinctions are consistent across intake, builder, and reconciliation, and do not authorize applications or external sharing.
 
 Focused walkthroughs covered: a single target posting; sibling roles needing different proof; a stale or redirected posting; missing metrics; a commercial tool without revenue attribution; conflicting old resumes with a recorded confirmation; a changed shared fact; a non-bullet uncertainty; a PDF/Word extraction discrepancy; unavailable conversion; and a reviewer proposing only a taste change. These were editorial consistency checks, not repeated model trials.
 
 ## Verification and limits
 
-- `git diff --check`, engine `./resumes check`, and demo `RESUMES_ROOT=examples/demo ./resumes check` passed.
+- Before workspace recovery, `git diff --check`, engine `./resumes check`, and demo `RESUMES_ROOT=examples/demo ./resumes check` passed. These results preceded the final approval-scope refinement and report correction.
 - The existing fictional demo built locally to a separate output directory as DOCX and PDF. Both text extractions were read; the one-page PDF was rendered and visually inspected. No active demo or personal resume was changed.
 - In a temporary fictional consumer, `variant new --from data-analyst --no-build` created the revised guide; `build-resumes --out` preserved it byte-for-byte; a normal build preserved its manual approval item and `needs-review` status.
-- No runtime code, dependencies, test framework, or automated evaluation suite was added. Broad unit/integration suites, typecheck, hosted CI, actual employer uploads, and hiring-outcome experiments were not run for these instruction/template edits.
+- Recovery checks on 2026-10-13 passed for whitespace/diff consistency, relative Markdown links, skill frontmatter, the eleven-file documentation-only scope, and byte-for-byte reconstruction of the seven unpublished files from the published branch plus patch. After restoring lockfile-pinned dependencies, the final checkout passed the engine and demo checks, typecheck, and existing local suite (244 passed, 4 skipped, 0 failed).
+- No runtime code, dependencies, test framework, or automated evaluation suite was added. Hosted CI, actual employer uploads, and hiring-outcome experiments were not run for these instruction/template edits.
 - The revised agent behavior is **untested in repeated before/after trials**. The checks establish instruction consistency and compatibility with the existing local workflow, not higher interview rates, employer ATS acceptance, or measured model-behavior improvement.
 
 ## Adoption
 
 Merge the engine PR after review. A private consumer then uses its normal `./resumes update` path in a clean integration checkout, reviews the engine-only diff, and retains all private facts, active files, and application settings. A dirty consumer is not a place to overwrite engine files by hand. Updating the process does not rebuild personal resumes or resume applications.
+
+## General-purpose scope and research substance — 2026-10-13
+
+The final review found the examples overemphasized technical and commercial careers. Shared guidance now explicitly derives its priorities from each person’s profession and replaces that default emphasis with varied, illustrative contexts. The target brief connects source quality to actual decisions: work and outcomes, eligibility, leading evidence, material concerns, and content selection. It does not promise hiring outcomes.
+
+Additional primary sources checked on 2026-10-13:
+- [U.S. Department of Labor O*NET overview](https://www.dol.gov/agencies/eta/onet) explains occupation-specific tasks, skills and worker requirements across professions. Use the appropriate geography’s sources; this is not a universal employer brief.
+- [CareerOneStop work-experience guidance](https://cloudfront.careeronestop.org/JobSearch/Resumes/ResumeGuide/work-experience.aspx) supports relevant accomplishments, context, contribution and outcomes, including transferable experience. It does not establish a guaranteed interview effect.
+
+Profession-neutral scenario walkthroughs cover teaching, skilled trades, administration, technical work and career changes. These are editorial checks only; repeated comparative agent trials and hiring-outcome validation remain unrun.

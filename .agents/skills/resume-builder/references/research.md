@@ -23,7 +23,11 @@ In the guide's Market notes, keep a compact comparison: requirement or outcome, 
 - **Transferable:** name the experience actually held and the relevant overlap; another tool or industry is not the same qualification.
 - **Evidence gap or fit constraint:** record what is missing or incompatible; a keyword cannot close it.
 
-Compare the resume's strongest proof with the work the employer needs. Technical implementation, discovery, demos, enablement, adoption, operations, and go-to-market work can each matter; select from the person's evidence rather than reducing every role to a technology list. Business relevance does not establish ownership of revenue, strategy, or measured results.
+Compare the resume's strongest proof with the actual work. Priorities depend on the profession: safe practice, teaching, craftsmanship, service, analysis, creative work, commercial results, or technical delivery can matter where supported. Do not import another person's career priorities, or treat technology, revenue, leadership, or a portfolio as universal requirements.
+
+Before writing, record a short target brief in the existing guide: the work and outcomes sought; genuine eligibility gates; the strongest evidence to lead with; material concerns or missing evidence; and the choices this changes in the draft. Prefer the actual employer's material, followed by relevant professional or licensing authorities and occupational sources for that geography. Distinguish an employer-specific requirement from a profession-wide pattern. Treat recruiter advice as advice, and unsupported screening claims as hypotheses. Check contradictory or missing evidence rather than collecting more similar postings.
+
+A source is useful when its relevance, date, authority, and effect on a decision are clear. A prestige brand, long source list, or model-generated score does not establish research quality. Explain which findings changed the target, content selection, terminology, or ordering, and which did not.
 
 ## Enough to write
 

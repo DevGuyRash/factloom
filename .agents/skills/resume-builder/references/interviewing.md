@@ -19,7 +19,7 @@ For important roles, let them describe the problem and a concrete incident befor
 - What made it difficult: scale, constraints, competing needs, reliability, cost, timing, or stakeholders?
 - What evidence shows the result: a measurement, adoption, delivery, feedback, a before-and-after, or a concrete capability?
 
-For customer-facing or go-to-market work, recover discovery, solution design, demonstrations, sales support, training, adoption, and feedback where they actually occurred. Separate supporting a commercial process from owning the deal, account, strategy, launch, or revenue. Preserve technical depth alongside the business reason for doing the work.
+Adapt follow-up questions to the actual work. Ask about safe practice and workmanship for a trade, instruction and learner progress for teaching, service and accuracy for administration, or discovery and account responsibility for commercial work only where relevant. Do not turn these examples into a questionnaire. Establish responsibility and context before attributing an organization’s outcome to one person.
 
 ## Numbers and sources
 
