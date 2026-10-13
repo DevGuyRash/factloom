@@ -2,7 +2,7 @@
 
 Truthful, agent-driven job applications. You write every fact about your work once; factloom weaves those facts into tailored resumes, cover letters, and form answers, and an AI agent (Claude Code, Codex, or any agent that reads `AGENTS.md`) applies to jobs from your browser while recording everything it sends.
 
-The same workflow also supports explicitly requested, company-authorized [synthetic recruiting-system research](.agents/skills/resume-builder/references/research-mode.md): wholly generated resumes or mixtures of supplied and fictional content, including accomplishments and metrics. Saved batch controls offer research/enrichment dials, per-variant and tailored overrides, and an evidence-only master restriction. The agent applies them; the CLI is unchanged. Research records preserve provenance and test scope while agreed blinded artifacts can look ordinary. Genuine source history remains intact; creating a test resume does not start submissions.
+New resume batches default to [research-mode onboarding](.agents/skills/resume-builder/references/research-mode.md). The agent explains synthetic-content capabilities before drafting and offers adjustable research/enrichment controls or evidence-only for a real career resume. Existing batches retain their saved settings. Controls inherit across variants and tailored outputs; the CLI is unchanged. Research records preserve provenance while agreed blinded artifacts can look ordinary. Genuine source history remains intact, and external tests require company agreement and submission authorization.
 
 | classic-blue | modern | executive |
 |:---:|:---:|:---:|
