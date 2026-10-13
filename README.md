@@ -50,7 +50,7 @@ You need [git](https://git-scm.com), [Node.js](https://nodejs.org) 22.18 or late
    ```
 
 4. Put every resume you have in `drop/`: any format, any number of versions, even a photo or a LinkedIn "Save to PDF". No resume yet is fine too.
-5. Open Claude Code or Codex in the folder and say **"set me up"**. The agent creates your profile, imports and reads your resumes (or builds one with you from your history, LinkedIn, and GitHub), reconciles them into your facts file, shows it to you in a few themes, and runs onboarding.
+5. Open Claude Code or Codex in the folder and say **"set me up"**. The agent explains the research-mode defaults and evidence-only choice, asks for your page-limit preference with a recommendation, and manages the settings for you. It creates your profile, imports and reads your resumes (or builds one from the material and scope you choose), reconciles the sources, and shows the result in a few themes. Existing batches keep their settings.
 6. Optionally, say **"run a trial"** first: the agent applies, as a fictional person, to mock postings on your machine, and a grader checks what it submitted and skipped.
 7. Open job postings in your agent's browser and say **"apply to the jobs open in my browser."**
 
@@ -70,7 +70,8 @@ On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode
 
   Every setting is listed in [docs/themes.md](docs/themes.md). `./resumes themes check` warns about hard-to-read colors and fonts your machine lacks.
 - **Tab completion.** `./resumes completion bash|zsh|fish|powershell` prints a script that completes commands, flags, and your people, resume variants, and themes as you type; [docs/completion.md](docs/completion.md) says where to load it.
-- **Page targets.** Set `pages: 2` in a variant and the build tightens spacing, then type (never below 9 pt), then margins until it fits.
+- **Resume controls.** Tell the agent how much research, enrichment, title flexibility, keyword emphasis, tailoring, and review you want. It saves the [batch controls](shared/templates/documents/research-controls.yaml.hbs), applies explicit per-variant/tailored overrides, and keeps an evidence-only setting stronger than generation switches. Changing settings rebuilds selected outputs after review and archives superseded files while preserving retained active variants.
+- **Page targets.** Choose a positive page limit or ask the agent to use its judgment. It recommends a default for your role, experience, market, and destination, then carries the choice across the batch. A stricter employer limit wins with an explanation. The existing `pages` setting fits the result by adjusting spacing, type, and margins; review readability rather than treating the 9 pt floor as a goal.
 - **Applicant tracking systems.** Themes marked `ats: safe` are designed for simpler parsing; check each file's extracted text and rendered pages, and verify portal fields during an authorized application. No theme guarantees every ATS's behavior. The sidebar layout is marked `ats: caution`, for a person-first context.
 - **Your own layer.** Put changes in `custom/` (themes, document templates, extra onboarding questions, scoring numbers, skill terms, site notes) or in `people/<you>/templates/`. They override the engine's defaults and survive every update.
 
@@ -96,7 +97,7 @@ It merges the newest engine, reinstalls dependencies when they changed, runs the
 
 ```
 people/<person>/             your profile, answers, evidence, stories, inbox, applications (yours)
-  resumes/source/            facts.yaml and variants/*.yaml: what your resumes are built from
+  resumes/source/            facts.yaml, variants/*.yaml, and saved batch controls
   resumes/active/<variant>/  the built resumes and a guide saying when to use each
 custom/                      your themes, templates, settings, site notes, company research (yours)
 shared/                      the engine's defaults: themes, templates, onboarding catalog, settings
@@ -107,6 +108,8 @@ examples/demo/               a complete fictional person to try every command on
 ```
 
 [AGENTS.md](AGENTS.md) is the agents' guide to the repository; [tools/README.md](tools/README.md) covers the tools, tests, and CI. Agents reach email through what their host provides (a mail connector or plugin, a webmail tab signed in to their browser, a mail MCP server) or through [himalaya](https://github.com/pimalaya/himalaya), a command-line email client.
+
+Current resume guidance lives with the [builder](.agents/skills/resume-builder/SKILL.md): [intake and evidence](.agents/skills/job-application/references/intake.md), [research](.agents/skills/resume-builder/references/research.md), [writing](.agents/skills/resume-builder/references/writing.md), [file and content review](.agents/skills/resume-builder/references/review.md), and [controlled research mode](.agents/skills/resume-builder/references/research-mode.md). These references include relevant sources and their limits. Development history belongs in Git and pull requests.
 
 ## Contributing and license
 

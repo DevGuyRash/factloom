@@ -87,6 +87,7 @@ A person's profile may carry a standing instruction, in their own words, on how 
 
 ## Changing the repository
 
+- Keep engine documentation in the timeless present: current behavior and guidance live in README, skills, and references; change narratives and verification history belong in Git commits and pull requests. Keep meaningful dates in source evidence and applicant records, not dated engine review reports.
 - Run `./resumes check` after edits and fix what it reports; the pre-commit hook and CI run it too.
 - `./resumes setup` prepares a checkout (git hooks including the privacy guard, diff drivers for Word and PDF files, the engine remote); `./resumes doctor` reports what is missing. LibreOffice adds PDF output.
 - `./resumes update` brings in the newest engine, and lists generated resumes that render differently afterwards so they can be rebuilt and reviewed. Records under `people/` and `custom/` stay where they are, modified or not, and staged ones are unstaged for the merge and staged again after it; uncommitted changes to engine files stop it, and so do records staged while an activation is at work (it is probably mid-commit).
