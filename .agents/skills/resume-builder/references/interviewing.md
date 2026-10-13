@@ -8,6 +8,8 @@ Use records the person has supplied or authorized: resumes, LinkedIn, reviews, p
 
 Use the tracked sanitized source notes and evidence links across devices. Gitignored originals are optional backups; do not make local paths required citations or copy sensitive material into Git. Preserve unresolved source-verification limits as intake describes.
 
+When intake is sparse, first write what it actually establishes. Use occupational and employer research to offer a short, relevant prompt: which duties they performed, where, using what, and with what responsibility. Keep suggested additions labeled in the inbox or review message until supported; a typical duty is a question, not a fact with a citation to a job description. A title alone may support a history entry while its duties remain unknown. Concrete supplied responsibilities can make strong bullets without an outcome or a number.
+
 Reuse available writing samples for their voice. If voice matters and no sample exists, ask for one without making it a prerequisite for a factual draft.
 
 ## Timeline and contribution
@@ -21,11 +23,15 @@ For important roles, let them describe the problem and a concrete incident befor
 - What made it difficult: scale, constraints, competing needs, reliability, cost, timing, or stakeholders?
 - What evidence shows the result: a measurement, adoption, delivery, feedback, a before-and-after, or a concrete capability?
 
+Use the strongest supported incidents to move beyond a duty list: an error caught, a difficult case resolved, a service maintained under pressure, a process improved, or someone trained. These are prompts, not assumed accomplishments. Ask what actually happened and what the person contributed. If a source lists responsibilities without personal attribution, establish which they performed before presenting them as experience.
+
 Adapt follow-up questions to the actual work. Ask about safe practice and workmanship for a trade, instruction and learner progress for teaching, service and accuracy for administration, or discovery and account responsibility for commercial work only where relevant. Do not turn these examples into a questionnaire. Establish responsibility and context before attributing an organization’s outcome to one person.
 
 ## Numbers and sources
 
 Ask for figures only where they would strengthen a relevant claim. Record units, period, baseline, how measured, and the person's share. Label memory estimates and ranges as such; never turn them into precise measured gains. Unknown is a valid answer. A concrete deliverable or observed user benefit can be strong evidence without a metric. Intended benefits remain intended until observed.
+
+Research can suggest useful measures: workload per week, people supported, turnaround time, error frequency, budget handled, or training reach where relevant. Offer the measure and ask for a record or a defensible estimate; keep an unanswered number as a question or visible placeholder in separate proposed wording, never as a realistic-looking value in the resume. If the evidence is only a responsibility, write its actual scope now and strengthen it when an outcome is established.
 
 Record claims in `facts.yaml` with the source and confirmation in `evidence.md`; useful incidents also go in `stories.md`. Keep unresolved or conflicting phrases in `confirm`, and unresolved non-bullet claims in the guide's manual `review`. Prior approval carries forward unless new evidence conflicts with it or the claim changes.
 

@@ -2,6 +2,8 @@
 
 Research should settle a writing or targeting decision. Start from the person's requested roles, level, location, engagement constraints, existing guides, and evidence. For one application, the actual posting is the primary brief. For a reusable variant, investigate the role family across distinct employers; a repost on several boards is one observation. Reuse relevant dated research and refresh what could change the decision.
 
+Read the exact target when supplied, then compare adjacent roles in the relevant industry to distinguish shared capabilities from role-specific credentials, scope, or terminology. Follow work and skills, not title similarity alone. For a general resume, start from the person's established profession and the related work their evidence supports. Keep this comparison small and decision-led; it informs wording and transferable strengths without silently changing the target or creating extra variants.
+
 ## Read the work, not just the title
 
 Prefer live employer postings and their linked application pages. Keep the employer, role, requisition or URL, location, posting date when available, access date, and whether the page is live, archived, or unavailable. Open the page: a search snippet or a redirect to a careers index does not establish a current vacancy. Historical postings remain evidence of that historical role, not current demand.
@@ -12,7 +14,7 @@ Read for:
 - Required versus preferred qualifications, eligibility gates, seniority and ownership, and relevant tools and terminology.
 - Differences by role family, employer type, location, and engagement. Separate individual contribution, team leadership, commercial ownership, and customer-facing delivery even when titles overlap.
 
-Use employer hiring guidance, published career ladders, professional or licensing bodies, and occupational databases to resolve specific questions. Use the actual ATS vendor's documentation for parser behavior. Recruiting systems vary; separate documented behavior from advice, inference, or a simulated screener's opinion. Check employer rules about AI assistance when relevant. Research pay when it affects the person's target or they ask for it; keep geography, level, currency, date, and base versus total compensation distinct.
+Use employer hiring guidance, published career ladders, professional or licensing bodies, and occupational databases to resolve specific questions. With sparse intake, these sources identify likely work to ask about and evidence worth recovering. Keep proposed duties or qualifications in questions or clearly labeled suggestions outside the person's facts and resume; only their records or confirmation can establish them. Use the actual ATS vendor's documentation for parser behavior, separating documented behavior from advice or inference. Check employer rules about AI assistance when relevant. Research pay when it affects the target or is requested; keep geography, level, currency, date, and base versus total compensation distinct.
 
 ## Map requirements to evidence
 
@@ -25,7 +27,7 @@ In the guide's Market notes, keep a compact comparison: requirement or outcome, 
 
 Compare the resume's strongest proof with the actual work. Priorities depend on the profession: safe practice, teaching, craftsmanship, service, analysis, creative work, commercial results, or technical delivery can matter where supported. Do not import another person's career priorities, or treat technology, revenue, leadership, or a portfolio as universal requirements.
 
-Before writing, record a short target brief in the existing guide: the work and outcomes sought; genuine eligibility gates; the strongest evidence to lead with; material concerns or missing evidence; and the choices this changes in the draft. Prefer the actual employer's material, followed by relevant professional or licensing authorities and occupational sources for that geography. Distinguish an employer-specific requirement from a profession-wide pattern. Treat recruiter advice as advice, and unsupported screening claims as hypotheses. Check contradictory or missing evidence rather than collecting more similar postings.
+Before writing, record a short target brief in the existing guide: the work and outcomes sought; genuine eligibility gates; the strongest evidence and supported keywords to lead with; material concerns or missing evidence; and the choices this changes in the draft. Show what transfers across adjacent roles and what remains specific to one. Prefer the employer's material, then professional or licensing authorities and occupational sources for that geography. Distinguish employer requirements from profession-wide patterns. Treat recruiter advice as advice and unsupported screening claims as hypotheses. Investigate contradictions rather than collecting more similar postings.
 
 A source is useful when its relevance, date, authority, and effect on a decision are clear. A prestige brand, long source list, or model-generated score does not establish research quality. Explain which findings changed the target, content selection, terminology, or ordering, and which did not.
 
