@@ -74,4 +74,4 @@ When the person asks to review the inbox, or accepts the end-of-session offer, t
 - **Change**: update an existing answer, catalog entry, resume guide, or site note as the person directs.
 - **Discard**.
 
-Remove each handled entry from the inbox (git history keeps it), run `./resumes check`, and commit.
+Remove each handled entry from the inbox (git history keeps it), run `./resumes check`, and save the coherent changes under [local checkpoints](../../../../AGENTS.md#local-checkpoints-in-consumer-work).

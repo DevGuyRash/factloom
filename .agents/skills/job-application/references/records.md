@@ -1,5 +1,7 @@
 # Records and submission
 
+Record observed attempts and outcomes promptly, then save coherent batches through [local checkpoints](../../../../AGENTS.md#local-checkpoints-in-consumer-work). A Git commit does not establish delivery; the submission confirmation and uncertainty rules below do.
+
 ## Application directory
 
 Each application gets `people/<person>/applications/<YYYY-MM-DD>_<company-slug>_<role-slug>/`, dated the day work starts, with lowercase hyphenated slugs. It holds the files below; `record.md`, `posting.md`, and `cover-letter.md` are good names for new ones, while readers find them by `type`.

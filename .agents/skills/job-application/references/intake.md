@@ -54,4 +54,6 @@ Build it with the resume-builder skill (`.agents/skills/resume-builder/`): it in
 
 ## Afterwards
 
+Save coherent import/reconciliation work through [local checkpoints](../../../../AGENTS.md#local-checkpoints-in-consumer-work); ignored originals remain local-only.
+
 Review the built resume and extraction with the resume-builder skill, show the person the material changes and unresolved claims, and settle the guide's `review` items. Continue onboarding only within their requested scope; importing or improving a resume does not start applications or change `apply`. Files added later go through the same steps; `./resumes status --person <slug>` shows them until their notes are `merged`.
