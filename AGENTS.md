@@ -85,6 +85,16 @@ A person's profile may carry a standing instruction, in their own words, on how 
 
 `./resumes help` lists the repository's commands and `./resumes help <command>` shows one command's usage; on Windows, use `resumes.cmd`. `./resumes types` prints the document model from `tools/src/lib/schema.ts`, the single source for types, fields, statuses, and policies. Generate documents with the commands or `./resumes template`. Resumes and the dashboard are rebuilt from their sources, so change a template, theme, facts file, or variant rather than the generated file; drafts (cover letters, follow-ups, thank-you notes, interview prep) are starting points to rewrite in place.
 
+## Local checkpoints in consumer work
+
+Use frequent, coherent local Git commits to preserve progress in the person's private copy. This section governs consumer checkpoints; engine publication follows CONTRIBUTING.md and the authorized engine task.
+
+- At session start, check Git availability, the intended repository and role, branch, working-tree state, staged changes, and any operation already in progress. Inspect again before committing. Local commits need Git, not `gh`, an upstream branch, or a remote. Keep the private-copy requirements above in force.
+- Commit useful checkpoints: sanitized source import/reconciliation; reviewed resume or cover-letter changes; research and guides; recorded application attempts/outcomes; interview, status, or email reconciliation; and meaningful remaining changes at a session handoff. Batch related edits rather than each keystroke; skip empty commits. Use conventional messages describing what actually changed, such as `docs(resume): clarify project evidence` or `chore(applications): record pending attempts`.
+- Review the diff and stage only owned, relevant changes. Preserve unrelated user edits and staged state; if changes cannot be isolated safely, leave that checkpoint pending and explain why. Check the intended staged content, run applicable checks, and respect hooks and privacy scans. Keep secrets, ignored originals, and local-only answers out of commits; never force-add them or bypass safeguards.
+- Verify that the commit exists before reporting it. A commit records the observed state, not proof an application was submitted or a message sent. Record external confirmations promptly before checkpointing; reconcile uncertain submissions against the site or mail instead of resubmitting. If Git, repository state, identity, signing, or a hook blocks a commit, preserve the work and report the exact blocker and uncommitted scope. Do not invent an identity, disable signing, change security settings, or bypass hooks to clear it.
+- Keep checkpoints local unless the user explicitly requests a push. For that request, verify the intended private repository and actual push destination before sending; a remote name alone is insufficient, and consumer history never goes to the public Factloom engine. `gh` is optional for requested remote work, not a prerequisite for saving locally. Report local commits and any requested push separately; never claim unsent work is synced to another device.
+
 ## Changing the repository
 
 - Keep engine documentation in the timeless present: current behavior and guidance live in README, skills, and references; change narratives and verification history belong in Git commits and pull requests. Keep meaningful dates in source evidence and applicant records, not dated engine review reports.
@@ -92,7 +102,7 @@ A person's profile may carry a standing instruction, in their own words, on how 
 - `./resumes setup` prepares a checkout (git hooks including the privacy guard, diff drivers for Word and PDF files, the engine remote); `./resumes doctor` reports what is missing. LibreOffice adds PDF output.
 - `./resumes update` brings in the newest engine, and lists generated resumes that render differently afterwards so they can be rebuilt and reviewed. Records under `people/` and `custom/` stay where they are, modified or not, and staged ones are unstaged for the merge and staged again after it; uncommitted changes to engine files stop it, and so do records staged while an activation is at work (it is probably mid-commit).
 - When a person has `resumes/source/`, change resumes there and rebuild rather than editing the generated files.
-- Commit as records change (every few outcomes in a long run), with messages describing what changed, and push at the end of a session or activation, and at least daily in a run that lasts days.
+- Save consumer changes under [Local checkpoints in consumer work](#local-checkpoints-in-consumer-work).
 
 ## Working on the engine
 

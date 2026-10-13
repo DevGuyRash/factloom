@@ -5,7 +5,7 @@ description: Apply to jobs autonomously for a person in this repository, from pa
 
 # Job application
 
-You work through whatever browser or computer-use tools the host provides, in the person's own signed-in sessions. The repository is your memory, located by frontmatter `type` as AGENTS.md describes, and `./resumes` is your toolbox: `./resumes help <command>` gives exact usage.
+You work through whatever browser or computer-use tools the host provides, in the person's own signed-in sessions. The repository is your memory, located by frontmatter `type` as AGENTS.md describes, and `./resumes` is your toolbox: `./resumes help <command>` gives exact usage. Follow [local checkpoints](../../../AGENTS.md#local-checkpoints-in-consumer-work) from the initial Git-state check through each coherent batch and handoff; application authority does not authorize a push.
 
 For a research-only candidate, read its recorded scope and the resume-builder's [research mode](../resume-builder/references/research-mode.md) first. Synthetic content is permitted only for company-agreed tests; it does not authorize a submission. When the user authorizes a test run, the existing tools operate within its specified companies, routes, actions, and stopping condition. Those limits replace this skill's open-ended search, widening, scheduling, and follow-up defaults. Keep observed results factual and separate from genuine applications.
 
@@ -88,7 +88,7 @@ Once a day (log each summary as a note, so the run logs show when the last one w
 
 - Each day has its own run log: `run start` continues the day's log and opens a new one on a new day, so an activation still at work past midnight ends and restarts it (`./resumes run end`, `./resumes run start`).
 - Send one summary notification, at the time `prefs.notifications` names (otherwise with the first activation of the day), unless the person asked for less: totals since the run began and for the day, by site (submitted, held with what each needs, skipped), what came back by mail (interviews, rejections, replies sent), sites closed and why, and the searches run.
-- Draft the follow-ups that are due, retry held applications whose blocker may have cleared, refresh any guide `./resumes status` lists as due for research, close the tabs that piled up, and commit and push. When the person has asked for engine updates during runs, bring in the newest engine then (`./resumes update`, with everything committed) and re-read this skill.
+- Draft the follow-ups that are due, retry held applications whose blocker may have cleared, refresh any guide `./resumes status` lists as due for research, close the tabs that piled up, and checkpoint meaningful changes locally. When the person has asked for engine updates during runs, save owned changes and inspect the repository state before `./resumes update`, then re-read this skill; unrelated work stays untouched.
 
 Some hosts end a turn after a while or start you again on a schedule (a heartbeat, an automation, a loop). Each activation continues the same run:
 
@@ -96,7 +96,7 @@ Some hosts end a turn after a while or start you again on a schedule (a heartbea
 - When `prefs.active-hours` puts now inside hours the person keeps the machine or browser free, end the activation without changes. Otherwise read `./resumes status` first: interviews coming up are handled before the next posting (reminders, the thank-you after a recent one), and what is due soon (holds and pending steps with a due time) is told to the person once, with its deadline.
 - Check the mail at the start of each activation (or session) and after each pass of the searches, when the person's answers let you read it ([communications](references/communications.md), "Mail about the applications"): record what came back, do what the messages ask that the person's answers settle, tell the person what only they can handle, and file what is done.
 - Work exactly as above. An activation ends when the leads are exhausted ("When leads run out") or the host stops it, never after one pass, one batch, or a set number of applications.
-- Before it ends, bring the queue and records up to date, `./resumes run end`, commit, and push, so the next activation picks up where this one stopped.
+- Before it ends, bring the queue and records up to date, `./resumes run end`, and checkpoint meaningful changes locally; report any checkpoint blocker so the next activation can recover the actual state.
 - Choose the shortest interval the host allows for the schedule: `run start` refuses while another activation is at work, so an extra start costs nothing, and the interval is only a safety net, not the pace.
 - An activation's last message says what is queued and when work resumes, never that the job is complete.
 - The schedule's prompt comes from the repository, so the behavior lives in one place: `./resumes template automation-prompt --person <slug>` renders it, pointing to this skill and carrying the person's standing instruction in their own words, including any approval their host accepts only in writing (the data and where it goes). It changes in its template (the person's `templates/` and `custom/templates/documents/` override the engine's), never only in the host. Each activation renders it again: when the schedule runs other text (an older template, an earlier standing instruction, a prompt an agent wrote), give the schedule the rendered prompt where the host lets you, and otherwise give the person the new text to paste.
@@ -109,7 +109,7 @@ When the person stops you, or the run reaches a bound they set:
 - Show new inbox entries (`./resumes inbox`) and offer to review them now; offer to save this session's answers (`onboarding answer … --save`).
 - Clear the session password, if there is one: `./resumes credentials clear`.
 - Remove the run's schedule, if one was set up, and say so.
-- Add dated notes (`./resumes sitenote <site> "…"`) for anything a future session should know that is not noted yet, run `./resumes check`, commit, and push.
+- Add dated notes (`./resumes sitenote <site> "…"`) for anything a future session should know that is not noted yet, run `./resumes check`, and checkpoint meaningful changes locally under the policy above.
 
 ## Other requests
 
