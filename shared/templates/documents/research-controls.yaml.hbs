@@ -1,0 +1,46 @@
+# Agent-interpreted creation controls. The CLI does not load or enforce this file.
+# Keep one file per batch in the existing resumes/source/ folder; link it from guides.
+version: 1
+batch_id: {{yaml (default batch_id "research-batch")}}
+mode: synthetic_research # synthetic_research | genuine_career (always evidence-only)
+# This restriction wins at any level; all generation/enrichment features off also implies it.
+evidence_only: false
+features:
+  role_research: true
+  job_holder_research: true
+  interview_research: true
+  synthetic_gap_fill: true
+  creative_enrichment: true
+  synthetic_metrics: true
+  title_reframing: true
+  summary_rewrite: true
+  keyword_optimization: true
+  tailoring: true
+  staged_review: true
+dials:
+  posting_target: 30 # Relevant distinct postings; normally 10–50, more when useful.
+  research_depth: deep # focused | standard | deep
+  source_classes:
+    - employer_postings
+    - employer_guidance
+    - occupational_professional
+    - job_holder_profiles
+    - hiring_stories
+    - interviewer_accounts
+    - communities
+  enrichment: balanced # conservative | balanced | expansive
+  metric_density: balanced # light | balanced | rich
+  title_flexibility: moderate # conservative | moderate | broad
+  summary_breadth: balanced # broad | balanced | targeted
+  keyword_emphasis: balanced # light | balanced | strong
+  tailoring_depth: deep # light | targeted | deep
+  review_depth: deep # standard | deep
+overrides:
+  variants: {} # Keys: "<person>/<variant>"; values: evidence_only/features/dials overrides.
+  tailored: {} # Keys: exact application-directory paths relative to the repository.
+# Example variant override:
+#   variants:
+#     research-candidate/general:
+#       evidence_only: true
+#       features: {creative_enrichment: false, synthetic_metrics: false}
+#       dials: {summary_breadth: broad, keyword_emphasis: light}

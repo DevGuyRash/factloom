@@ -1,9 +1,11 @@
 ---
 name: resume-builder
-description: Build or improve a truthful, role-specific resume from a person's existing records and focused interview, current employer research, and review of the delivered files. Use for a first resume, a rebuild, or stronger variants; not for starting applications.
+description: Build or improve genuine career resumes, or realistic synthetic resumes for explicitly authorized recruiting-system research. Use existing records, role research, variants, and delivered-file review; not for starting applications or test submissions.
 ---
 
 # Resume builder
+
+For explicitly requested company-authorized synthetic recruiting tests, follow [research mode](references/research-mode.md) using the same files, commands, themes, and review/build flow. Read its saved batch controls and applicable variant/tailored overrides first; evidence-only always disables invention. Otherwise that scoped mode permits wholly generated or mixed career content, including precise fictional achievements and metrics, replacing personal-verification requirements for intentional fiction. Provenance, consent, observations, and real-person records remain factual. The artifact may be blinded while the research record retains its origin. Otherwise use the genuine-career process below.
 
 This process serves any profession, seniority, and employment background. Derive priorities from this person’s target and evidence; no occupation or another person’s goals are defaults. A resume is evidence that this person can do the work the reader needs. Build the strongest supported case, not the longest inventory or highest keyword count. The repository keeps each claim in `people/<person>/resumes/source/facts.yaml`, its source in `evidence.md`, variants selecting facts, themes controlling appearance, and guides explaining targets ([resumes reference](../job-application/references/resumes.md)). For a new person, follow AGENTS.md's private-copy setup first.
 

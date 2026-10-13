@@ -1,5 +1,7 @@
 # Resumes: sources, themes, building, keywords, tailoring
 
+The commands below serve both genuine resumes and explicitly authorized [synthetic research](../../resume-builder/references/research-mode.md). In a research-only record, that mode and its batch/per-output controls replace personal-truth requirements with synthetic provenance and consistency when invention is enabled. Read and apply them before selecting or tailoring; the commands do not enforce those controls. The file model, rendering, review flags, and delivery permissions are unchanged. The factual rules below govern genuine career and evidence-only work.
+
 ## Content, structure, and style are separate files
 
 - Content (the single source of truth for every claim): `people/<person>/resumes/source/facts.yaml` — `skills`, `projects`, `jobs`, `lines`. Each bullet is `{text, keywords?, confirm?}`; `confirm` lists exact phrases still awaiting the person's own confirmation. Never add a fact that isn't true and traceable.
