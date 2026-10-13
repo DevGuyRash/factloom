@@ -18,7 +18,9 @@ features:
   tailoring: true
   staged_review: true
 dials:
-  page_limit: use_judgment # Positive integer | use_judgment; ask once and recommend a default.
+  # Review all context/sources and invite extra notes before recommending length.
+  # Keep document type, must-keeps, and optional preferences/1–5 weights in the guide.
+  page_limit: use_judgment # Positive integer | use_judgment; suitable for long CVs too.
   posting_target: 30 # Relevant distinct postings; normally 10–50, more when useful.
   research_depth: deep # focused | standard | deep
   source_classes:
