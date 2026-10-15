@@ -18,14 +18,17 @@ export function findDocInDir(dir: string, type: string): { path: string; data: R
   return null;
 }
 
-export type BulletFact = { text: string; keywords?: string[]; confirm?: string[] };
-export type EntryFact = { title: string; sub?: string; dates?: string; link?: { text: string; url: string }; bullets: BulletFact[] };
-export type LineFact = { left: string; rest?: string; right?: string };
+export type EvidenceRefs = { sources?: string[]; confirmed_by?: string[] };
+export type BulletFact = EvidenceRefs & { text: string; keywords?: string[]; confirm?: string[] };
+export type EntryFact = EvidenceRefs & { title: string; sub?: string; dates?: string; link?: { text: string; url: string }; bullets: BulletFact[] };
+export type LineFact = EvidenceRefs & { left: string; rest?: string; right?: string };
 export type Facts = {
   person: string;
+  mode?: "genuine_career" | "synthetic_research";
+  batch_id?: string;
   name: string;
   contact: Contact[];
-  skills: Record<string, { label: string; items: string }>;
+  skills: Record<string, EvidenceRefs & { label: string; items: string }>;
   projects: Record<string, EntryFact>;
   jobs: Record<string, EntryFact>;
   lines: Record<string, LineFact>;
@@ -42,7 +45,7 @@ export type VariantSection =
  * A layout: which facts, in what order, under which headings. `style` overrides any theme setting for
  * this variant only; `pages` is the most pages it may take (the build tightens spacing to fit).
  */
-export type Variant = { variant: string; theme: string; headline: string; output: string; sections: VariantSection[]; style?: Record<string, unknown>; pages?: number };
+export type Variant = { mode?: "genuine_career" | "synthetic_research"; batch_id?: string; variant: string; theme: string; headline: string; output: string; sections: VariantSection[]; style?: Record<string, unknown>; pages?: number };
 
 export const sourceDir = (person: string, root = repoRoot()) => join(personDir(person, root), "resumes", "source");
 export const factsPath = (person: string, root = repoRoot()) => join(sourceDir(person, root), "facts.yaml");
@@ -114,16 +117,28 @@ export function resolveContent(facts: Facts, variant: Variant): ResumeContent {
   return { name: facts.name, headline: variant.headline, contact: facts.contact, sections: variant.sections.map((s) => sectionOf(facts, s)) };
 }
 
-/** Every fact's text, flattened for keyword scanning: skill items, project/job titles and
- * bullets, and one-line entries. Broader than any single resume variant. */
-export function factsText(facts: Facts): string {
-  const entryText = (e: EntryFact) => [e.title, e.sub ?? "", ...e.bullets.map((b) => b.text)].join("\n");
-  const parts: string[] = [];
-  for (const s of Object.values(facts.skills ?? {})) parts.push(s.label, s.items);
-  for (const e of Object.values(facts.projects ?? {})) parts.push(entryText(e));
-  for (const e of Object.values(facts.jobs ?? {})) parts.push(entryText(e));
-  for (const l of Object.values(facts.lines ?? {})) parts.push(l.left, l.rest ?? "", l.right ?? "");
-  return parts.join("\n");
+/** Stable source references for reviewing the full inventory, independently of a selection. */
+export type FactEvidence = { id: string; text: string; state: "confirmed" | "unconfirmed"; sources: string[]; confirmedBy: string[] };
+export function factEvidence(facts: Facts): FactEvidence[] {
+  const out: FactEvidence[] = [];
+  const refs = (value: unknown, id: string): string[] => {
+    if (value === undefined) return [];
+    if (!Array.isArray(value) || value.some(x => typeof x !== "string" || !x.trim())) throw new Error(`${id}: evidence references must be nonempty strings`);
+    return value;
+  };
+  const add = (id: string, text: string, evidence: EvidenceRefs, held = false) => out.push({ id, text, state: held ? "unconfirmed" : "confirmed", sources: refs(evidence.sources, id), confirmedBy: refs(evidence.confirmed_by, id) });
+  for (const [id, s] of Object.entries(facts.skills ?? {})) add(`skills.${id}`, `${s.label}: ${s.items}`, s);
+  for (const kind of ["projects", "jobs"] as const) for (const [id, e] of Object.entries(facts[kind] ?? {})) {
+    add(`${kind}.${id}.title`, [e.title, e.sub, e.dates].filter(Boolean).join("\n"), e);
+    for (const [i, bullet] of e.bullets.entries()) add(`${kind}.${id}.bullets.${i}`, bullet.text, bullet, !!bullet.confirm?.length);
+  }
+  for (const [id, l] of Object.entries(facts.lines ?? {})) add(`lines.${id}`, [l.left, l.rest, l.right].filter(Boolean).join(" "), l);
+  return out;
+}
+
+/** Confirmed source text by default. A held flag remains held until reconciled in the source. */
+export function factsText(facts: Facts, opts: { includeUnconfirmed?: boolean } = {}): string {
+  return factEvidence(facts).filter(f => opts.includeUnconfirmed || f.state === "confirmed").map(f => f.text).join("\n");
 }
 
 /** A resolved resume's text, flattened for keyword scanning (what the reader of that resume sees). */
