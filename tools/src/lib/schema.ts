@@ -62,10 +62,20 @@ export type ApplicationDetails = {
   started?: string;
 };
 export const APPLICATION_EVENT_KINDS = ["created", "details-updated", "contacted", "submitted", "held", "skipped", "reopened", "pending-resolved", "interview-scheduled", "interview-rescheduled", "interview-cancelled", "interview-attended", "hired", "start-scheduled", "started", "note"] as const;
+/** Attributed feedback is input to reconciliation, never a proven hiring cause or an automatic edit. */
+export const OUTCOME_FEEDBACK_RECONCILIATION = {
+  generic: "no-change-required", visibility: "recover-supported-evidence", specific: "review-feedback",
+} as const;
+export type OutcomeFeedback = {
+  kind: keyof typeof OUTCOME_FEEDBACK_RECONCILIATION;
+  cause: "unknown";
+  reconciliation: (typeof OUTCOME_FEEDBACK_RECONCILIATION)[keyof typeof OUTCOME_FEEDBACK_RECONCILIATION];
+  text?: string; source?: string; evidence_refs?: string[];
+};
 /** on is when it happened; recorded_at is when we learned/recorded it. at is an interview's scheduled time. */
 export type ApplicationEvent = {
   kind: string; on: string; recorded_at: string; status?: ApplicationStatus; note?: string;
-  at?: string; replaces?: string; round?: string; contact_method?: string; start_date?: string;
+  at?: string; replaces?: string; round?: string; contact_method?: string; start_date?: string; feedback?: OutcomeFeedback;
 };
 /** Statuses that mean the employer answered, and those that mean an interview happened. */
 export const RESPONDED_STATUS: readonly ApplicationStatus[] = ["rejected", "interviewing", "offer", "closed", "hired", "started", "not-hired", "work-not-available"];
