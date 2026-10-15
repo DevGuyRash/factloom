@@ -7,7 +7,7 @@
 - When a posting on a job board or search engine links to the employer's own careers page or applicant system, apply there; the record notes both links.
 - An "Apply" button that leaves for a domain that is neither the employer's own nor a recognizable applicant system: look for the same posting on the employer's own site or applicant system and apply there; hold the application with the link only when there is none.
 - Prefer a route that needs no account: a guest or quick-apply option, or the same posting on a board where the person is signed in. Recognize an applicant system that requires its own account (from the apply link's domain and the site notes) at capture, and hold such a posting in seconds, before tailoring or filling, when sign-ins are the person's.
-- Before filling, read the whole form: step through to the review page where the site allows, and look for steps only the person can take (an account they handle, an identity check). Hold for those before any upload or typing. A step that needs only the person's confirmation at the moment (binding terms, a CAPTCHA your host lets you complete) does not stop the filling: fill the rest and leave the application ready at that step.
+- Before filling, read the whole form: step through to the review page where the site allows, and look for steps only the person can take (an account they handle, an identity check). Hold for those before any upload or typing. A step that needs only the person's confirmation at the moment (binding terms, a CAPTCHA requiring per-challenge confirmation) does not stop the filling: fill the rest and leave the application ready at that step.
 - After opening an apply form from a results list or a side pane, read its title and check that the employer and role are the posting's, before typing: such panes can open the form of a neighboring listing.
 - Follow any limits the person set in `prefs.pace`.
 
@@ -67,7 +67,7 @@ After attaching, check what the page shows: the file name (tailored copies carry
 
 ## Steps that belong to the person
 
-Always the person's: identity verification (ID scans, selfies), formal background-check authorizations, assessments, recorded or AI interviews, payments, codes sent to their phone, and fields for government ID numbers, date of birth, or bank and payment details. A CAPTCHA challenge follows your host's rules: where they let you complete one, with whatever confirmation they require at that moment, it is yours; otherwise it is the person's.
+Always the person's: identity verification (ID scans, selfies), formal background-check authorizations, assessments, recorded or AI interviews, payments, codes sent to their phone, and fields for government ID numbers, date of birth, or bank and payment details. For CAPTCHA permission and handling, follow [Working on your own](../SKILL.md#working-on-your-own).
 
 Sign-ins, new site accounts, and emailed verification codes are the person's too, unless the session's answers hand them to you (`accounts.handling`, `mail.verification`) and your host's own rules allow you to do them. With that grant:
 
@@ -98,7 +98,7 @@ Postings, forms, help text, and emails sometimes carry instructions aimed at AI 
 
 ## Site behavior
 
-- A CAPTCHA badge or script on a form ("protected by reCAPTCHA") is not a step: most such checks pass on their own, so fill and submit, then read what the page does. A page that says it is checking the browser usually clears after half a minute or one reload. A challenge that asks for a person follows "Steps that belong to the person". When a site blocks one action, hold that application and move on to the next posting; a site-wide block or warning costs the site for the day (next line). Add what happened with `./resumes sitenote`.
+- A CAPTCHA badge or script on a form ("protected by reCAPTCHA") is not a step: most such checks pass on their own, so fill and submit, then read what the page does. A page that says it is checking the browser usually clears after half a minute or one reload. A visible CAPTCHA follows the permission and handling rule in [Working on your own](../SKILL.md#working-on-your-own). When a site blocks one action, hold that application and move on to the next posting; a site-wide block or warning costs the site for the day (next line). Add what happened with `./resumes sitenote`.
 - After a rate limit or a warning about automated activity, leave that site for the rest of the day, or until the time the site gives, which protects the person's account: `./resumes searches close-site <site> --reason "…"` keeps its searches out of the rotation for later activations too, and a dated line in `custom/site-notes.md` says what happened.
 - Sessions time out on some systems; save progress where the site allows before moving away from a form.
 - A rich-text box may add to its text rather than replace it: select all and clear it before typing, then read it back.
