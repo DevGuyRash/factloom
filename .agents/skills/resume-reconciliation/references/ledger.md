@@ -13,13 +13,13 @@ Record the cutoff, source account identity, authorized mailboxes, search queries
 | Application identity | Employer, recruiter if distinct, role, requisition or posting URL, submission date or bounded period |
 | Outcome timeline | Message date, durable identifier, event, and evidence; include later replies and distinguish separate applications |
 | Latest supported disposition | Rejected, role closed, withdrawn, eligibility restriction, progressed, or unresolved |
-| Submitted material | Exact retained artifact and hash, recorded variant, or unknown; source of the match |
-| Requirements | Historical posting source and capture date; current primary source checked and date; required versus preferred |
+| Submitted material | Exact retained artifact/hash and delivery evidence, recorded variant, or unknown; factual or synthetic identity and source/settings revision when known |
+| Requirements | Historical posting and date; required versus preferred responsibilities; current official source only where it informs the comparison |
 | Employer feedback | What the employer actually said, with attribution and limits; generic fit language remains generic |
-| Verified experience | Fact identifiers, source, dates, scope, and whether an outcome is estimated, measured, or person-confirmed |
+| Verified experience | Fact ids, original source section/page, dated user corrections, scope, and confirmation or uncertainty; preserve synthetic provenance separately |
 | Comparison | Visibility gap, evidence gap, fit constraint, or hypothesis; no inferred causal claim |
-| Disposition of proposed change | Included wording and variant, held factual addition, or no resume change, with reason |
-| Verification | Build, text extraction, visual QA, source version, and authorized destination verification |
+| Disposition of proposed change | Narrowest source/selection edit and affected variant, held addition, or no change with reason; material source-to-final omissions or recovered evidence |
+| Verification | Actual source/variant diff and delivered-text comparison; affected file checks and source version; destination verification only for an authorized external change |
 
 ## Evidence distinctions
 
