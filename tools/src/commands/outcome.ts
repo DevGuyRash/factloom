@@ -3,7 +3,7 @@ import { listApplications, loadRecord } from "../lib/applications.ts";
 import type { Command } from "../lib/command.ts";
 import { writeDoc } from "../lib/frontmatter.ts";
 import { rel, resolvePerson, today } from "../lib/repo.ts";
-import { APPLICATION_LABEL, OUTCOME_STATUS, type ApplicationStatus } from "../lib/schema.ts";
+import { APPLICATION_LABEL, OUTCOME_STATUS, OUTCOME_FEEDBACK_RECONCILIATION, type ApplicationStatus, type OutcomeFeedback } from "../lib/schema.ts";
 import { appendEvent, calendarDate, onFromArgs } from "../lib/application-history.ts";
 import { normalizeAt } from "../lib/when.ts";
 
@@ -23,6 +23,7 @@ const command: Command = {
     "resumes outcome <dir> interviewing --at <datetime> [--replaces <datetime>] [--on <date|datetime>] [--round TEXT] [--note TEXT] [--person p]",
     "resumes outcome <dir> interviewing --cancel <datetime> [--on <date|datetime>] [--note TEXT] [--person p]",
     "resumes outcome <dir> hired [--on <date>] [--start <date>] [--note TEXT] [--person p]",
+    "resumes outcome <dir> <status> --feedback generic|visibility|specific [--feedback-text TEXT --source TEXT] [--evidence-ref TEXT] [--on <date|datetime>] [--person p]",
   ].join("\n       "),
   run(argv) {
     const a = parseArgs(argv, ["custom"]);
@@ -30,6 +31,27 @@ const command: Command = {
     const [dirArg, status] = a._;
     if (!dirArg || !status) throw new Error("outcome needs <dir> and a status");
     if (!OUTCOMES.includes(status) && !(has(a, "custom") && APPLICATION_LABEL.test(status) && !["drafted", "blocked", "submitted", "skipped"].includes(status))) throw new Error(`status must be one of ${OUTCOMES.join(", ")}, or an explicit lowercase hyphenated custom status with --custom; use app for draft/hold/submit/skip`);
+    // Classifications are explicit caller input, never inferred from rejection text or keyword overlap.
+    // Keep the original reference for later evidence recovery; intake does not verify it or edit resumes.
+    for (const field of ["feedback", "feedback-text", "source", "evidence-ref"]) {
+      if (has(a, field) && !flag(a, field)?.trim()) throw new Error(`--${field} needs text`);
+    }
+    const feedbackKind = flag(a, "feedback") ?? (["rejected", "not-hired"].includes(status) ? "generic" : undefined);
+    if (feedbackKind && !Object.hasOwn(OUTCOME_FEEDBACK_RECONCILIATION, feedbackKind)) throw new Error("--feedback must be generic, visibility, or specific");
+    if (!has(a, "feedback") && (has(a, "feedback-text") || has(a, "evidence-ref"))) throw new Error("--feedback-text and --evidence-ref need an explicit --feedback classification");
+    if (has(a, "source") && !feedbackKind) throw new Error("--source needs --feedback");
+    const feedbackText = flag(a, "feedback-text")?.trim();
+    const feedbackSource = flag(a, "source")?.trim();
+    if ((feedbackKind === "visibility" || feedbackKind === "specific") && (!feedbackText || !feedbackSource)) throw new Error("visibility and specific feedback need --feedback-text and --source (the original message or observation reference)");
+    if (feedbackText && !feedbackSource) throw new Error("--feedback-text needs --source so the statement remains attributable");
+    const evidenceRefs = flag(a, "evidence-ref")?.split(";").map((ref) => ref.trim()).filter(Boolean);
+    if (has(a, "evidence-ref") && !evidenceRefs?.length) throw new Error("--evidence-ref needs an original-source pointer (separate several with semicolons)");
+    const feedback: OutcomeFeedback | undefined = feedbackKind ? {
+      kind: feedbackKind as OutcomeFeedback["kind"], cause: "unknown",
+      reconciliation: OUTCOME_FEEDBACK_RECONCILIATION[feedbackKind as OutcomeFeedback["kind"]],
+      ...(feedbackText ? { text: feedbackText } : {}), ...(feedbackSource ? { source: feedbackSource } : {}),
+      ...(evidenceRefs ? { evidence_refs: evidenceRefs } : {}),
+    } : undefined;
     const on = onFromArgs(a);
     const start = flag(a, "start");
     if (has(a, "start") && (status !== "hired" || !start || !calendarDate(start))) throw new Error("--start goes with hired and takes a real YYYY-MM-DD date");
@@ -73,11 +95,20 @@ const command: Command = {
     if (status === "hired") data.hired = on.slice(0, 10);
     if (start) data.start_date = start;
     if (status === "started") data.started = on.slice(0, 10);
-    appendEvent(data, { kind, on, status, ...(note ? { note } : {}), ...(at ? { at: at.text } : {}), ...(cancelArg ? { at: moment("--cancel", cancelArg).text } : {}), ...(replacesArg ? { replaces: moment("--replaces", replacesArg).text } : {}), ...(round ? { round } : {}) });
+    appendEvent(data, { kind, on, status, ...(note ? { note } : {}), ...(at ? { at: at.text } : {}), ...(cancelArg ? { at: moment("--cancel", cancelArg).text } : {}), ...(replacesArg ? { replaces: moment("--replaces", replacesArg).text } : {}), ...(round ? { round } : {}), ...(feedback ? { feedback } : {}) });
     if (start) appendEvent(data, { kind: "start-scheduled", on, start_date: start });
-    const line = `- ${on}: ${status}${detail ? ` (${detail})` : ""}${start ? ` (start ${start})` : ""}${note ? ` — ${note}` : ""}\n`;
+    const feedbackDetail = feedback ? `; feedback ${feedback.kind}, cause unknown, reconciliation ${feedback.reconciliation}${feedback.text ? `; ${feedback.text}` : ""}${feedback.source ? `; source: ${feedback.source}` : ""}${feedback.evidence_refs?.length ? `; supplied evidence: ${feedback.evidence_refs.join("; ")}` : ""}` : "";
+    const line = `- ${on}: ${status}${detail ? ` (${detail})` : ""}${start ? ` (start ${start})` : ""}${note ? ` — ${note}` : ""}${feedbackDetail}\n`;
     writeDoc(app.recordPath!, data, `${body.trimEnd()}\n\n${line}`);
     console.log(`${rel(app.dir)}: ${status}`);
+    if (feedback) {
+      console.log(`Feedback: ${feedback.kind}; cause unknown.`);
+      if (feedback.kind === "generic") console.log("No resume change required from this outcome alone; retain the outcome for bounded resume-reconciliation when useful.");
+      else if (feedback.kind === "visibility") console.log("Use resume-reconciliation to recover supported evidence from original evidence and later explicit confirmations, compare it with the exact sent artifact (or retain unknown identity), and update only the narrowest appropriate source if justified.");
+      else console.log("Use resume-reconciliation to compare the attributed feedback, role requirements and original evidence; no automatic resume change or hiring-causality claim.");
+      if (feedback.source) console.log(`Supplied feedback source (not independently verified): ${feedback.source}`);
+      if (feedback.evidence_refs?.length) console.log(`Supplied evidence pointers (not independently verified): ${feedback.evidence_refs.join("; ")}`);
+    }
     return 0;
   },
 };

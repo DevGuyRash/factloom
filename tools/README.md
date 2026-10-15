@@ -27,6 +27,8 @@ Run `resumes help` for the full command list and `resumes help <command>` for on
 
 ## Tests and typecheck
 
+Choose checks under [the validation guidance](../CONTRIBUTING.md#validation): working end-to-end behavior first, integration coverage next, unit coverage last. Documentation-only changes do not need these suites.
+
 ```sh
 npx tsc -p .                        # typecheck
 node --test 'tests/**/*.test.ts'    # all tests
@@ -82,6 +84,6 @@ tools installed the pre-push hook refuses, since a privacy check must not be ski
 
 ## CI
 
-`.github/workflows/ci.yml` runs on push and pull request, on Node 22.x and 24.x: `npm ci`, then
+`.github/workflows/ci.yml` runs only through an explicitly requested manual dispatch, on Node 22.x and 24.x: `npm ci`, then
 typecheck, check (on the repository and on `examples/demo`), the upstream guard (in the public
 engine only: no personal data), and the tests. It does not need LibreOffice; tests that need it skip.

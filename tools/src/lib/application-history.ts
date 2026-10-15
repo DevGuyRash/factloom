@@ -3,7 +3,7 @@
 import { flag, has, type Args } from "./args.ts";
 import type { Record_ } from "./applications.ts";
 import { stamp, today } from "./repo.ts";
-import { APPLICATION_CONTACT_FIELDS, APPLICATION_LABEL, APPLICATION_LOCATION_FIELDS, type ApplicationDetails, type ApplicationEvent } from "./schema.ts";
+import { APPLICATION_CONTACT_FIELDS, APPLICATION_LABEL, APPLICATION_LOCATION_FIELDS, OUTCOME_FEEDBACK_RECONCILIATION, type ApplicationDetails, type ApplicationEvent } from "./schema.ts";
 import { scamReviewErrors } from "./scam.ts";
 import { normalizeAt } from "./when.ts";
 
@@ -87,6 +87,23 @@ export function applicationRecordErrors(data: Record<string, unknown>): string[]
       if (e.start_date != null && (typeof e.start_date !== "string" || !calendarDate(e.start_date))) errors.push(`${prefix}.start_date must be a real YYYY-MM-DD date`);
       if (e.status != null && (typeof e.status !== "string" || !APPLICATION_LABEL.test(e.status))) errors.push(`${prefix}.status must be a lowercase hyphenated slug`);
       for (const f of ["note", "round", "contact_method"]) if (e[f] != null && typeof e[f] !== "string") errors.push(`${prefix}.${f} must be text`);
+      if (e.feedback != null) {
+        const path = `${prefix}.feedback`;
+        if (typeof e.feedback !== "object" || Array.isArray(e.feedback)) errors.push(`${path} must be a mapping`);
+        else {
+          const feedback = e.feedback as Record<string, unknown>;
+          const kind = feedback.kind;
+          if (typeof kind !== "string" || !Object.hasOwn(OUTCOME_FEEDBACK_RECONCILIATION, kind)) errors.push(`${path}.kind must be generic, visibility, or specific`);
+          else if (feedback.reconciliation !== OUTCOME_FEEDBACK_RECONCILIATION[kind as keyof typeof OUTCOME_FEEDBACK_RECONCILIATION]) errors.push(`${path}.reconciliation must match its feedback kind`);
+          if (feedback.cause !== "unknown") errors.push(`${path}.cause must be unknown; feedback does not prove hiring causality`);
+          for (const field of ["text", "source"]) if (feedback[field] != null && (typeof feedback[field] !== "string" || !(feedback[field] as string).trim())) errors.push(`${path}.${field} must be nonempty text`);
+          const hasText = typeof feedback.text === "string" && !!feedback.text.trim();
+          const hasSource = typeof feedback.source === "string" && !!feedback.source.trim();
+          if ((kind === "visibility" || kind === "specific") && (!hasText || !hasSource)) errors.push(`${path} needs text and the original source for visibility or specific feedback`);
+          else if (hasText && !hasSource) errors.push(`${path}.text needs an attributable source`);
+          if (feedback.evidence_refs != null && (!Array.isArray(feedback.evidence_refs) || feedback.evidence_refs.some((ref) => typeof ref !== "string" || !ref.trim()))) errors.push(`${path}.evidence_refs must be a list of nonempty supplied source pointers`);
+        }
+      }
     }
   }
   return errors;

@@ -14,7 +14,7 @@ Read for:
 - Required versus preferred qualifications, eligibility gates, seniority and ownership, and relevant tools and terminology.
 - Differences by role family, employer type, location, and engagement. Separate individual contribution, team leadership, commercial ownership, and customer-facing delivery even when titles overlap.
 
-Use employer hiring guidance, published career ladders, professional or licensing bodies, and occupational databases to resolve specific questions. With sparse intake, these sources identify likely work to ask about and evidence worth recovering. Keep proposed duties or qualifications in questions or clearly labeled suggestions outside the person's facts and resume; only their records or confirmation can establish them. Use the actual ATS vendor's documentation for parser behavior, separating documented behavior from advice or inference. Check employer rules about AI assistance when relevant. Research pay when it affects the target or is requested; keep geography, level, currency, date, and base versus total compensation distinct.
+Use the employer's official posting and product, team, and hiring material to distinguish required from preferred responsibilities, qualifications, fit constraints, and the target argument. Advertised values describe employer expectations; they establish no candidate beliefs, conduct, or experience. Professional or licensing bodies and occupational databases can resolve specific questions. With sparse intake, research identifies work to ask about, not facts to add: keep proposed duties outside the person's record until supported. Use actual ATS vendor documentation for parser behavior, distinguishing documentation from inference. Check employer AI-assistance rules when relevant, and research pay when it changes the target or is requested, preserving geography, level, currency, date, and base versus total compensation.
 
 ## Learn from the work and hiring experience
 
@@ -26,7 +26,7 @@ Translate findings into decisions: which responsibilities and achievements deser
 
 ## Map requirements to evidence
 
-In the guide's Market notes, keep a compact comparison: requirement or outcome, supporting source, the person's fact id and evidence source, and the editorial decision. Distinguish:
+In the guide's Market notes, keep a compact comparison: required or preferred responsibility/criterion, employer source and date, candidate fact id and original evidence pointer, confirmation or uncertainty, and what this changes in the draft. Employer criteria and lexical matches are not candidate evidence. Distinguish:
 
 - **Supported and visible:** preserve the useful evidence and recognizable terms.
 - **Visibility gap:** supported but buried, unclear, or omitted; change emphasis or wording within its factual scope.

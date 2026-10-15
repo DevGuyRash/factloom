@@ -7,7 +7,7 @@ import { findEmployer } from "../lib/employers.ts";
 import { writeDoc } from "../lib/frontmatter.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
 import { updateFor } from "../lib/queue.ts";
-import { rel, resolvePerson, stamp, today } from "../lib/repo.ts";
+import { rel, repoRoot, resolvePerson, stamp, today } from "../lib/repo.ts";
 import { logEvent } from "../lib/runlog.ts";
 import { appendEvent, DETAILS_USAGE, detailsFromArgs, eventDate, onFromArgs } from "../lib/application-history.ts";
 import { requireScamClear } from "../lib/scam.ts";
@@ -15,6 +15,7 @@ import { wasSent } from "../lib/stats.ts";
 import { normalizeAt } from "../lib/when.ts";
 import { DATE, APPLICATION_EVENT_KINDS, OUTCOME_STATUS, type ApplicationEvent } from "../lib/schema.ts";
 import { parseWhen } from "../lib/when.ts";
+import { associateSubmissionArtifact, freezeSubmissionArtifact, lockArtifact, validateApplication } from "../lib/tailored-artifact.ts";
 
 function addDays(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00`);
@@ -63,7 +64,7 @@ const command: Command = {
   summary: "Record applications, employer details, contacts, milestones, and notes",
   usage: [
     "resumes app new --company <name> --role <title> [--url U] [--source S] [--site Z] [--requisition R] [--posted YYYY-MM-DD] [--closes YYYY-MM-DD] [--posting-file <file|->] [--location L] [--arrangement A] [--pay-min N] [--pay-max N] [--pay-period hour|year] [--distinct-from <dir> --because TEXT] [--person p] " + DETAILS_USAGE,
-    "resumes app submitting <dir> [--person p]",
+    "resumes app submitting <dir> [--artifact <uploaded-docx-or-pdf>] [--person p]",
     "resumes app submit <dir> [--confirmation TEXT] [--proof <file>] [--answers <file|->] [--follow-up <days|YYYY-MM-DD>] [--on <date>] [--no-log] [--person p]",
     "resumes app hold <dir> --reason TEXT [--kind answer|person-step|account|captcha|upload|site|confirmation|other] [--waits <catalog-id>] [--due <YYYY-MM-DD|datetime with offset>] [--answers <file|->] [--no-log] [--person p]",
     "resumes app resolve <dir> [--note TEXT] [--no-log] [--person p]",
@@ -148,8 +149,16 @@ const command: Command = {
       if (!dirArg) throw new Error("app submitting needs <dir>");
       const app = findApplication(person, dirArg);
       const { data, body } = loadRecord(app);
+      validateApplication(app.dir, person, repoRoot());
+      if (data.person !== person) throw new Error("application record owner does not match this person");
       requireScamClear(data, "Marking a submit click");
-      writeDoc(app.recordPath!, { ...data, submit_clicked: stamp(), updated: today() }, body);
+      if (wasSent(data)) throw new Error("this application already has sent history; never record another submit click");
+      if (has(a, "artifact") && flag(a, "artifact") === undefined) throw new Error("--artifact needs the selected uploaded DOCX/PDF file");
+      const release = lockArtifact(app.dir);
+      try {
+        const submission_artifact = freezeSubmissionArtifact(app.dir, data, flag(a, "artifact"));
+        writeDoc(app.recordPath!, { ...data, submission_artifact, submit_clicked: data.submit_clicked ?? stamp(), updated: today() }, body);
+      } finally { release(); }
       log("note", `submitting ${label(app)}`);
       console.log(`${rel(app.dir)}: submit marked; run app submit as soon as the site confirms`);
       return 0;
@@ -160,6 +169,8 @@ const command: Command = {
       if (!dirArg) throw new Error("app submit needs <dir>");
       const app = findApplication(person, dirArg);
       const { data, body } = loadRecord(app);
+      validateApplication(app.dir, person, repoRoot());
+      if (data.person !== person) throw new Error("application record owner does not match this person");
       requireScamClear(data, "Recording a submission");
       const applied = onFromArgs(a);
       if (!DATE.test(applied)) throw new Error("app submit --on takes YYYY-MM-DD");
@@ -174,25 +185,31 @@ const command: Command = {
       // The pipeline's follow_up_days is the default; a posting that states its own timeline can set another.
       const followUp = flag(a, "follow-up");
       if (followUp && !DATE.test(followUp) && !/^\d+$/.test(followUp)) throw new Error("--follow-up takes a number of days or a YYYY-MM-DD date");
-      data.status = "submitted";
-      data.applied = applied;
-      if (!data.date_contacted || applied < data.date_contacted) data.date_contacted = applied;
-      data.follow_up = followUp && DATE.test(followUp) ? followUp : addDays(applied, followUp ? Number(followUp) : cfg.follow_up_days);
-      data.updated = today();
-      delete data.submit_clicked;
-      delete data.due;
       const confirmation = flag(a, "confirmation");
-      if (confirmation) data.confirmation = confirmation;
-      appendEvent(data, { kind: "submitted", on: applied, status: "submitted", ...(confirmation ? { note: confirmation } : {}) });
       const proof = flag(a, "proof");
-      if (proof) {
-        if (!existsSync(proof)) throw new Error(`${proof} does not exist`);
-        const destName = `confirmation${extname(proof) || ".txt"}`;
-        if (join(app.dir, destName) !== proof) copyFileSync(proof, join(app.dir, destName));
-        data.proof = destName;
-        if (!data.confirmation) data.confirmation = destName;
-      }
-      writeDoc(app.recordPath!, data, answeredBody);
+      if (proof && !existsSync(proof)) throw new Error(`${proof} does not exist`);
+      const releaseArtifact = lockArtifact(app.dir);
+      try {
+        const submission_artifact = associateSubmissionArtifact(app.dir, data, applied);
+        data.status = "submitted";
+        data.submission_artifact = submission_artifact;
+        data.applied = applied;
+        if (!data.date_contacted || applied < data.date_contacted) data.date_contacted = applied;
+        data.follow_up = followUp && DATE.test(followUp) ? followUp : addDays(applied, followUp ? Number(followUp) : cfg.follow_up_days);
+        data.updated = today();
+        delete data.submit_clicked;
+        delete data.due;
+        if (confirmation) data.confirmation = confirmation;
+        appendEvent(data, { kind: "submitted", on: applied, status: "submitted", ...(confirmation ? { note: confirmation } : {}) });
+        if (proof) {
+          if (!existsSync(proof)) throw new Error(`${proof} does not exist`);
+          const destName = `confirmation${extname(proof) || ".txt"}`;
+          if (join(app.dir, destName) !== proof) copyFileSync(proof, join(app.dir, destName));
+          data.proof = destName;
+          if (!data.confirmation) data.confirmation = destName;
+        }
+        writeDoc(app.recordPath!, data, answeredBody);
+      } finally { releaseArtifact(); }
       updateFor(person, data, { status: "done", outcome: "submitted", application: app.name });
       log("applied", `${label(app)}${confirmation ? ` (${confirmation})` : ""}`);
       console.log(`submitted ${rel(app.dir)} (follow up ${data.follow_up})${proof ? `; proof saved as ${data.proof}` : ""}`);
