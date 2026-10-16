@@ -19,7 +19,7 @@ const DATA = [":(exclude)people", ":(exclude)custom"];
 const PERSON_DATA = /^(people|custom)\//;
 
 export type UpdateResult =
-  | { status: "no-remote" | "dirty" | "busy" | "no-history" | "edited" | "conflict" | "fetch-failed"; message: string; files?: string[] }
+  | { status: "no-remote" | "dirty" | "busy" | "no-history" | "edited" | "conflict" | "fetch-failed" | "commit-failed"; message: string; files?: string[] }
   | { status: "up-to-date" | "dry-run" | "updated" | "linked"; message: string; incoming?: string[]; extra?: string[]; depsChanged?: boolean; staged?: string[]; restageError?: string };
 
 /** Unstages records for a merge, leaving their files exactly as they are; false when git could not. */
@@ -37,6 +37,9 @@ function restage(paths: string[], root: string): string | undefined {
 
 /** The git part of an update: fetch, check for local engine edits, merge (or link once with `link`). */
 export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolean } = {}): UpdateResult {
+  if (git(["rev-parse", "-q", "--verify", "MERGE_HEAD"], root).ok) {
+    return { status: "busy", message: "a merge is already in progress; finish or abort it before updating" };
+  }
   const ensured = ensureUpstreamRemote(root);
   if ("error" in ensured) return { status: "no-remote", message: ensured.error };
   const name = ensured.remote.name;
@@ -76,7 +79,10 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
     // Files the engine does not have, outside people/ and custom/: left for the person to move or delete.
     const engineFiles = new Set(git(["ls-tree", "-r", "--name-only", target], root).out.split("\n"));
     const extra = git(["ls-files", "--", ".", ...DATA], root).out.split("\n").filter((f) => f && !engineFiles.has(f));
-    git(["commit", "--no-edit", "-m", "Link to the factloom engine"], root);
+    const committed = git(["commit", "--no-edit", "-m", "Link to the factloom engine"], root);
+    if (!committed.ok) {
+      return { status: "commit-failed", files: staged, message: `link commit failed: ${committed.err}\nInspect and finish or abort the merge before restoring previously staged records; they were not restaged.` };
+    }
     return { status: "linked", message: `linked to ${target}`, extra, staged, restageError: restage(staged, root) };
   }
 
@@ -106,6 +112,14 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
   return { status: "updated", message: `merged ${incoming.length} engine change(s)`, incoming, depsChanged, extra, staged, restageError };
 }
 
+/** A failed post-merge step does not roll back the completed engine merge. */
+function stepExit(step: string, result: ReturnType<typeof spawnSync>): number {
+  if (result.status === 0 && !result.error && !result.signal) return 0;
+  const reason = result.error?.message ?? (result.signal ? `signal ${result.signal}` : `exit ${result.status ?? "unknown"}`);
+  console.error(`engine merge completed; ${step} did not pass (${reason})`);
+  return result.status || 1;
+}
+
 const command: Command = {
   name: "update",
   summary: "Update to the newest engine: checks for local engine edits, merges, reinstalls, and checks",
@@ -114,21 +128,25 @@ const command: Command = {
     const a = parseArgs(argv, ["dry-run", "link"]);
     const root = repoRoot();
     const r = updateFrom(root, { dryRun: has(a, "dry-run"), link: has(a, "link") });
-    if (["no-remote", "dirty", "busy", "no-history", "edited", "conflict", "fetch-failed"].includes(r.status)) { console.error(r.message); return 1; }
+    if (["no-remote", "dirty", "busy", "no-history", "edited", "conflict", "fetch-failed", "commit-failed"].includes(r.status)) { console.error(r.message); return 1; }
+    if ("restageError" in r && r.restageError) {
+      console.error(`${r.message}, but ${r.restageError}; verification was not run`);
+      return 1;
+    }
     console.log(r.message);
     if ("staged" in r && r.staged?.length) console.log(`${r.staged.length} record(s) staged for a commit ${r.status === "dry-run" ? "would be unstaged for the merge and staged again" : "were unstaged for the merge and staged again"}, so the merge holds only the engine`);
-    if ("restageError" in r && r.restageError) console.error(r.restageError);
     if ("incoming" in r && r.incoming?.length) console.log(`  ${r.incoming.slice(0, 15).join("\n  ")}${r.incoming.length > 15 ? "\n  …" : ""}`);
     if ("extra" in r && r.extra?.length) console.log(`These files are outside people/ and custom/ but not part of the engine; move what you want to keep into custom/ and delete the rest:\n  ${r.extra.join("\n  ")}`);
     if (r.status !== "updated" && r.status !== "linked") return 0;
     if ("depsChanged" in r && r.depsChanged) {
       console.log("dependencies changed; reinstalling");
-      spawnSync("npm", ["ci", "--no-audit", "--no-fund"], { cwd: join(engineRoot(), "tools"), stdio: "inherit", shell: process.platform === "win32" });
+      const installed = stepExit("dependency installation", spawnSync("npm", ["ci", "--no-audit", "--no-fund"], { cwd: join(engineRoot(), "tools"), stdio: "inherit", shell: process.platform === "win32" }));
+      if (installed) return installed;
     }
     // Fresh processes run the merged engine; this one still has the code from before the merge loaded.
-    spawnSync(process.execPath, [...process.execArgv, process.argv[1], "check"], { stdio: "inherit" });
-    spawnSync(process.execPath, [...process.execArgv, process.argv[1], "build-resumes", "--check"], { stdio: "inherit" });
-    return 0;
+    const checked = stepExit("repository check", spawnSync(process.execPath, [...process.execArgv, process.argv[1], "check"], { stdio: "inherit" }));
+    if (checked) return checked;
+    return stepExit("resume render check", spawnSync(process.execPath, [...process.execArgv, process.argv[1], "build-resumes", "--check"], { stdio: "inherit" }));
   },
 };
 export default command;
