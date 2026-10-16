@@ -13,9 +13,10 @@ import { dataLayers } from "./layers.ts";
 // PATH (such as firejail's) can be unable to read files in the temp directory.
 const PDFTOTEXT_CANDIDATES = ["/usr/bin/pdftotext", "pdftotext"];
 
-async function extractDocxText(path: string): Promise<string | null> {
+async function extractDocxText(content: Buffer): Promise<string | null> {
   try {
-    const zip = await JSZip.loadAsync(readFileSync(path));
+    const zip = await JSZip.loadAsync(content);
+    if (!zip.file("word/document.xml")) return null;
     const parts: string[] = [];
     for (const name of Object.keys(zip.files)) {
       if (/^word\/(document|header\d*|footer\d*)\.xml$/.test(name)) parts.push(await zip.files[name].async("text"));
@@ -48,7 +49,9 @@ function extractPdfText(path: string): string | null {
 /** Text content of a resume file, or null when its format cannot be read (e.g. no pdftotext). */
 export function extractDocumentText(path: string): Promise<string | null> | string | null {
   const lower = path.toLowerCase();
-  if (lower.endsWith(".docx")) return extractDocxText(path);
+  if (lower.endsWith(".docx")) {
+    try { return extractDocxText(readFileSync(path)); } catch { return null; }
+  }
   if (lower.endsWith(".pdf")) return extractPdfText(path);
   return null;
 }
@@ -56,12 +59,12 @@ export function extractDocumentText(path: string): Promise<string | null> | stri
 export type Finding = { file: string; line: number; kind: string; snippet: string };
 export type Allowlist = { paths: string[]; strings: string[] };
 
-/** Allowlist entries from shared/pii-allow.yaml and custom/pii-allow.yaml: path globs and/or exact matched strings. */
-export function loadAllowlist(root: string): Allowlist {
+/** Merge allowlist YAML from one source of truth (the working tree or the Git index). */
+export function parseAllowlists(contents: Iterable<string>): Allowlist {
   const out: Allowlist = { paths: [], strings: [] };
-  for (const path of dataLayers("pii-allow.yaml", root)) {
+  for (const content of contents) {
     try {
-      const data = (YAML.parse(readFileSync(path, "utf8")) ?? {}) as Record<string, unknown>;
+      const data = (YAML.parse(content) ?? {}) as Record<string, unknown>;
       if (Array.isArray(data.paths)) out.paths.push(...data.paths.map(String));
       if (Array.isArray(data.strings)) out.strings.push(...data.strings.map(String));
     } catch {
@@ -69,6 +72,13 @@ export function loadAllowlist(root: string): Allowlist {
     }
   }
   return out;
+}
+
+/** Allowlist entries from shared/pii-allow.yaml and custom/pii-allow.yaml: path globs and/or exact matched strings. */
+export function loadAllowlist(root: string): Allowlist {
+  return parseAllowlists(dataLayers("pii-allow.yaml", root).flatMap((path) => {
+    try { return [readFileSync(path, "utf8")]; } catch { return []; }
+  }));
 }
 
 function escapeRe(s: string): string {
@@ -159,27 +169,23 @@ export function listScannableFiles(root: string): string[] {
   });
 }
 
-/** Scans one file (by absolute `path`, reported as `relPath`) for findings not covered by `allow`. */
 const IMAGE = /\.(?:png|jpe?g|webp|gif|heic|bmp|tiff?)$/i;
 
-export async function scanFile(path: string, relPath: string, allow: Allowlist): Promise<Finding[]> {
-  const lower = path.toLowerCase();
+/** Scan supplied bytes, so indexed content never needs a working-tree copy or a temporary file. */
+export async function scanContent(content: Buffer, relPath: string, allow: Allowlist): Promise<Finding[]> {
+  const lower = relPath.toLowerCase();
   // No text scan reads a picture, and a picture of a filled form shows the address, phone, and answers. In an
   // application, only the submission proof (`app submit --proof` saves it as confirmation.*) is committed.
   if (IMAGE.test(lower)) {
     const inApplication = /^people\/[^/]+\/applications\//.test(relPath.replace(/\\/g, "/"));
-    if (!inApplication || basename(path).startsWith("confirmation.") || isAllowed(relPath, "", allow)) return [];
+    if (!inApplication || basename(relPath).startsWith("confirmation.") || isAllowed(relPath, "", allow)) return [];
     return [{ file: relPath, line: 0, kind: "screenshot", snippet: "a picture can show private details no scan reads: rename it *.local.* (git ignores those) or delete it" }];
   }
   let text: string | null = null;
-  if (lower.endsWith(".docx")) text = await extractDocxText(path);
-  else if (SCAN_TEXT_EXTENSIONS.some((e) => lower.endsWith(e))) {
-    try {
-      text = readFileSync(path, "utf8");
-    } catch {
-      text = null;
-    }
-  }
+  if (lower.endsWith(".docx")) {
+    text = await extractDocxText(content);
+    if (text === null) return [{ file: relPath, line: 0, kind: "unreadable-document", snippet: "could not read DOCX text; repair or remove this document before committing" }];
+  } else if (SCAN_TEXT_EXTENSIONS.some((e) => lower.endsWith(e))) text = content.toString("utf8");
   if (text == null) return [];
   const out: Finding[] = [];
   const lines = text.split(/\r?\n/);
@@ -190,4 +196,14 @@ export async function scanFile(path: string, relPath: string, allow: Allowlist):
     }
   }
   return out;
+}
+
+/** Scans one working-tree file (by absolute `path`, reported as `relPath`). */
+export async function scanFile(path: string, relPath: string, allow: Allowlist): Promise<Finding[]> {
+  if (IMAGE.test(path)) return scanContent(Buffer.alloc(0), relPath, allow);
+  const lower = path.toLowerCase();
+  if (!lower.endsWith(".docx") && !SCAN_TEXT_EXTENSIONS.some((extension) => lower.endsWith(extension))) return [];
+  let content: Buffer;
+  try { content = readFileSync(path); } catch { return []; }
+  return scanContent(content, relPath, allow);
 }
