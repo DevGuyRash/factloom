@@ -2,7 +2,7 @@ import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { rel, resolvePerson } from "../lib/repo.ts";
 import { loadPipelineConfig } from "../lib/pipeline-config.ts";
-import { activeRun, endRun, logEvent, startRun } from "../lib/runlog.ts";
+import { endRun, logEvent, tryStartRun } from "../lib/runlog.ts";
 
 const KINDS = ["applied", "held", "skipped", "error", "note"] as const;
 type Kind = (typeof KINDS)[number];
@@ -23,8 +23,9 @@ const command: Command = {
 
     if (sub === "start") {
       const minutes = loadPipelineConfig().run_active_minutes;
-      const active = activeRun(person, minutes);
-      if (active && !has(a, "takeover")) {
+      const result = tryStartRun(person, minutes, has(a, "takeover"));
+      if (!result.started) {
+        const { active } = result;
         console.error(
           `a run log is still open: ${rel(active.path)} was written at ${active.lastWrite.toISOString()}, within ${minutes} minutes. ` +
             "If it is your own, from an earlier turn of this same conversation (a host that continues one thread), that turn has stopped: `run start --takeover`. " +
@@ -32,7 +33,7 @@ const command: Command = {
         );
         return 1;
       }
-      console.log(rel(startRun(person)));
+      console.log(rel(result.path));
       return 0;
     }
     if (sub === "log") {

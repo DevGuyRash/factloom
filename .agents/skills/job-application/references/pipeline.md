@@ -35,6 +35,7 @@ own answers, and the checks on truthfulness and privacy, are the lines that bind
    another agent may be at work. When that log is your own, from an earlier turn of the same
    conversation, `--takeover` starts anyway. It closes logs left running by an activation that
    stopped without `run end`.
+   Run-log writes and this activity check share a per-person lock. A busy writer is retried for up to five seconds, then the command fails clearly. If an interrupted command leaves `runs/.write.local.lock`, inspect its host and pid and verify that no writer remains before removing it; `--takeover` never bypasses that lock. An application record may already be saved when logging fails: reconcile it and retry only logging, never the external action.
 
 ## Per posting
 

@@ -121,6 +121,7 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
   if (!fetched.ok) return { status: "fetch-failed", message: `could not fetch ${name}: ${fetched.err}` };
   const target = `${name}/main`;
   const base = git(["merge-base", "HEAD", target], root);
+  const lockBefore = git(["rev-parse", "HEAD:tools/package-lock.json"], root).out;
 
   if (!base.ok) {
     if (!opts.link) return { status: "no-history", message: "this copy does not share history with the engine yet. Run `./resumes update --link` once: it merges the engine in, taking the engine's version of every file outside people/ and custom/." };
@@ -138,7 +139,8 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
     if (!committed.ok) {
       return { status: "commit-failed", files: staged, message: "link commit failed: " + committed.err + "\nInspect and finish or abort the merge before restoring previously staged records; they were not restaged. " + recoveryHint(saved) };
     }
-    return { status: "linked", message: `linked to ${target}`, extra, staged, restageError: restage(saved, root) };
+    const depsChanged = git(["rev-parse", "HEAD:tools/package-lock.json"], root).out !== lockBefore;
+    return { status: "linked", message: `linked to ${target}`, depsChanged, extra, staged, restageError: restage(saved, root) };
   }
 
   // Local changes outside people/ and custom/ since the last merge. Edits to the engine's own files
@@ -154,7 +156,6 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
   const incoming = git(["log", "--oneline", `HEAD..${target}`], root).out.split("\n").filter(Boolean);
   if (!incoming.length) return { status: "up-to-date", message: "already up to date", extra };
   if (opts.dryRun) return { status: "dry-run", message: `${incoming.length} engine change(s) to merge`, incoming, extra, staged };
-  const lockBefore = git(["rev-parse", "HEAD:tools/package-lock.json"], root).out;
   const saved = unstage(staged, root);
   if ("error" in saved) return { status: "dirty", files: staged, message: saved.error };
   const merged = git(["merge", "--no-edit", target], root);

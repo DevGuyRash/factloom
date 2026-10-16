@@ -3,6 +3,11 @@ rem The repository's tools on Windows: resumes help lists every command. Needs N
 setlocal
 set "DIR=%~dp0"
 where node >nul 2>nul || (echo Node.js is not installed: get version 22.18 or later from https://nodejs.org 1>&2 & exit /b 1)
+node -e "const [a,b]=process.versions.node.split('.').map(Number);process.exit(a>22||(a===22&&b>=18)?0:1)"
+if errorlevel 1 (
+  echo Node.js is too old: install 22.18 or later from https://nodejs.org. 1>&2
+  exit /b 1
+)
 if not exist "%DIR%tools\node_modules" (
   rem Tab completion (docs/completion.md) must never install anything: say nothing until the tools are set up.
   if "%~1"=="__complete" exit /b 0

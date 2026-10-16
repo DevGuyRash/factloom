@@ -1,24 +1,43 @@
 // Tracked files exclude editor lock files, local overlays, dependency/caches, and anything
-// oversized. Silently does nothing outside a git checkout (matches the Python checker).
-import { execFileSync } from "node:child_process";
-import { existsSync, statSync } from "node:fs";
-import { basename, join } from "node:path";
+// oversized. Skips non-Git roots, but an unreadable checkout must not look valid.
+import { spawnSync } from "node:child_process";
+import { existsSync, lstatSync, statSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import { MAX_TRACKED_BYTES } from "../lib/schema.ts";
 import type { CheckContext, Rule } from "./types.ts";
+
+/** Worktrees have a .git file; ordinary checkouts have a directory, possibly in a parent. */
+function hasGitMetadata(root: string): boolean {
+  let dir = resolve(root);
+  for (;;) {
+    try {
+      lstatSync(join(dir, ".git"));
+      return true;
+    } catch (error) {
+      // A broken metadata symlink still marks a checkout; lookup errors must not turn it into an export.
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") return true;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) return false;
+    dir = parent;
+  }
+}
 
 const rule: Rule = {
   name: "tracked-files",
   run(ctx: CheckContext) {
     const errors: string[] = [];
-    let out: string;
-    try {
-      out = execFileSync("git", ["-C", ctx.root, "ls-files", "-z"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-    } catch {
-      return { errors, warnings: [] };
+    const listed = spawnSync("git", ["-C", ctx.root, "ls-files", "-z"], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    if (listed.status !== 0 || listed.error) {
+      // A fixture or exported directory has no index to inspect. A real checkout (including one
+      // selected by GIT_DIR) still fails closed when Git is unavailable or its index is unreadable.
+      if (existsSync(ctx.root) && !hasGitMetadata(ctx.root) && !process.env.GIT_DIR) return { errors, warnings: [] };
+      const reason = listed.error?.message || listed.stderr.trim() || `exit ${listed.status ?? "unknown"}`;
+      return { errors: [`tracked-files: could not list tracked files: ${reason}`], warnings: [] };
     }
-    for (const f of out.split("\0").filter(Boolean)) {
+    for (const f of listed.stdout.split("\0").filter(Boolean)) {
       const base = basename(f);
-      if (base.startsWith("~$") || base.includes(".local.") || base === ".DS_Store" || f.includes("node_modules/") || f.includes("__pycache__/") || base.endsWith(".pyc")) {
+      if (base.startsWith("~$") || (base.startsWith(".~lock.") && base.endsWith("#")) || base.includes(".local.") || base === ".DS_Store" || f.includes("node_modules/") || f.includes("__pycache__/") || base.endsWith(".pyc")) {
         errors.push(`${f}: should not be tracked`);
       }
       const p = join(ctx.root, f);
