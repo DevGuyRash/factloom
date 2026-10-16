@@ -3,10 +3,10 @@
 // the engine's main branch, reinstalls dependencies when they changed, runs the checks, and lists
 // generated resumes that the new engine would render differently. Records under people/ and custom/ stay
 // where they are, modified or not: no engine change touches them. Only records already staged for a commit
-// are unstaged for the merge (so the merge commit holds nothing but the engine) and staged again after it.
-import { existsSync } from "node:fs";
+// are saved as an exact index patch, unstaged for the merge, and restored afterwards without staging new edits.
+import { existsSync, rmSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { join, relative } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { ensureUpstreamRemote, git } from "../lib/git.ts";
@@ -22,23 +22,72 @@ export type UpdateResult =
   | { status: "no-remote" | "dirty" | "busy" | "no-history" | "edited" | "conflict" | "fetch-failed" | "commit-failed"; message: string; files?: string[] }
   | { status: "up-to-date" | "dry-run" | "updated" | "linked"; message: string; incoming?: string[]; extra?: string[]; depsChanged?: boolean; staged?: string[]; restageError?: string };
 
-/** Unstages records for a merge, leaving their files exactly as they are; false when git could not. */
-function unstage(paths: string[], root: string): boolean {
-  return !paths.length || git(["reset", "-q", "--", ...paths], root).ok;
+type SavedIndex = { patch?: string };
+
+/** A per-worktree recovery file, outside tracked records and never overwritten. */
+function recoveryPath(root: string): string {
+  const path = git(["rev-parse", "--git-path", "factloom-update-staged.patch"], root);
+  if (!path.ok) throw new Error("could not locate the staged-record recovery file: " + path.err);
+  return resolve(root, path.out);
 }
 
-/** Stages the records again (one that has vanished since is skipped); the reason when git could not. */
-function restage(paths: string[], root: string): string | undefined {
-  const live = paths.filter((p) => existsSync(join(root, p)) || git(["ls-files", "--error-unmatch", "--", p], root).ok);
-  if (!live.length) return undefined;
-  const added = git(["add", "-A", "--", ...live], root);
-  return added.ok ? undefined : `the records staged before the update could not be staged again; run \`git add -A -- ${live.map((p) => JSON.stringify(p)).join(" ")}\` (${added.err})`;
+function recoveryHint(saved: SavedIndex): string {
+  return saved.patch
+    ? "Exact staged content is saved in " + saved.patch + ". After finishing or aborting any merge, inspect it, restore it with git apply --cached --binary <patch>, and remove the recovery file."
+    : "";
+}
+
+/** Save exact indexed bytes before resetting; never stage working-tree changes as a substitute. */
+function unstage(paths: string[], root: string): SavedIndex | { error: string } {
+  if (!paths.length) return {};
+  const patch = recoveryPath(root);
+  const diff = spawnSync("git", ["--literal-pathspecs", "diff", "--cached", "--binary", "--full-index", "--no-ext-diff", "--no-textconv", "--no-renames", "--", ...paths], { cwd: root, maxBuffer: 1 << 30 });
+  if (diff.status !== 0 || diff.error || !diff.stdout?.length) {
+    return { error: "could not save exact staged records before the update: " + (diff.stderr?.toString("utf8") || diff.error?.message || "the index changed; inspect it and retry") };
+  }
+  try {
+    writeFileSync(patch, diff.stdout, { mode: 0o600, flag: "wx" });
+  } catch (e) {
+    return { error: "could not save staged records in " + patch + ": " + String(e) };
+  }
+  const reset = git(["--literal-pathspecs", "reset", "-q", "--", ...paths], root);
+  return reset.ok ? { patch } : { error: "could not unstage records: " + reset.err + "\n" + recoveryHint({ patch }) };
+}
+
+/** Restore the original staged patch only; partial hunks, deletions and file modes survive. */
+function restage(saved: SavedIndex, root: string): string | undefined {
+  if (!saved.patch) return undefined;
+  const applied = git(["apply", "--cached", "--binary", saved.patch], root);
+  if (!applied.ok) return "the original record staging could not be restored: " + applied.err + "\n" + recoveryHint(saved);
+  try {
+    rmSync(saved.patch);
+  } catch (e) {
+    return "record staging was restored, but its recovery file could not be removed: " + saved.patch + " (" + String(e) + ")";
+  }
+  return undefined;
+}
+
+/** Do not restore private staging into a merge that Git could not abort. */
+function failedMerge(root: string, saved: SavedIndex, reason: string): UpdateResult {
+  if (git(["rev-parse", "-q", "--verify", "MERGE_HEAD"], root).ok) {
+    const aborted = git(["merge", "--abort"], root);
+    if (!aborted.ok) return { status: "conflict", message: "merge failed: " + reason + "\nThe merge could not be aborted: " + aborted.err + "\n" + recoveryHint(saved) };
+  }
+  const error = restage(saved, root);
+  return { status: "conflict", message: "the merge did not complete: " + reason + (error ? "\n" + error : "; original record staging was restored") };
 }
 
 /** The git part of an update: fetch, check for local engine edits, merge (or link once with `link`). */
 export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolean } = {}): UpdateResult {
   if (git(["rev-parse", "-q", "--verify", "MERGE_HEAD"], root).ok) {
     return { status: "busy", message: "a merge is already in progress; finish or abort it before updating" };
+  }
+  const recovery = recoveryPath(root);
+  if (existsSync(recovery)) {
+    return { status: "busy", message: "an earlier update left a staged-record recovery file; inspect and restore it before updating again. " + recoveryHint({ patch: recovery }) };
+  }
+  if (git(["ls-files", "--unmerged", "-z"], root).out) {
+    return { status: "busy", message: "the index has unresolved conflicts; finish or abort that operation before updating" };
   }
   const ensured = ensureUpstreamRemote(root);
   if ("error" in ensured) return { status: "no-remote", message: ensured.error };
@@ -48,12 +97,19 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
   // they are unstaged for the merge and staged again after it; while an activation is at work they are probably
   // mid-commit, and the update waits for a moment.
   // -z keeps unusual file names unquoted; --no-renames lists both sides of a rename, so a whole change is named.
-  const names = (args: string[]) => git(args, root).out.split("\0").filter(Boolean);
-  const engineEdits = names(["diff", "--name-only", "--no-renames", "-z", "HEAD", "--"]).filter((p) => !PERSON_DATA.test(p));
+  const names = (args: string[]) => {
+    const result = spawnSync("git", args, { cwd: root, maxBuffer: 1 << 30 });
+    if (result.status !== 0 || result.error) throw new Error("could not inspect the update's Git state: " + (result.stderr?.toString("utf8") || result.error?.message));
+    const bytes = result.stdout ?? Buffer.alloc(0);
+    const text = bytes.toString("utf8");
+    if (!Buffer.from(text).equals(bytes)) throw new Error("Git paths are not UTF-8; checkpoint them manually before updating");
+    return text.split("\0").filter(Boolean);
+  };
+  const staged = names(["diff", "--cached", "--name-only", "--no-renames", "-z", "--"]);
+  const engineEdits = [...new Set([...staged, ...names(["diff", "--name-only", "--no-renames", "-z", "HEAD", "--"])])].filter((p) => !PERSON_DATA.test(p));
   if (engineEdits.length) {
     return { status: "dirty", files: engineEdits, message: `commit or undo these uncommitted changes to engine files first; update merges the engine over them:\n  ${engineEdits.join("\n  ")}` };
   }
-  const staged = names(["diff", "--cached", "--name-only", "--no-renames", "-z", "--"]);
   if (staged.length) {
     const minutes = loadPipelineConfig(root).run_active_minutes;
     const active = listPeople(root).map((p) => activeRun(p, minutes, root)).find((r) => r !== null);
@@ -69,21 +125,20 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
   if (!base.ok) {
     if (!opts.link) return { status: "no-history", message: "this copy does not share history with the engine yet. Run `./resumes update --link` once: it merges the engine in, taking the engine's version of every file outside people/ and custom/." };
     if (opts.dryRun) return { status: "dry-run", message: `would link this copy to ${target}`, staged };
-    if (!unstage(staged, root)) return { status: "dirty", files: staged, message: "the staged records under people/ and custom/ could not be unstaged for the update; commit them first" };
+    const saved = unstage(staged, root);
+    if ("error" in saved) return { status: "dirty", files: staged, message: saved.error };
     const merged = git(["merge", "--allow-unrelated-histories", "--no-commit", "-X", "theirs", target], root);
     if (!merged.ok && !git(["diff", "--name-only", "--cached"], root).out) {
-      git(["merge", "--abort"], root);
-      const restageError = restage(staged, root);
-      return { status: "conflict", message: `merge failed: ${merged.err}${restageError ? `\n${restageError}` : ""}` };
+      return failedMerge(root, saved, merged.err);
     }
     // Files the engine does not have, outside people/ and custom/: left for the person to move or delete.
     const engineFiles = new Set(git(["ls-tree", "-r", "--name-only", target], root).out.split("\n"));
     const extra = git(["ls-files", "--", ".", ...DATA], root).out.split("\n").filter((f) => f && !engineFiles.has(f));
     const committed = git(["commit", "--no-edit", "-m", "Link to the factloom engine"], root);
     if (!committed.ok) {
-      return { status: "commit-failed", files: staged, message: `link commit failed: ${committed.err}\nInspect and finish or abort the merge before restoring previously staged records; they were not restaged.` };
+      return { status: "commit-failed", files: staged, message: "link commit failed: " + committed.err + "\nInspect and finish or abort the merge before restoring previously staged records; they were not restaged. " + recoveryHint(saved) };
     }
-    return { status: "linked", message: `linked to ${target}`, extra, staged, restageError: restage(staged, root) };
+    return { status: "linked", message: `linked to ${target}`, extra, staged, restageError: restage(saved, root) };
   }
 
   // Local changes outside people/ and custom/ since the last merge. Edits to the engine's own files
@@ -100,14 +155,13 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
   if (!incoming.length) return { status: "up-to-date", message: "already up to date", extra };
   if (opts.dryRun) return { status: "dry-run", message: `${incoming.length} engine change(s) to merge`, incoming, extra, staged };
   const lockBefore = git(["rev-parse", "HEAD:tools/package-lock.json"], root).out;
-  if (!unstage(staged, root)) return { status: "dirty", files: staged, message: "the staged records under people/ and custom/ could not be unstaged for the update; commit them first" };
+  const saved = unstage(staged, root);
+  if ("error" in saved) return { status: "dirty", files: staged, message: saved.error };
   const merged = git(["merge", "--no-edit", target], root);
   if (!merged.ok) {
-    git(["merge", "--abort"], root);
-    const restageError = restage(staged, root);
-    return { status: "conflict", message: `the merge stopped on a conflict and was undone: ${merged.err}${restageError ? `\n${restageError}` : ""}` };
+    return failedMerge(root, saved, merged.err);
   }
-  const restageError = restage(staged, root);
+  const restageError = restage(saved, root);
   const depsChanged = git(["rev-parse", "HEAD:tools/package-lock.json"], root).out !== lockBefore;
   return { status: "updated", message: `merged ${incoming.length} engine change(s)`, incoming, depsChanged, extra, staged, restageError };
 }
