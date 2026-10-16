@@ -61,7 +61,7 @@ An invitation to talk is the most time-sensitive thing a run receives, and a wro
 ## Notifications
 
 - Use `resumes notify "<message>" [--title T]` when a run needs the person's attention (a held application, a question only they can answer) or when a long unattended run finishes.
-- It posts to `RESUMES_NTFY_URL` when the person has set it, falls back to a desktop `notify-send`, and otherwise only prints and says it was not delivered; it is always safe to call. When it was not delivered, the message reaches the person only through the run's summary, so put it there too, and suggest setting `RESUMES_NTFY_URL` once.
+- It posts to `RESUMES_NTFY_URL` when the person has set it, falls back to a desktop `notify-send` when no URL is configured, the HTTP response rejects delivery, or the request fails, and otherwise only prints and says it was not delivered; it is always safe to call. When it was not delivered, the message reaches the person only through the run's summary, so put it there too, and suggest setting `RESUMES_NTFY_URL` once.
 - Do not invent urgency; one notification per natural stopping point is enough, and a blocker already reported is not reported again.
 
 ## Sign-ins

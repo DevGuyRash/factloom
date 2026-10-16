@@ -12,8 +12,17 @@ export type NotifyDeps = {
   log?: (line: string) => void;
 };
 
+class NtfyResponseError extends Error {
+  readonly status: number;
+  constructor(status: number) {
+    super(`ntfy rejected the notification (HTTP ${status})`);
+    this.status = status;
+  }
+}
+
 async function defaultPost(url: string, message: string, title?: string): Promise<void> {
-  await fetch(url, { method: "POST", body: message, headers: title ? { Title: title } : undefined });
+  const response = await fetch(url, { method: "POST", body: message, headers: title ? { Title: title } : undefined });
+  if (!response.ok) throw new NtfyResponseError(response.status);
 }
 
 function defaultSendDesktop(message: string, title?: string): boolean {
@@ -26,7 +35,7 @@ function defaultSendDesktop(message: string, title?: string): boolean {
   }
 }
 
-/** Posts to `RESUMES_NTFY_URL` when set, else tries a desktop notify-send, else prints. */
+/** Tries ntfy when configured, then desktop notify-send on failure, then prints. */
 export async function notify(message: string, opts: NotifyOptions = {}, deps: NotifyDeps = {}): Promise<NotifyResult> {
   const env = deps.env ?? process.env;
   const log = deps.log ?? ((line: string) => console.log(line));
@@ -39,8 +48,14 @@ export async function notify(message: string, opts: NotifyOptions = {}, deps: No
   }
   if (url) {
     const post = deps.post ?? defaultPost;
-    await post(url, message, opts.title);
-    return { via: "ntfy", dryRun: false };
+    try {
+      await post(url, message, opts.title);
+      return { via: "ntfy", dryRun: false };
+    } catch (error) {
+      // Never print the URL, response body, or transport error: they may contain private data.
+      const reason = error instanceof NtfyResponseError ? ` (HTTP ${error.status})` : "";
+      log(`ntfy delivery failed${reason}; trying a desktop notification.`);
+    }
   }
   const sendDesktop = deps.sendDesktop ?? defaultSendDesktop;
   if (sendDesktop(message, opts.title)) return { via: "notify-send", dryRun: false };
