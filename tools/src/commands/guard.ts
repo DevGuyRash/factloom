@@ -8,7 +8,7 @@ import { extname, join } from "node:path";
 import { flag, has, parseArgs } from "../lib/args.ts";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
-import { dataPathsIn, ENGINE_OWNED_DATA, git, PRIVATE_REMOTE_KEY, privateCopies, remotes, repoSlug, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
+import { dataPathsIn, ENGINE_OWNED_DATA, git, githubDestination, PRIVATE_REMOTE_KEY, privateCopies, remotes, repoSlug, sameRepo, upstreamUrl, visibility } from "../lib/git.ts";
 import { extractDocumentText } from "../lib/pii.ts";
 import { findByType, listPeople, personDir, repoRoot } from "../lib/repo.ts";
 
@@ -100,6 +100,8 @@ type RefUpdate = { localSha: string; remoteSha: string };
 export async function checkPush(remoteName: string, url: string, updates: RefUpdate[], cwd: string, root = cwd): Promise<string[]> {
   const problems: string[] = [];
   const toUpstream = sameRepo(url, upstreamUrl());
+  const hosted = Boolean(githubDestination(url));
+  let destination: { visibility: string | undefined } | undefined;
   for (const u of updates) {
     if (ZERO.test(u.localSha)) continue; // deleting a branch sends no content
     const range = ZERO.test(u.remoteSha) ? [u.localSha, "--not", `--remotes=${remoteName}`] : [`${u.remoteSha}..${u.localSha}`];
@@ -129,10 +131,12 @@ export async function checkPush(remoteName: string, url: string, updates: RefUpd
       continue;
     }
     if (!data.length) continue;
+    // A stored GitHub destination can change visibility. Recheck it once per push, never trust the cache.
+    if (hosted) destination ??= { visibility: visibility(url, cwd) };
+    const vis = destination?.visibility;
+    if (hosted && vis === "PRIVATE") continue;
     const allowed = git(["config", "--get", PRIVATE_REMOTE_KEY], cwd).out;
-    if (allowed && sameRepo(allowed, url)) continue;
-    const vis = visibility(url, cwd);
-    if (vis === "PRIVATE" || vis === "INTERNAL") continue;
+    if (!hosted && allowed && sameRepo(allowed, url)) continue;
     problems.push(`this push would send ${data.length} file(s) from people/ or custom/ to ${repoSlug(url)}, which is ${vis ? `${vis.toLowerCase()}` : "not verified as private (the GitHub CLI could not check it)"}. Personal data goes only to your private repository: run \`./resumes guard allow ${remoteName}\` once it is private.`);
   }
   return problems;
@@ -152,12 +156,15 @@ function allow(remoteName: string, root: string, force: boolean): number {
   const r = remotes(root).find((x) => x.name === remoteName);
   if (!r) { console.error(`no remote named ${remoteName}`); return 1; }
   if (sameRepo(r.push || r.fetch, upstreamUrl())) { console.error(`${remoteName} is the public engine; personal data never goes there`); return 1; }
-  const vis = visibility(r.push || r.fetch, root);
-  if (vis !== "PRIVATE" && vis !== "INTERNAL" && !force) {
-    console.error(`${repoSlug(r.push || r.fetch)} is ${vis ? vis.toLowerCase() : "not verifiable with the GitHub CLI"}; make it private first (or, for a private repository outside GitHub, pass --force)`);
+  const url = r.push || r.fetch;
+  const hosted = Boolean(githubDestination(url));
+  const vis = hosted ? visibility(url, root) : undefined;
+  if (hosted ? vis !== "PRIVATE" : !force) {
+    console.error(`${repoSlug(url)} is ${vis ? vis.toLowerCase() : "not verified as private"}; ${hosted ? "GitHub must currently report PRIVATE; --force cannot override this" : "for a verified private repository outside GitHub, pass --force"}`);
     return 1;
   }
-  git(["config", PRIVATE_REMOTE_KEY, r.push || r.fetch], root);
+  const saved = git(["config", PRIVATE_REMOTE_KEY, url], root);
+  if (!saved.ok) { console.error(`could not record the private destination: ${saved.err}`); return 1; }
   console.log(`personal data may now be pushed to ${repoSlug(r.push || r.fetch)} (${PRIVATE_REMOTE_KEY})`);
   return 0;
 }
@@ -165,7 +172,7 @@ function allow(remoteName: string, root: string, force: boolean): number {
 function status(root: string): number {
   const allowed = git(["config", "--get", PRIVATE_REMOTE_KEY], root).out;
   console.log(`engine (public): ${repoSlug(upstreamUrl())}`);
-  console.log(`private data remote: ${allowed ? repoSlug(allowed) : "none yet (run ./resumes guard allow <remote> once your copy is private)"}`);
+  console.log(`private data remote: ${allowed ? `${repoSlug(allowed)} (GitHub visibility is rechecked before each push)` : "none yet (run ./resumes guard allow <remote> once your copy is private)"}`);
   for (const r of remotes(root)) console.log(`remote ${r.name}: fetch ${r.fetch}${r.push !== r.fetch ? `, push ${r.push}` : ""}`);
   const copies = privateCopies(root);
   if (copies.length) console.log(`engine pushes are also checked against the profiles in: ${copies.join(", ")}`);
