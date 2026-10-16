@@ -17,7 +17,7 @@ does the same for those who use `just`.
 | Command | What it does |
 |---|---|
 | `resumes check [root]` | Validates repository conventions (frontmatter types/fields, one profile per person, active resume variants, application directories, saved answers, cover letters, tracked files). Exit 1 on any error; warnings print but do not fail. |
-| `resumes pii [--staged] [paths...]` | Scans Markdown/text/docx content for SSNs, labeled birth dates, card numbers (Luhn-checked), API-key/token shapes, and street addresses. `--staged` scans only files staged in git. Exit 1 on any finding not covered by `shared/pii-allow.yaml` or `custom/pii-allow.yaml`. Never prints a full matched secret. |
+| `resumes pii [--staged] [paths...]` | Scans Markdown/text/docx content for SSNs, labeled birth dates, card numbers (Luhn-checked), API-key/token shapes, and street addresses. `--staged` scans the exact indexed bytes and indexed allowlists, independent of unstaged working files. Exit 1 on any finding not covered by `shared/pii-allow.yaml` or `custom/pii-allow.yaml`. Never prints a full matched secret. |
 | `resumes themes list\|show\|check\|preview\|new` | Themes: see `docs/themes.md`. |
 | `resumes setup`, `resumes update`, `resumes guard` | First-time setup, engine updates, and the push guard that keeps `people/` and `custom/` in the private repository. |
 | `resumes completion bash\|zsh\|fish\|powershell` | Prints the tab-completion script for a shell: see `docs/completion.md`. |
@@ -76,8 +76,11 @@ git config core.hooksPath .githooks
 Enables `.githooks/pre-commit`, which runs `resumes check` and `resumes pii --staged` before each
 commit (skipping itself with a message when `tools/node_modules` is missing), and
 `.githooks/pre-push`, which runs `resumes guard pre-push`: pushes carrying `people/` or `custom/` go
-only to the remote recorded by `resumes guard allow` (or one GitHub reports private), never to the
-public engine, and engine changes bound for the engine may not contain profile details, in text files or in
+only to a destination GitHub currently reports private, or an explicitly trusted private destination
+outside GitHub, never to the public engine. GitHub visibility is checked on every push; a recorded
+remote cannot override a public, internal, or unverifiable result, and `guard allow --force` applies
+only outside GitHub. The doctor checks the actual push URL. Engine changes bound for the engine
+may not contain profile details, in text files or in
 the text of Word and PDF files (images are not read, so examples and screenshots come from the demo person).
 A push the guard cannot read is refused. Without the
 tools installed the pre-push hook refuses, since a privacy check must not be skipped silently.
@@ -86,4 +89,6 @@ tools installed the pre-push hook refuses, since a privacy check must not be ski
 
 `.github/workflows/ci.yml` runs only through an explicitly requested manual dispatch, on Node 22.x and 24.x: `npm ci`, then
 typecheck, check (on the repository and on `examples/demo`), the upstream guard (in the public
-engine only: no personal data), and the tests. It does not need LibreOffice; tests that need it skip.
+engine only: unexpected tracked files under `people/` and `custom/`), and the tests. This directory
+check does not scan every engine file for secrets or inspect images; local privacy checks and review
+remain required. It does not need LibreOffice; tests that need it skip.

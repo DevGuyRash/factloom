@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import type { Command } from "../lib/command.ts";
 import { peek } from "../lib/frontmatter.ts";
-import { PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
+import { githubDestination, PRIVATE_REMOTE_KEY, remotes, repoSlug, ROLE_KEY, sameRepo, upstreamRemote, upstreamUrl, visibility } from "../lib/git.ts";
 import { engineRoot } from "../lib/layers.ts";
 import { dropWaiting } from "../lib/intake.ts";
 import { findByType, listPeople, personDir, rel, repoRoot } from "../lib/repo.ts";
@@ -42,7 +42,7 @@ function run(cmd: string, args: string[], cwd?: string): { ok: boolean; stdout: 
   }
 }
 
-/** `doctor`: environment, privacy, and font checks. Exits non-zero when Node is too old or real people's data sits in a public repository. */
+/** `doctor`: environment, privacy, and font checks. Unverified hosted destinations for real people's data are fatal. */
 const command: Command = {
   name: "doctor",
   summary: "Check the environment, the push guard, privacy of your repository, and fonts your themes need",
@@ -97,17 +97,20 @@ const command: Command = {
         : { name: "engine remote", ok: false, detail: "none", fix: "run ./resumes setup (adds it for ./resumes update)" });
       const origin = remotes(root).find((r) => r.name === "origin");
       if (people.length && origin) {
-        const isEngine = sameRepo(origin.fetch, upstreamUrl());
-        const vis = isEngine ? "PUBLIC" : visibility(origin.fetch, root);
-        const exposed = vis === "PUBLIC";
-        const where = isEngine ? `origin is the public engine (${repoSlug(origin.fetch)})` : `origin (${repoSlug(origin.fetch)}) is public`;
-        checks.push({
-          name: "privacy", ok: !exposed, fatal: exposed,
-          detail: exposed ? `${where} and people/ holds ${people.length} real person(s)` : `origin (${repoSlug(origin.fetch)}) is ${vis ? vis.toLowerCase() : "not verifiable (GitHub CLI unavailable)"}`,
-          fix: sameRepo(origin.fetch, upstreamUrl()) ? "this checkout still points at the public engine: run ./resumes setup --private-repo <name>" : "make the repository private on GitHub (Settings, Change visibility) before pushing again",
-        });
+        const destination = origin.push || origin.fetch;
+        const isEngine = sameRepo(destination, upstreamUrl());
+        const hosted = Boolean(githubDestination(destination));
+        const vis = isEngine ? "PUBLIC" : hosted ? visibility(destination, root) : undefined;
         const allowed = run("git", ["config", "--get", PRIVATE_REMOTE_KEY], root).stdout;
-        checks.push({ name: "private data remote", ok: Boolean(allowed), detail: allowed ? repoSlug(allowed) : "not set: pushes of people/ are refused until it is", fix: "./resumes guard allow origin (after making origin private)" });
+        const trusted = Boolean(allowed && sameRepo(allowed, destination));
+        const privateDestination = !isEngine && (hosted ? vis === "PRIVATE" : trusted);
+        const where = `origin push destination (${repoSlug(destination)})`;
+        checks.push({
+          name: "privacy", ok: privateDestination, fatal: !privateDestination,
+          detail: `${where} is ${isEngine ? "the public engine" : vis ? vis.toLowerCase() : hosted ? "not verifiable as private (GitHub CLI unavailable or visibility unknown)" : trusted ? "manually trusted as private (outside GitHub)" : "not verified as private"}; people/ holds ${people.length} real person(s)`,
+          fix: isEngine ? "this push destination is the public engine: run ./resumes setup --private-repo <name>" : hosted ? "verify this push destination is PRIVATE on GitHub and that the GitHub CLI can read its visibility before pushing" : "verify this destination is private, then run ./resumes guard allow origin --force",
+        });
+        checks.push({ name: "private data remote", ok: trusted, detail: trusted ? repoSlug(allowed) : allowed ? `${repoSlug(allowed)} does not match origin's push destination` : "not set", fix: "./resumes guard allow origin (after verifying origin's push destination is private)" });
       }
     }
 

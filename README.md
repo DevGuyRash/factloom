@@ -78,7 +78,7 @@ On Windows, use `resumes.cmd` in place of `./resumes`, and enable Developer Mode
 
 ## Privacy
 
-- `people/` and `custom/` hold your data. They belong only in your private repository: the pre-push guard refuses to push them anywhere else, and refuses personal details in changes bound for the public engine. `./resumes doctor` warns if your repository is public.
+- `people/` and `custom/` hold your data. They belong only in your private repository: the pre-push guard refuses to push them anywhere else, and refuses personal details in changes bound for the public engine. GitHub destinations must currently be private at every push; a saved destination does not override a visibility change. `./resumes doctor` checks the actual push destination and reports public or unverifiable hosted privacy as unsafe.
 - Street addresses and anything else you keep out of git go in `*.local.*` files, which git ignores. Session answers are kept in one of those too.
 - Nothing in `drop/` is committed. When a resume is imported, lines the scan recognizes as personal details (a street address, a Social Security number, a labeled birth date, a card number, a key) go to git-ignored `.local` files, and any original the scan could not check is kept git-ignored on your computer.
 - Portable evidence lives in tracked, sanitized imported notes in the person’s private repository, with attribution, dates and uncertainties. Guides and handoffs reference those notes, never gitignored originals or device-specific paths. Private local backups do not become a cross-device prerequisite.
