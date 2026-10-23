@@ -6,7 +6,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import {
   AlignmentType, BorderStyle, Document, ExternalHyperlink, type Header, LevelFormat, Packer, Paragraph,
-  type Table, TabStopType, TextRun,
+  type IParagraphOptions, type Table, TabStopType, TextRun,
 } from "docx";
 import { estimateWidth, exactLine, LAYER, lineFor, shape } from "./decor.ts";
 import { color, textWidth, type ColorRef, type TextStyle, type Theme } from "./theme.ts";
@@ -117,6 +117,7 @@ export function header(theme: Theme, c: { name: string; headline?: string; conta
  * breaks across pages, but borders are part of the text and always print.
  */
 export function heading(theme: Theme, title: string, colW: number, kind: Theme["headings"]["style"] = theme.headings.style, opts: { borders?: boolean } = {}): Paragraph[] {
+  const titled = (options: IParagraphOptions) => new Paragraph({ ...options, outlineLevel: 0 });
   const hs = theme.headings;
   if (opts.borders && kind === "band") kind = "rule";
   const run = styled(theme, title, hs, theme.sizes.sectionHeading, theme.fonts.heading);
@@ -126,16 +127,16 @@ export function heading(theme: Theme, title: string, colW: number, kind: Theme["
   const lh = lineFor(theme.sizes.sectionHeading, 1.3);
   switch (kind) {
     case "rule":
-      return [new Paragraph({ keepNext: true, spacing: { before: sp.before, after: sp.after }, border: { bottom: border }, ...center(centered), children: [run] })];
+      return [titled({ keepNext: true, spacing: { before: sp.before, after: sp.after }, border: { bottom: border }, ...center(centered), children: [run] })];
     case "rules":
-      return [new Paragraph({ keepNext: true, spacing: { before: sp.before, after: sp.after }, border: { top: border, bottom: border }, ...center(centered), children: [run] })];
+      return [titled({ keepNext: true, spacing: { before: sp.before, after: sp.after }, border: { top: border, bottom: border }, ...center(centered), children: [run] })];
     case "plain":
-      return [new Paragraph({ keepNext: true, spacing: { before: sp.before, after: sp.after }, ...center(centered), children: [run] })];
+      return [titled({ keepNext: true, spacing: { before: sp.before, after: sp.after }, ...center(centered), children: [run] })];
     case "band": {
       // A tinted band the width of the column behind the heading text, which is inset from its edge.
       const padY = 3, inset = 6;
       const band = shape(theme, { x: -inset, y: -padY, w: colW / 20, h: lh + 2 * padY }, theme.colors.tint, { horizontal: "character", vertical: "line" }, "heading band");
-      return [new Paragraph({
+      return [titled({
         keepNext: true,
         spacing: { before: Math.max(sp.before, (padY + 4) * 20), after: Math.max(sp.after, (padY + 3) * 20), ...exactLine(lh) },
         indent: { left: inset * 20 },
@@ -148,10 +149,10 @@ export function heading(theme: Theme, title: string, colW: number, kind: Theme["
       const barW = 3.5, gap = 6, barH = Math.round(lh * 0.62);
       if (opts.borders) {
         const left = { style: BorderStyle.SINGLE, size: Math.round(barW * 8), color: color(theme, hs.barColor), space: gap };
-        return [new Paragraph({ keepNext: true, spacing: { before: sp.before, after: sp.after }, indent: { left: Math.round((barW + gap) * 20) }, border: { left }, children: [run] })];
+        return [titled({ keepNext: true, spacing: { before: sp.before, after: sp.after }, indent: { left: Math.round((barW + gap) * 20) }, border: { left }, children: [run] })];
       }
       const bar = shape(theme, { x: -(barW + gap), y: (lh - barH) / 2, w: barW, h: barH }, color(theme, hs.barColor), { horizontal: "character", vertical: "line" }, "heading bar");
-      return [new Paragraph({ keepNext: true, spacing: { before: sp.before, after: sp.after, ...exactLine(lh) }, indent: { left: Math.round((barW + gap) * 20) }, children: [bar, run] })];
+      return [titled({ keepNext: true, spacing: { before: sp.before, after: sp.after, ...exactLine(lh) }, indent: { left: Math.round((barW + gap) * 20) }, children: [bar, run] })];
     }
     case "underbar": {
       // The heading, then a short accent bar under it on a line of its own.
@@ -160,7 +161,7 @@ export function heading(theme: Theme, title: string, colW: number, kind: Theme["
         // The same bar as a bottom border on an empty paragraph indented to the bar's width.
         const rest = Math.max(0, colW - Math.round(barW * 20));
         return [
-          new Paragraph({ keepNext: true, spacing: { before: sp.before, after: 0 }, ...center(centered), children: [run] }),
+          titled({ keepNext: true, spacing: { before: sp.before, after: 0 }, ...center(centered), children: [run] }),
           new Paragraph({
             keepNext: true, spacing: { after: sp.after, ...exactLine(3) },
             indent: centered ? { left: Math.round(rest / 2), right: Math.round(rest / 2) } : { right: rest },
@@ -172,7 +173,7 @@ export function heading(theme: Theme, title: string, colW: number, kind: Theme["
       const x = centered ? (colW / 20 - barW) / 2 : 0;
       const bar = shape(theme, { x, y: 0.5, w: barW, h: barH }, color(theme, hs.barColor), { horizontal: "character", vertical: "line" }, "heading underbar");
       return [
-        new Paragraph({ keepNext: true, spacing: { before: sp.before, after: 30 }, ...center(centered), children: [run] }),
+        titled({ keepNext: true, spacing: { before: sp.before, after: 30 }, ...center(centered), children: [run] }),
         new Paragraph({ keepNext: true, spacing: { after: sp.after, ...exactLine(barH + 1.5) }, children: [bar] }),
       ];
     }
