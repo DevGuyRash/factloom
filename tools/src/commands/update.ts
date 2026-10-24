@@ -145,10 +145,20 @@ export function updateFrom(root: string, opts: { dryRun?: boolean; link?: boolea
 
   // Local changes outside people/ and custom/ since the last merge. Edits to the engine's own files
   // can conflict and block the update; files the engine does not have cannot, and are only listed.
-  const engineFiles = new Set(git(["ls-tree", "-r", "--name-only", target], root).out.split("\n"));
-  const changes = git(["diff", "--name-status", base.out, "HEAD", "--", ".", ...DATA], root).out.split("\n").filter(Boolean)
-    .map((l) => { const parts = l.split("\t"); return { status: parts[0][0], path: parts[parts.length - 1] }; });
-  const edited = changes.filter((c) => c.status !== "A" || engineFiles.has(c.path)).map((c) => c.path);
+  const engineFiles = new Set(names(["ls-tree", "-r", "--name-only", "-z", target]));
+  const changed = names(["diff", "--name-status", "--no-renames", "-z", base.out, "HEAD", "--", ".", ...DATA]);
+  const changes = [];
+  for (let i = 0; i < changed.length; i += 2) changes.push({ status: changed[i], path: changed[i + 1] });
+  // An independently adopted upstream file needs its history joined, not its bytes overwritten.
+  // Compare complete tree entries (mode, type and object), never just text or a worktree diff.
+  // Missing on both sides is an identical deletion. Failed tree reads throw before any merge.
+  const entries = (ref: string) => new Map(names(["ls-tree", "-r", "-z", ref]).map((entry) => {
+    const tab = entry.indexOf("\t");
+    return [entry.slice(tab + 1), entry.slice(0, tab)];
+  }));
+  const localEntries = entries("HEAD"), upstreamEntries = entries(target);
+  const edited = changes.filter((c) => (c.status !== "A" || engineFiles.has(c.path))
+    && localEntries.get(c.path) !== upstreamEntries.get(c.path)).map((c) => c.path);
   const extra = changes.filter((c) => c.status === "A" && !engineFiles.has(c.path)).map((c) => c.path);
   if (edited.length) {
     return { status: "edited", files: edited, message: `these engine files were changed in this copy, so an update could conflict:\n  ${edited.join("\n  ")}\nMove your changes into custom/ (themes, templates, catalog entries, pipeline numbers), or contribute them to the engine, then restore the files with \`git checkout ${target} -- <file>\`.` };

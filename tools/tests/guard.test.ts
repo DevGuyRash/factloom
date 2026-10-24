@@ -2,7 +2,7 @@
 // is a local repository named by FACTLOOM_UPSTREAM).
 import assert from "node:assert";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import test from "node:test";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -301,4 +301,50 @@ test("a push that cannot be read is refused rather than allowed", () => withTemp
   r.commit("x");
   const problems = await checkPush("origin", join(base, "elsewhere.git"), [{ localSha: "f".repeat(40), remoteSha: ZERO }], r.dir);
   assert.ok(problems.some((p) => p.includes("could not be checked")), problems.join("; "));
+}));
+
+test("update joins independently adopted identical engine trees without losing records", () => withTemp((base) => {
+  const engine = repo(join(base, "engine"));
+  engine.write("tools/changed.txt", "old\n");
+  engine.write("tools/deleted.txt", "old\n");
+  engine.commit("initial engine");
+  const copy = join(base, "copy");
+  execFileSync("git", ["clone", "-q", engine.dir, copy]);
+  const run = (...args: string[]) => execFileSync("git", args, { cwd: copy, encoding: "utf8" }).trim();
+  run("config", "user.email", "test@example.com"); run("config", "user.name", "Test"); run("config", "commit.gpgsign", "false");
+  engine.write("tools/changed.txt", "adopted\n");
+  engine.write("tools/added.txt", "added\n");
+  engine.write("tools/odd\tline\nname.txt", "same\n");
+  rmSync(join(engine.dir, "tools/deleted.txt"));
+  const upstream = engine.commit("upstream changes");
+  writeFileSync(join(copy, "tools/changed.txt"), "adopted\n");
+  writeFileSync(join(copy, "tools/added.txt"), "added\n");
+  writeFileSync(join(copy, "tools/odd\tline\nname.txt"), "same\n");
+  rmSync(join(copy, "tools/deleted.txt"));
+  mkdirSync(join(copy, "people")); writeFileSync(join(copy, "people/note.md"), "synthetic private record\n");
+  run("add", "-A"); run("commit", "-qm", "independent adoption and record");
+  const local = run("rev-parse", "HEAD");
+  process.env.FACTLOOM_UPSTREAM = engine.dir;
+  try {
+    assert.strictEqual(updateFrom(copy, { dryRun: true }).status, "dry-run");
+    assert.strictEqual(run("rev-parse", "HEAD"), local);
+    assert.strictEqual(updateFrom(copy).status, "updated");
+    assert.deepStrictEqual(run("show", "-s", "--format=%P", "HEAD").split(" "), [local, upstream]);
+    run("merge-base", "--is-ancestor", upstream, "HEAD");
+    assert.strictEqual(readFileSync(join(copy, "people/note.md"), "utf8"), "synthetic private record\n");
+    assert.strictEqual(run("status", "--porcelain"), "");
+    assert.strictEqual(updateFrom(copy).status, "up-to-date");
+    for (const kind of ["content", "mode", "unusual-path", "staged", "dirty"]) {
+      run("reset", "--hard", local);
+      const path = kind === "unusual-path" ? "tools/odd\tline\nname.txt" : "tools/changed.txt";
+      if (kind === "mode") { chmodSync(join(copy, "tools/changed.txt"), 0o755); run("add", "tools/changed.txt"); }
+      else { writeFileSync(join(copy, path), "different\n"); if (kind !== "dirty") run("add", path); }
+      if (kind === "content" || kind === "mode" || kind === "unusual-path") run("commit", "-qm", kind);
+      const before = run("rev-parse", "HEAD");
+      const result = updateFrom(copy);
+      assert.strictEqual(result.status, kind === "content" || kind === "mode" || kind === "unusual-path" ? "edited" : "dirty", kind);
+      assert.ok("files" in result && result.files?.includes(path), kind);
+      assert.strictEqual(run("rev-parse", "HEAD"), before);
+    }
+  } finally { delete process.env.FACTLOOM_UPSTREAM; }
 }));
