@@ -1,5 +1,7 @@
 # Resumes: sources, themes, building, keywords, tailoring
 
+For reusable resume and web/profile summaries, use [named summary channels](../../../../docs/summaries.md). `facts.yaml` owns each channel's prose and primary fact references; variant sections use `summary: <id>` with optional `channel` (default `resume`). Inline paragraphs remain supported. Summary review is explicitly bound to wording and selected evidence; stale review and inherited source holds gate tailoring, without making review a truth certification. Export with `resumes summary show`, not the application-record export command.
+
 The commands below serve genuine resumes and explicitly authorized [synthetic research](../../resume-builder/references/research-mode.md). Research controls govern generation and source use; the executor interprets them. The tools preserve declared artifact identity and guard synthetic submissions against the recorded bounded scope, not against invented consent. Genuine career and evidence-only content stays supported by evidence; a synthetic source remains synthetic even under an evidence-only override.
 
 ## Content, structure, and style are separate files
