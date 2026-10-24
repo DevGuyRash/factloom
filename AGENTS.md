@@ -83,6 +83,8 @@ A person's profile may carry a standing instruction, in their own words, on how 
 
 ## Tools
 
+Reusable resume and web/profile summary wording belongs in named channels in `facts.yaml`; variants reference it, and downstream profiles consume `resumes summary show`. Follow [summary inspection and explicit review](docs/summaries.md): never stamp review automatically during generation or building. A stamp binds reviewed wording and source context, not truth or publishing permission. Legacy paragraphs remain supported.
+
 `./resumes help` lists the repository's commands and `./resumes help <command>` shows one command's usage; on Windows, use `resumes.cmd`. `./resumes types` prints the document model from `tools/src/lib/schema.ts`, the single source for types, fields, statuses, and policies. Generate documents with the commands or `./resumes template`. Resumes and the dashboard are rebuilt from their sources, so change a template, theme, facts file, or variant rather than the generated file; drafts (cover letters, follow-ups, thank-you notes, interview prep) are starting points to rewrite in place.
 
 ## Local checkpoints in consumer work

@@ -2,6 +2,7 @@
 // order, under which headings) and resolves them into the plain ResumeContent that docx.ts
 // renders. Keeps content, structure, and style (theme.ts) as three separate, swappable layers.
 import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join } from "node:path";
 import YAML from "yaml";
 import { peek } from "../lib/frontmatter.ts";
@@ -22,6 +23,9 @@ export type EvidenceRefs = { sources?: string[]; confirmed_by?: string[] };
 export type BulletFact = EvidenceRefs & { text: string; keywords?: string[]; confirm?: string[] };
 export type EntryFact = EvidenceRefs & { title: string; sub?: string; dates?: string; link?: { text: string; url: string }; bullets: BulletFact[] };
 export type LineFact = EvidenceRefs & { left: string; rest?: string; right?: string };
+/** Reviewed prose projections, not primary evidence. Channels are explicit destination names. */
+export type SummaryCopy = { text: string; fact_refs: string[]; confirm?: string[]; reviewed?: string };
+export type NamedSummary = { channels: Record<string, SummaryCopy> };
 export type Facts = {
   person: string;
   mode?: "genuine_career" | "synthetic_research";
@@ -32,12 +36,14 @@ export type Facts = {
   projects: Record<string, EntryFact>;
   jobs: Record<string, EntryFact>;
   lines: Record<string, LineFact>;
+  summaries?: Record<string, NamedSummary>;
 };
 
 export type VariantEntryRef = { project?: string; job?: string; bullets?: number[]; title?: string };
 type Placement = { title: string; place?: "side" | "main" };
 export type VariantSection =
   | (Placement & { paragraph: string })
+  | (Placement & { summary: string; channel?: string })
   | (Placement & { labeled: string[] })
   | (Placement & { entries: VariantEntryRef[] })
   | (Placement & { lines: string[] });
@@ -105,7 +111,9 @@ function labeledOf(facts: Facts, id: string): [string, string] {
 }
 
 export function sectionOf(facts: Facts, vs: VariantSection): Section {
+  validateSection(vs);
   const place = vs.place ? { place: vs.place } : {};
+  if ("summary" in vs) return { title: vs.title, paragraph: resolveSummary(facts, vs.summary, vs.channel).text, ...place };
   if ("paragraph" in vs) return { title: vs.title, paragraph: vs.paragraph, ...place };
   if ("labeled" in vs) return { title: vs.title, labeled: vs.labeled.map((id) => labeledOf(facts, id)), ...place };
   if ("entries" in vs) return { title: vs.title, entries: vs.entries.map((e) => entryOf(facts, e)), ...place };
@@ -165,6 +173,12 @@ export function allConfirms(facts: Facts): string[] {
 export function confirmsUsed(facts: Facts, variant: Variant): string[] {
   const out: string[] = [];
   for (const vs of variant.sections) {
+    validateSection(vs);
+    if ("summary" in vs) {
+      const summary = resolveSummary(facts, vs.summary, vs.channel);
+      out.push(...summary.holds);
+      if (summary.review_status !== "current") out.push(`Review summary ${summary.summary}/${summary.channel}: ${summary.review_status} review`);
+    }
     if (!("entries" in vs)) continue;
     for (const ref of vs.entries) {
       const { fact } = entryFactOf(facts, ref);
@@ -172,4 +186,64 @@ export function confirmsUsed(facts: Facts, variant: Variant): string[] {
     }
   }
   return [...new Set(out)];
+}
+
+function validateSection(section: VariantSection): void {
+  if (!section || typeof section !== "object" || ["paragraph", "summary", "labeled", "entries", "lines"].filter(k => Object.hasOwn(section, k)).length !== 1) {
+    throw new Error("section must select exactly one of paragraph, summary, labeled, entries, or lines");
+  }
+  if ("channel" in section && !("summary" in section)) throw new Error("section channel requires a summary reference");
+}
+
+export type ResolvedSummary = {
+  summary: string; channel: string; text: string; fact_refs: string[]; digest: string;
+  review_status: "missing" | "stale" | "current"; holds: string[]; evidence: FactEvidence[];
+  identity: { mode: Facts["mode"] | "unknown"; batch_id: string | null };
+  support_context: { fact_ref: string; context: unknown }[];
+};
+const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+const own = (v: unknown, key: string): unknown => object(v) && Object.hasOwn(v, key) ? v[key] : undefined;
+function strings(v: unknown, label: string, required = false): string[] {
+  if (v === undefined && !required) return [];
+  if (!Array.isArray(v) || (required && !v.length) || v.some(x => typeof x !== "string" || !x.trim()) || new Set(v).size !== v.length) {
+    throw new Error(`${label} must contain distinct nonempty strings`);
+  }
+  return v;
+}
+
+/** One deterministic projection for rendering, inspection, export and review. Never generates prose. */
+export function resolveSummary(facts: Facts, id: string, channel = "resume"): ResolvedSummary {
+  if (typeof id !== "string" || !id.trim() || typeof channel !== "string" || !channel.trim()) throw new Error("summary id and channel must be nonempty strings");
+  const summary = own(facts.summaries, id);
+  if (!object(summary)) throw new Error(`no summary named ${id}`);
+  const copy = own(summary.channels, channel);
+  if (!object(copy)) throw new Error(`summary ${id} has no channel ${channel}`);
+  if (typeof copy.text !== "string" || !copy.text.trim()) throw new Error(`summary ${id}/${channel} needs nonempty text`);
+  const refs = strings(copy.fact_refs, `summary ${id}/${channel} fact_refs`, true);
+  const confirm = strings(copy.confirm, `summary ${id}/${channel} confirm`);
+  if (copy.reviewed !== undefined && (typeof copy.reviewed !== "string" || !/^[a-f0-9]{64}$/.test(copy.reviewed))) throw new Error(`summary ${id}/${channel} reviewed must be a SHA-256 digest from summary inspect`);
+  const primary = new Map(factEvidence(facts).map(f => [f.id, f]));
+  const evidence = refs.map(ref => {
+    const fact = primary.get(ref);
+    if (!fact) throw new Error(`summary ${id}/${channel}: unknown primary fact ${ref}`);
+    return fact;
+  });
+  const contexts = new Map<string, unknown>();
+  for (const kind of ["jobs", "projects"] as const) for (const [key, entry] of Object.entries(facts[kind] ?? {})) {
+    const context = { title: entry.title, sub: entry.sub ?? null, dates: entry.dates ?? null,
+      link: entry.link ? { text: entry.link.text, url: entry.link.url } : null,
+      sources: entry.sources ?? [], confirmed_by: entry.confirmed_by ?? [] };
+    contexts.set(`${kind}.${key}.title`, context);
+    entry.bullets.forEach((bullet, index) => contexts.set(`${kind}.${key}.bullets.${index}`, { context, confirm: bullet.confirm ?? [] }));
+  }
+  // Ordered refs protect against positional bullet IDs changing meaning. Attribution and holds
+  // are part of the review, too; adding a stamp itself must not change its digest.
+  const support = evidence.map(fact => ({ fact, context: contexts.get(fact.id) ?? null }));
+  // Missing legacy identity remains unknown, never silently certified as genuine.
+  const digest = createHash("sha256").update(JSON.stringify({ version: 1, person: facts.person, mode: facts.mode ?? null, batch_id: facts.batch_id ?? null, summary: id, channel, text: copy.text, confirm, support })).digest("hex");
+  return { summary: id, channel, text: copy.text, fact_refs: refs, digest,
+    identity: { mode: facts.mode ?? "unknown", batch_id: facts.batch_id ?? null },
+    support_context: support.map(s => ({ fact_ref: s.fact.id, context: s.context })),
+    review_status: copy.reviewed === undefined ? "missing" : copy.reviewed === digest ? "current" : "stale",
+    holds: [...confirm, ...evidence.filter(f => f.state === "unconfirmed").map(f => `Summary ${id}/${channel} uses unconfirmed ${f.id}`)], evidence };
 }
