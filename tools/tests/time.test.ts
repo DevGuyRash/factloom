@@ -1,6 +1,7 @@
 // Time in the records: interviews with their offsets, due times on holds and pending steps, close dates on postings.
 // The commands are driven the way an agent drives them; expected values are worked out by hand from fixed offsets.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test, { type TestContext } from "node:test";
@@ -12,7 +13,7 @@ import queueCommand from "../src/commands/queue.ts";
 import statusCommand from "../src/commands/status.ts";
 import { readDoc } from "../src/lib/frontmatter.ts";
 import { normalizeAt, parseWhen, relative } from "../src/lib/when.ts";
-import { makeFixture, verifyFixtureApplication } from "./helpers/fixture.ts";
+import { makeFixture, REAL_ROOT, verifyFixtureApplication } from "./helpers/fixture.ts";
 
 type Run = (argv: string[]) => number | Promise<number>;
 
@@ -223,4 +224,43 @@ test("times are read only with their offset, due dates run to the end of the day
   assert.equal(relative(now - 40 * 60000, now), "40 minutes ago");
   assert.equal(relative(now + 2 * 60000, now), "now");
   assert.equal(relative(now - 3 * 86400000, now), "3 days ago");
+});
+
+test("hold CLI rejects impossible deadlines without changing the application", () => withFixture(async (fx, p) => {
+  const dir = await newApplication(p, "CalendarFixture");
+  const path = join(fx.root, dir, "record.md");
+  const before = readFileSync(path, "utf8");
+  for (const due of ["2026-02-29", "2026-02-30", "2026-04-31", "1900-02-29",
+    "2026-02-30T14:00-07:00", "2026-04-31T00:30+14:00"]) {
+    const result = spawnSync(process.execPath, [join(REAL_ROOT, "tools/src/cli.ts"), "app", "hold", dir,
+      "--reason", "fictional assessment deadline", "--due", due, ...p], { encoding: "utf8" });
+    assert.notEqual(result.status, 0, `${due}: ${result.stdout}${result.stderr}`);
+    assert.match(result.stderr, /--due takes/);
+    assert.equal(readFileSync(path, "utf8"), before, `${due} must not alter the application`);
+  }
+  for (const due of ["2028-02-29", "2000-02-29", "2026-03-01T00:30+14:00", "2026-12-31T23:30-12:00"]) {
+    const result = spawnSync(process.execPath, [join(REAL_ROOT, "tools/src/cli.ts"), "app", "hold", dir,
+      "--reason", "fictional assessment deadline", "--due", due, ...p], { encoding: "utf8" });
+    assert.equal(result.status, 0, `${due}: ${result.stdout}${result.stderr}`);
+    assert.equal(readDoc<{ due?: string }>(path).data.due, due);
+  }
+}));
+
+test("time parsers reject calendar overflow before converting offsets or local end of day", () => {
+  for (const date of ["2026-02-29", "2026-02-30", "2026-04-31", "1900-02-29", "2026-00-01", "2026-01-00"]) {
+    assert.equal(parseWhen(date), null, date);
+    for (const offset of ["Z", "+14:00", "-12:00"]) {
+      const datetime = `${date}T12:00${offset}`;
+      assert.equal(normalizeAt(datetime), null, datetime);
+      assert.equal(parseWhen(datetime), null, datetime);
+    }
+  }
+  for (const date of ["2028-02-29", "2000-02-29", "2026-04-30", "0000-02-29"]) {
+    assert.equal(parseWhen(date)?.text, date);
+    assert.equal(parseWhen(date)?.ms, Date.parse(`${date}T23:59:59`));
+  }
+  for (const datetime of ["2026-03-01T00:30+14:00", "2026-12-31T23:30-12:00", "2028-02-29T12:00Z"]) {
+    assert.equal(normalizeAt(datetime)?.text, datetime);
+    assert.equal(normalizeAt(datetime)?.ms, Date.parse(datetime));
+  }
 });
