@@ -5,13 +5,8 @@ import type { Record_ } from "./applications.ts";
 import { stamp, today } from "./repo.ts";
 import { APPLICATION_CONTACT_FIELDS, APPLICATION_LABEL, APPLICATION_LOCATION_FIELDS, OUTCOME_FEEDBACK_RECONCILIATION, type ApplicationDetails, type ApplicationEvent } from "./schema.ts";
 import { scamReviewErrors } from "./scam.ts";
-import { normalizeAt } from "./when.ts";
-
-export function calendarDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
-}
+import { calendarDate, normalizeAt } from "./when.ts";
+export { calendarDate } from "./when.ts";
 
 export function eventDate(value: string, label = "--on"): string {
   if (calendarDate(value)) return value;
