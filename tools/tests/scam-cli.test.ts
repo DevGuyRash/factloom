@@ -11,7 +11,9 @@ function fixture(fn: (fx: ReturnType<typeof makeFixture>, cli: (args: string[], 
   return () => {
     const fx = makeFixture();
     const cli = (args: string[], expected = 0) => {
-      const r = spawnSync(process.execPath, [join(REAL_ROOT, "tools/src/cli.ts"), ...args, "--person", "pat-lee"], {
+      // check takes an optional repository root, not a person selector.
+      const personArgs = args[0] === "check" ? [] : ["--person", "pat-lee"];
+      const r = spawnSync(process.execPath, [join(REAL_ROOT, "tools/src/cli.ts"), ...args, ...personArgs], {
         cwd: fx.root, env: { ...process.env, RESUMES_ROOT: fx.root }, encoding: "utf8",
       });
       assert.equal(r.status, expected, `${args.join(" ")}\n${r.stdout}\n${r.stderr}`);
@@ -21,6 +23,12 @@ function fixture(fn: (fx: ReturnType<typeof makeFixture>, cli: (args: string[], 
   };
 }
 const clearance = (dir: string, decision = "cleared") => ["risk", "resolve", dir, decision, "--official-url", "https://employer.example/careers", "--trusted-domains", "ats.example", "--source", "Independent fictional official career page", "--reason", "Official employer evidence verifies the opening and authorized recruiting vendor."];
+
+test("CLI helper checks the fixture repository and still reports invalid records", fixture((fx, cli) => {
+  assert.match(cli(["check"]), /0 error\(s\)/);
+  fx.write("people/pat-lee/unknown.md", "---\ntype: unknown-test-type\n---\n");
+  assert.match(cli(["check"], 1), /unknown-test-type/);
+}));
 
 test("CLI intake holds unknown employers and queue progression, requires evidence, and preserves a global pause", fixture((fx, cli) => {
   const profile = join(fx.root, "people/pat-lee/profile.md");
