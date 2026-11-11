@@ -4,10 +4,17 @@
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const DATE_TIME = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(:\d{2})?\s*(Z|[+-]\d{2}:?\d{2})$/i;
 
+/** A real calendar date, without Date.parse's normalization of overflowing days. */
+export function calendarDate(value: string): boolean {
+  if (!DATE_ONLY.test(value)) return false;
+  const d = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
 /** A datetime with its offset, as `2026-10-12T14:00-07:00`; null when it is not one (an offset is required, never guessed). */
 export function normalizeAt(text: string): { text: string; ms: number } | null {
   const m = text.trim().match(DATE_TIME);
-  if (!m) return null;
+  if (!m || !calendarDate(m[1])) return null;
   const offset = m[4].toUpperCase() === "Z" ? "Z" : m[4].replace(/^([+-]\d{2})(\d{2})$/, "$1:$2");
   const normalized = `${m[1]}T${m[2]}${m[3] ?? ""}${offset}`;
   const ms = Date.parse(normalized);
@@ -18,6 +25,7 @@ export function normalizeAt(text: string): { text: string; ms: number } | null {
 export function parseWhen(text: string): { text: string; ms: number } | null {
   const t = text.trim();
   if (DATE_ONLY.test(t)) {
+    if (!calendarDate(t)) return null;
     const ms = Date.parse(`${t}T23:59:59`);
     return Number.isNaN(ms) ? null : { text: t, ms };
   }
