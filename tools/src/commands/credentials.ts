@@ -2,12 +2,13 @@
 // so the password never passes through the chat or a hand-edited file. They are kept in the
 // git-ignored people/<person>/accounts.local.md, readable only by its owner, and cleared when the
 // session ends. Used when the person's `accounts.handling` answer calls for a session password.
-import { chmodSync, existsSync, rmSync, statSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { closeSync, existsSync, fsyncSync, openSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { flag, parseArgs } from "../lib/args.ts";
 import { loadAnswers, savedAnswersPath, sessionAnswersPath } from "../lib/catalog.ts";
 import type { Command } from "../lib/command.ts";
-import { peek, writeDoc } from "../lib/frontmatter.ts";
+import { peek, stringify } from "../lib/frontmatter.ts";
 import { findByType, findOne, personDir, rel, repoRoot, resolvePerson } from "../lib/repo.ts";
 import { FILE_NAMES } from "../lib/schema.ts";
 
@@ -21,8 +22,29 @@ export function findCredentials(person: string, root = repoRoot()): string | nul
 /** Writes the session credentials file, readable only by its owner; returns its path. */
 export function saveCredentials(person: string, email: string, password: string, root = repoRoot()): string {
   const path = credentialsPath(person, root);
-  writeDoc(path, { type: "session-credentials", person, email, password }, "\nA password for one session. `./resumes credentials clear` removes it; git ignores this file.\n");
-  chmodSync(path, 0o600);
+  const content = stringify({ type: "session-credentials", person, email, password }, "\nA password for one session. `./resumes credentials clear` removes it; git ignores this file.\n");
+  // Create privately before writing any plaintext. Exclusive creation cannot follow a
+  // pre-existing symlink; rename replaces the destination entry, not a symlink target.
+  // Keep interrupted-write remnants git-ignored and owner-only on POSIX.
+  const temporary = `${path}.${randomUUID()}.local.md`;
+  let fd: number | undefined;
+  let created = false;
+  try {
+    fd = openSync(temporary, "wx", 0o600);
+    created = true;
+    writeFileSync(fd, content);
+    fsyncSync(fd);
+    const closing = fd;
+    fd = undefined;
+    closeSync(closing);
+    renameSync(temporary, path);
+  } finally {
+    try {
+      if (fd !== undefined) closeSync(fd);
+    } finally {
+      if (created) rmSync(temporary, { force: true });
+    }
+  }
   return path;
 }
 
