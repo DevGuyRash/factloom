@@ -12,10 +12,19 @@ const command: Command = {
   run(argv) {
     const a = parseArgs(argv);
     const person = resolvePerson(flag(a, "person"));
-    const days = Number(flag(a, "days") ?? "0");
+    const rawDays = a.flags.days;
+    const days = Number(rawDays ?? "0");
+    if (rawDays === true || (typeof rawDays === "string" && !rawDays.trim()) || !Number.isFinite(days)) {
+      throw new Error("--days takes a finite number of days");
+    }
     const horizon = new Date(`${today()}T00:00:00`);
     horizon.setDate(horizon.getDate() + days);
-    const horizonStr = horizon.toLocaleDateString("en-CA");
+    const year = horizon.getFullYear();
+    if (!Number.isFinite(horizon.getTime()) || year < 0 || year > 9999) {
+      throw new Error("--days must produce a follow-up horizon between 0000-01-01 and 9999-12-31");
+    }
+    // Record dates use four-digit years, so lexical ordering needs the same format.
+    const horizonStr = `${String(year).padStart(4, "0")}-${String(horizon.getMonth() + 1).padStart(2, "0")}-${String(horizon.getDate()).padStart(2, "0")}`;
     const due = listApplications(person).filter((app) => {
       const r = app.record;
       return r?.status === "submitted" && typeof r.follow_up === "string" && r.follow_up <= horizonStr;
